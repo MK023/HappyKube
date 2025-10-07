@@ -29,6 +29,8 @@ hf_cache/
 
 .DS_Store
 Thumbs.db
+.idea/
+*.iml
 
 deployment/*.yaml
 deployment/*.yml
