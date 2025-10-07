@@ -3,10 +3,11 @@ import configparser
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
-from emotion_api import EmotionAPI
+
 from event_logs import EventLogger
 from comandi_handler import ComandiHandler
 import telegram.error
+from emotion_api_client import EmotionAPIClient
 
 # load_dotenv()
 config = configparser.ConfigParser()
@@ -102,6 +103,6 @@ class TelegramBot:
             raise
 
 if __name__ == "__main__":
-    emotion_api = EmotionAPI()
+    emotion_api = EmotionAPIClient()  # <-- ora chiama le API REST!
     bot = TelegramBot(emotion_api)
     bot.run()

@@ -9,7 +9,7 @@ class ComandiHandler:
     async def start(self, update, context):
         user_id = update.effective_user.id if update.effective_user else "unknown"
         self.logger.info(f"/start richiesto da user {user_id}", context="ComandiHandler")
-        await update.message.reply_text(self.messages.get("welcome", "Ciao! 😊 Sono HappyKube.\nDimmi come ti senti oggi!"))
+        await update.message.reply_text(self.messages.get("welcome", "Ciao! 😊 Sono HappyKube! Dimmi come ti senti oggi!"))
 
     async def chiedi(self, update, context):
         user_id = update.effective_user.id if update.effective_user else "unknown"

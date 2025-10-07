@@ -53,7 +53,7 @@ class EmotionDB:
         start_time = time.time()
         if month:
             query = (
-                "SELECT date, emotion, score FROM emotions WHERE user_id=%s AND EXTRACT(MONTH FROM date)=%s AND model_type=%s"
+                "SELECT date, emotion, score FROM emotions WHERE user_id=%s AND to_char(date, 'YYYY-MM')=%s AND model_type=%s"
             )
             params = (user_id, month, self.report_type)
         else:
@@ -69,8 +69,8 @@ class EmotionDB:
                     elapsed = time.time() - start_time
                     self.logger.info(
                         f"Report estratto per user_id={user_id}, month={month}, model={self.report_type} | rows={len(result)} | duration={elapsed:.3f}s"
-                    )
-                    return result
+                )
+                return result
         except psycopg2.Warning as w:
             self.logger.warning(f"Warning DB (get_report): {w}", exc_info=True)
             return []
