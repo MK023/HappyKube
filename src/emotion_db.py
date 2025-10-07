@@ -2,7 +2,7 @@ import os
 import psycopg2
 import time
 from datetime import datetime
-from event_logs import EventLogger
+from event_logger import EventLogger
 
 class EmotionDB:
     def __init__(self, report_type=None):
@@ -13,14 +13,14 @@ class EmotionDB:
             host=os.environ.get("DB_HOST"),
             port=os.environ.get("DB_PORT", 5432)
         )
-        self.logger = EventLogger(name="EmotionDB", log_filename="emotion_db.log")
-        self.report_type = report_type  # "italian", "distill", "sentiment"
+        self.logger = EventLogger(name="EmotionDB")
+        self.report_type = report_type
         self.logger.info(f"EmotionDB initialized with connection params: {self.conn_params} and report_type={self.report_type}")
 
     def _get_conn(self):
         try:
             self.logger.debug(f"Attempting DB connection with params: {self.conn_params}")
-            conn = psycopg2.connect(**self.conn_params)  # type: ignore
+            conn = psycopg2.connect(**self.conn_params) # type: ignore
             self.logger.info("Database connection established")
             return conn
         except Exception as e:
@@ -69,8 +69,8 @@ class EmotionDB:
                     elapsed = time.time() - start_time
                     self.logger.info(
                         f"Report estratto per user_id={user_id}, month={month}, model={self.report_type} | rows={len(result)} | duration={elapsed:.3f}s"
-                )
-                return result
+                    )
+                    return result
         except psycopg2.Warning as w:
             self.logger.warning(f"Warning DB (get_report): {w}", exc_info=True)
             return []
