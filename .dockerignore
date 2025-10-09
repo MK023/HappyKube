@@ -1,0 +1,85 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Pyre type checker
+.pyre/
+
+# mypy
+.mypy_cache/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Editor/IDE
+.idea/
+*.iml
+
+# Docker (ma versiona i file!)
+# Dockerfile
+# docker-compose.yml
+
+# Sensitive config
+.env
+.env.*
+config.ini
+config.ini.*
+
+# Deployment - ignora SOLO i secrets
+deployment/secrets*.yaml
+deployment/secrets*.yml
+
+# Log/output/temporary
+*.log
+*.out
+*.pid

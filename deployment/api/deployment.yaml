@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: happykube-api
+  labels:
+    app: happykube-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: happykube-api
+  template:
+    metadata:
+      labels:
+        app: happykube-api
+    spec:
+      containers:
+      - name: happykube-api
+        image: emmekappa23/happykube-bot:3.10-slim
+        workingDir: /app
+        command: ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DB_NAME
+          value: "neondb"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: db_user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: db_password
+        - name: DB_HOST
+          value: "ep-cold-brook-agz9f5sw-pooler.c-2.eu-central-1.aws.neon.tech"
+        - name: DB_PORT
+          value: "5432"
+        - name: SENTIMENT_MODEL
+          value: "MilaNLProc/feel-it-italian-sentiment"
+        - name: EMOTION_MODEL
+          value: "MilaNLProc/feel-it-italian-emotion"
+        - name: DISTILL_MODEL
+          value: "j-hartmann/emotion-english-distilroberta-base"
+        - name: PORT
+          value: "5000"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: LOG_FORMAT
+          value: "%(asctime)s %(levelname)s %(name)s %(message)s"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 600
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 1200
+          periodSeconds: 15

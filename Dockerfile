@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Aggiorna e installa tool base (stile Debian)
+# Installa tool di base
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     bash \
     build-essential \
@@ -14,6 +14,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
+# Copia TUTTI i file Python dalla src/ nella root di /app
+COPY src/ .
 
+# Il comando di default viene sovrascritto dal deployment YAML (Gunicorn o bot)
 CMD ["python", "app.py"]

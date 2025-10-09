@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+
 *.env
 *.venv
 env/
@@ -15,7 +16,8 @@ env.bak/
 src/config.py
 .env
 .env.*
-
+config.ini
+config.ini.*
 *.log
 *.out
 *.pid

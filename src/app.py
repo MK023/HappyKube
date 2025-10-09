@@ -23,17 +23,16 @@ emotion_api = EmotionAPI()
 logger = EventLogger("happykube-main")
 logger.info("Applicazione HappyKube avviata!")
 
-@app.route("/")
-def home():
-    logger.info("Chiamata GET su /", context="Flask")
-    return "Hello from HappyKube Python Bot!"
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return "OK", 200
 
 @app.route("/emotion", methods=["POST"])
 def emotion():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True) or {}
     user_id = data.get("user_id", "anonimo")
     text = data.get("text", "")
-    logger.info(f"Richiesta emotion da user {user_id}", context="Flask", text=text)
+    logger.info(f"Richiesta emotion da user {user_id}", extra={"context": "Flask", "text": text})
     result = emotion_api.process_emotion(user_id, text)
     return jsonify(result)
 
@@ -41,9 +40,7 @@ def emotion():
 def report():
     user_id = request.args.get("user_id", "anonimo")
     month = request.args.get("month", None)
-    logger.info(f"Richiesta report da user {user_id}", context="Flask", month=month)
+    logger.info(f"Richiesta report da user {user_id}", extra={"context": "Flask", "month": month})
     report = emotion_api.get_report(user_id, month)
     return jsonify(report)
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

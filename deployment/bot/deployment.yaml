@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: happykube-bot
+  labels:
+    app: happykube-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: happykube-bot
+  template:
+    metadata:
+      labels:
+        app: happykube-bot
+    spec:
+      containers:
+      - name: happykube-bot
+        image: emmekappa23/happykube-bot:3.10-slim
+        command: ["python", "telegram_bot.py"]
+        workingDir: /app
+        env:
+        - name: TELEGRAM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: telegram_token
+        - name: EMOTION_API_URL
+          value: "http://happykube-api:5000"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: LOG_FORMAT
+          value: "%(asctime)s %(levelname)s %(name)s %(message)s"
+        - name: MESSAGES_WELCOME
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_WELCOME
+        - name: MESSAGES_ASK_EMOTION
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_ASK_EMOTION
+        - name: MESSAGES_EXIT
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_EXIT
+        - name: MESSAGES_NOT_IDENTIFIED
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_NOT_IDENTIFIED
+        - name: MESSAGES_EMPTY
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_EMPTY
+        - name: MESSAGES_ERROR
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_ERROR
+        - name: MESSAGES_NOT_UNDERSTOOD
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_NOT_UNDERSTOOD
+        - name: MESSAGES_THANKS
+          valueFrom:
+            configMapKeyRef:
+              name: happykube-bot-messages
+              key: MESSAGES_THANKS
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"

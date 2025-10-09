@@ -10,7 +10,7 @@ class SentimentAnalyzer:
         self.logger = logging.getLogger("SentimentAnalyzer")
         model_name = os.getenv("SENTIMENT_MODEL", "MilaNLProc/feel-it-italian-sentiment")
         self.logger.info(f"Inizializzo pipeline transformers con modello: {model_name}")
-        self.classifier = pipeline("text-classification", model=model_name)
+        self.classifier = pipeline("text-classification", model=model_name) # type: ignore
 
     def analyze(self, text: str) -> Dict[str, Any]:
         try:
