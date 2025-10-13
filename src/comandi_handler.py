@@ -11,9 +11,9 @@ class ComandiHandler:
         self.logger.info(f"/start richiesto da user {user_id}", context="ComandiHandler")
         await update.message.reply_text(self.messages.get("welcome", "Ciao! 😊 Sono HappyKube! Dimmi come ti senti oggi!"))
 
-    async def chiedi(self, update, context):
+    async def ask(self, update, context):
         user_id = update.effective_user.id if update.effective_user else "unknown"
-        self.logger.info(f"/chiedi richiesto da user {user_id}", context="ComandiHandler")
+        self.logger.info(f"/ask richiesto da user {user_id}", context="ComandiHandler")
         await update.message.reply_text(self.messages.get("ask_emotion", "Dimmi come ti senti, sono qui per ascoltarti!"))
 
     async def exit(self, update, context):
