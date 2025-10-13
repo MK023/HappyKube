@@ -101,7 +101,7 @@ class TelegramBot:
 
     def run(self):
         self.app.add_handler(CommandHandler("start", self.comandi.start))
-        self.app.add_handler(CommandHandler("chiedi", self.comandi.chiedi))
+        self.app.add_handler(CommandHandler("ask", self.comandi.ask))
         self.app.add_handler(CommandHandler("exit", self.comandi.exit))
         self.app.add_handler(CommandHandler("help", self.comandi.help))
         self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.receive_emotion))
