@@ -1,0 +1,83 @@
+# Multi-stage Dockerfile for HappyKube API
+# Optimized for production with pre-loaded ML models
+
+# ================================
+# Stage 1: Download ML Models
+# ================================
+FROM python:3.12-slim AS model-downloader
+
+WORKDIR /models
+
+# Install minimal dependencies for model download
+RUN pip install --no-cache-dir transformers==4.46.3 torch==2.5.1 huggingface-hub==0.26.5
+
+# Download all models to cache
+RUN python -c "from transformers import pipeline; \
+    print('Downloading Italian emotion model...'); \
+    pipeline('text-classification', model='MilaNLProc/feel-it-italian-emotion'); \
+    print('Downloading English emotion model...'); \
+    pipeline('text-classification', model='j-hartmann/emotion-english-distilroberta-base'); \
+    print('Downloading sentiment model...'); \
+    pipeline('text-classification', model='MilaNLProc/feel-it-italian-sentiment'); \
+    print('All models downloaded!')"
+
+# ================================
+# Stage 2: Build Dependencies
+# ================================
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+# Install build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and build wheels
+COPY requirements/base.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r base.txt
+
+# ================================
+# Stage 3: Runtime
+# ================================
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python wheels
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+
+# Copy pre-downloaded models from stage 1
+COPY --from=model-downloader /root/.cache/huggingface /home/appuser/.cache/huggingface
+RUN chown -R appuser:appuser /home/appuser/.cache
+
+# Copy application code
+COPY --chown=appuser:appuser src/ /app/
+
+# Switch to non-root user
+USER appuser
+
+# Expose API port
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/healthz || exit 1
+
+# Run with Gunicorn
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:5000", \
+     "--workers", "4", \
+     "--timeout", "120", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "presentation.api.app:create_app()"]

@@ -1,0 +1,8 @@
+# Namespace for HappyKube application
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: happykube
+  labels:
+    name: happykube
+    app: happykube

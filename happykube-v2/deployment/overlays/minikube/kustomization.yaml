@@ -1,0 +1,26 @@
+# Kustomize overlay for Minikube deployment
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: happykube
+
+resources:
+- ../../base/namespace.yaml
+- ../../base/redis/deployment.yaml
+- ../../base/api/deployment.yaml
+- ../../base/bot/deployment.yaml
+- secrets.yaml
+
+# Patch images for local testing (optional)
+images:
+- name: emmekappa23/happykube-api
+  newTag: latest
+- name: emmekappa23/happykube-bot
+  newTag: latest
+
+# ConfigMaps for Minikube-specific config
+configMapGenerator:
+- name: happykube-config
+  literals:
+  - APP_ENV=development
+  - LOG_LEVEL=DEBUG

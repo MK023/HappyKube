@@ -1,0 +1,119 @@
+# Docker Compose for local development
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: happykube-postgres
+    environment:
+      POSTGRES_DB: happykube_dev
+      POSTGRES_USER: happykube
+      POSTGRES_PASSWORD: dev_password_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U happykube"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: happykube-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # HappyKube API
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: happykube-api
+    ports:
+      - "5000:5000"
+    environment:
+      # App
+      APP_ENV: development
+      DEBUG: "True"
+      LOG_LEVEL: DEBUG
+
+      # Database (local)
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: happykube_dev
+      DB_USER: happykube
+      DB_PASSWORD: dev_password_change_me
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # Security (CHANGE IN PRODUCTION!)
+      ENCRYPTION_KEY: "vF3K9mN7pQ2wX8yZ5tR6uE4hJ1kL0oM3="  # Example key
+      JWT_SECRET_KEY: "dev-secret-key-change-in-production"
+      API_KEYS: "dev-api-key-12345"
+
+      # Telegram (not used by API, but needed for config validation)
+      TELEGRAM_BOT_TOKEN: "dummy-token-not-used-by-api"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app  # Mount source for hot reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # HappyKube Telegram Bot (optional, comment out if no bot token)
+  # bot:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.bot
+  #   container_name: happykube-bot
+  #   environment:
+  #     APP_ENV: development
+  #     DEBUG: "True"
+  #     LOG_LEVEL: DEBUG
+  #
+  #     # Database
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_NAME: happykube_dev
+  #     DB_USER: happykube
+  #     DB_PASSWORD: dev_password_change_me
+  #
+  #     # Redis
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #
+  #     # Security
+  #     ENCRYPTION_KEY: "vF3K9mN7pQ2wX8yZ5tR6uE4hJ1kL0oM3="
+  #     JWT_SECRET_KEY: "dev-secret-key"
+  #     API_KEYS: "dev-api-key-12345"
+  #
+  #     # Telegram
+  #     TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"  # Set in .env file
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./src:/app
+
+volumes:
+  postgres_data:

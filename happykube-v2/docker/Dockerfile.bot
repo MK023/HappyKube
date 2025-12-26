@@ -1,0 +1,57 @@
+# Multi-stage Dockerfile for HappyKube Telegram Bot
+# Shares model-downloader stage with API for efficiency
+
+# ================================
+# Stage 1: Download ML Models
+# ================================
+FROM python:3.12-slim AS model-downloader
+
+WORKDIR /models
+
+RUN pip install --no-cache-dir transformers==4.46.3 torch==2.5.1 huggingface-hub==0.26.5
+
+RUN python -c "from transformers import pipeline; \
+    pipeline('text-classification', model='MilaNLProc/feel-it-italian-emotion'); \
+    pipeline('text-classification', model='j-hartmann/emotion-english-distilroberta-base'); \
+    pipeline('text-classification', model='MilaNLProc/feel-it-italian-sentiment')"
+
+# ================================
+# Stage 2: Build Dependencies
+# ================================
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/base.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r base.txt
+
+# ================================
+# Stage 3: Runtime
+# ================================
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
+
+# Copy and install wheels
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+
+# Copy pre-downloaded models
+COPY --from=model-downloader /root/.cache/huggingface /home/appuser/.cache/huggingface
+RUN chown -R appuser:appuser /home/appuser/.cache
+
+# Copy application code
+COPY --chown=appuser:appuser src/ /app/
+
+# Switch to non-root user
+USER appuser
+
+# Run Telegram bot
+CMD ["python", "-m", "presentation.bot.telegram_bot"]
