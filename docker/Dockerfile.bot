@@ -48,7 +48,10 @@ COPY --from=model-downloader /root/.cache/huggingface /home/appuser/.cache/huggi
 RUN chown -R appuser:appuser /home/appuser/.cache
 
 # Copy application code
-COPY --chown=appuser:appuser src/ /app/
+COPY --chown=appuser:appuser src/ /app/src/
+
+# Set Python path to find modules from src directory
+ENV PYTHONPATH=/app/src
 
 # Switch to non-root user
 USER appuser

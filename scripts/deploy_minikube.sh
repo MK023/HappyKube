@@ -40,7 +40,7 @@ echo "✅ Bot image built"
 echo ""
 echo "☸️  Deploying to Kubernetes..."
 
-kubectl apply -f deployment/overlays/minikube/
+kubectl apply -k deployment/overlays/minikube/
 
 echo "✅ Manifests applied"
 

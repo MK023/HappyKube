@@ -1,0 +1,100 @@
+# Patch to use connection strings instead of separate DB/Redis variables
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: happykube-api
+  namespace: happykube
+spec:
+  template:
+    spec:
+      containers:
+      - name: api
+        env:
+        # Replace DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD with DATABASE_URL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: db-url
+        # Remove individual DB variables by setting them to empty
+        - name: DB_HOST
+          value: ""
+        - name: DB_PORT
+          value: ""
+        - name: DB_NAME
+          value: ""
+        - name: DB_USER
+          value: ""
+        - name: DB_PASSWORD
+          value: ""
+        # Replace REDIS_HOST and REDIS_PORT with REDIS_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: redis-url
+        - name: REDIS_HOST
+          value: ""
+        - name: REDIS_PORT
+          value: ""
+        # Fix API_KEYS to use api-key
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: api-key
+        - name: API_KEYS
+          value: ""
+        # Remove JWT_SECRET_KEY (not used)
+        - name: JWT_SECRET_KEY
+          value: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: happykube-bot
+  namespace: happykube
+spec:
+  template:
+    spec:
+      containers:
+      - name: bot
+        env:
+        # Replace DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD with DATABASE_URL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: db-url
+        # Remove individual DB variables
+        - name: DB_HOST
+          value: ""
+        - name: DB_PORT
+          value: ""
+        - name: DB_NAME
+          value: ""
+        - name: DB_USER
+          value: ""
+        - name: DB_PASSWORD
+          value: ""
+        # Replace REDIS_HOST and REDIS_PORT with REDIS_URL
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: redis-url
+        - name: REDIS_HOST
+          value: ""
+        - name: REDIS_PORT
+          value: ""
+        # Fix API_KEYS to use api-key
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: happykube-secrets
+              key: api-key
+        - name: API_KEYS
+          value: ""
+        # Remove JWT_SECRET_KEY (not used)
+        - name: JWT_SECRET_KEY
+          value: ""
