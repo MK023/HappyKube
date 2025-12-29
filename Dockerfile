@@ -58,8 +58,11 @@ COPY --from=model-downloader /root/.cache/huggingface /home/appuser/.cache/huggi
 RUN chown -R appuser:appuser /home/appuser/.cache
 
 # Copy application code (with __init__.py files!)
-# Cache bust v2025-12-29-02
-COPY --chown=appuser:appuser src/ /app/
+# Cache bust v2025-12-29-03
+COPY --chown=appuser:appuser src/ /app/src/
+
+# Copy wsgi.py to root
+COPY --chown=appuser:appuser wsgi.py /app/wsgi.py
 
 # Copy supervisor config
 COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -67,8 +70,8 @@ COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisor
 # Create logs directory
 RUN mkdir -p /var/log/supervisor && chown -R appuser:appuser /var/log/supervisor
 
-# Set Python path
-ENV PYTHONPATH=/app
+# Set Python path to include src
+ENV PYTHONPATH=/app/src:/app
 
 # Expose API port
 EXPOSE 5000
