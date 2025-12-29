@@ -27,18 +27,9 @@ class EmotionAnalysisRequest(BaseModel):
 class EmotionAnalysisResponse(BaseModel):
     """Response DTO for emotion analysis."""
 
-    model_config = {"protected_namespaces": ()}
-
-    emotion: str = Field(..., description="Detected emotion")
-    sentiment: str | None = Field(None, description="Detected sentiment (optional)")
-    score: float = Field(..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0)
-    confidence: str = Field(..., description="Confidence percentage")
-    model_type: str = Field(..., description="ML model used")
-
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = {
+        "protected_namespaces": (),
+        "json_schema_extra": {
             "example": {
                 "emotion": "joy",
                 "sentiment": "positive",
@@ -47,25 +38,21 @@ class EmotionAnalysisResponse(BaseModel):
                 "model_type": "italian_emotion",
             }
         }
+    }
+
+    emotion: str = Field(..., description="Detected emotion")
+    sentiment: str | None = Field(None, description="Detected sentiment (optional)")
+    score: float = Field(..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0)
+    confidence: str = Field(..., description="Confidence percentage")
+    model_type: str = Field(..., description="ML model used")
 
 
 class EmotionRecordDTO(BaseModel):
     """DTO for emotion record in reports."""
 
-    model_config = {"protected_namespaces": ()}
-
-    id: str = Field(..., description="Record UUID")
-    emotion: str = Field(..., description="Emotion label")
-    sentiment: str | None = Field(None, description="Sentiment label")
-    score: float = Field(..., description="Confidence score")
-    confidence: str = Field(..., description="Confidence percentage")
-    model_type: str = Field(..., description="Model used")
-    created_at: datetime = Field(..., description="Analysis timestamp")
-
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = {
+        "protected_namespaces": (),
+        "json_schema_extra": {
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "emotion": "joy",
@@ -76,6 +63,15 @@ class EmotionRecordDTO(BaseModel):
                 "created_at": "2025-12-26T01:00:00Z",
             }
         }
+    }
+
+    id: str = Field(..., description="Record UUID")
+    emotion: str = Field(..., description="Emotion label")
+    sentiment: str | None = Field(None, description="Sentiment label")
+    score: float = Field(..., description="Confidence score")
+    confidence: str = Field(..., description="Confidence percentage")
+    model_type: str = Field(..., description="Model used")
+    created_at: datetime = Field(..., description="Analysis timestamp")
 
 
 class EmotionReportResponse(BaseModel):
