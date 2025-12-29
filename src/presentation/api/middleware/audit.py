@@ -1,6 +1,6 @@
 """Audit logging middleware."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import Request
@@ -49,21 +49,24 @@ class AuditMiddleware(BaseHTTPMiddleware):
         # Process request
         response = await call_next(request)
 
-        # Log to database (async, don't block response)
+        # Log to database (don't block response)
         try:
             db = next(get_db_session())
-            audit_entry = AuditLogModel(
-                id=uuid4(),
-                user_id=user_id,
-                action=action,
-                endpoint=request.url.path,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                created_at=datetime.utcnow(),
-            )
-            db.add(audit_entry)
-            db.commit()
-            logger.debug("Audit log created", action=action, ip=ip_address)
+            try:
+                audit_entry = AuditLogModel(
+                    id=uuid4(),
+                    user_id=user_id,
+                    action=action,
+                    endpoint=request.url.path,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    created_at=datetime.now(timezone.utc),
+                )
+                db.add(audit_entry)
+                db.commit()
+                logger.debug("Audit log created", action=action, ip=ip_address)
+            finally:
+                db.close()
         except Exception as e:
             logger.error("Failed to create audit log", error=str(e), action=action)
             # Don't fail the request if audit logging fails

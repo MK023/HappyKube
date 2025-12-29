@@ -1,6 +1,5 @@
 """Telegram bot application."""
 
-import asyncio
 import os
 import signal
 import sys

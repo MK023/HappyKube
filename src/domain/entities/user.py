@@ -1,7 +1,7 @@
 """User domain entity."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from ..value_objects.user_id import UserId
@@ -38,14 +38,14 @@ class User:
         return cls(
             id=uuid4(),
             user_id=UserId.from_telegram(telegram_id),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             last_seen_at=None,
             is_active=True,
         )
 
     def update_last_seen(self) -> None:
         """Update last_seen_at timestamp."""
-        self.last_seen_at = datetime.utcnow()
+        self.last_seen_at = datetime.now(timezone.utc)
 
     def deactivate(self) -> None:
         """Deactivate user account."""
