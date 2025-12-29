@@ -4,6 +4,7 @@ __pycache__/
 *.pyd
 
 *.env
+!.env.example
 *.venv
 env/
 venv/
@@ -16,6 +17,7 @@ env.bak/
 src/config.py
 .env
 .env.*
+!.env.example
 config.ini
 config.ini.*
 *.log
