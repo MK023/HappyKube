@@ -64,6 +64,7 @@ def create_bot() -> None:
     app.add_handler(CommandHandler("start", command_handlers.start))
     app.add_handler(CommandHandler("help", command_handlers.help))
     app.add_handler(CommandHandler("ask", command_handlers.ask))
+    app.add_handler(CommandHandler("exit", command_handlers.exit))
 
     # Register message handler (non-command text)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handlers.handle_text))

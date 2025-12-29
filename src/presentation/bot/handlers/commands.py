@@ -60,6 +60,7 @@ class CommandHandlers:
 /start - Inizia conversazione
 /help - Mostra questo messaggio
 /ask - Chiedi come ti senti
+/exit - Termina conversazione
 
 💬 *Come usare il bot:*
 Invia semplicemente un messaggio descrivendo come ti senti, e io analizzerò la tua emozione!
@@ -92,3 +93,28 @@ I tuoi messaggi sono criptati e sicuri.
         )
 
         await update.message.reply_text(ask_msg)
+
+    async def exit(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Handle /exit command - graceful conversation end.
+
+        Args:
+            update: Telegram update
+            context: Bot context
+        """
+        if not update.message:
+            return
+
+        user = update.effective_user
+        username = user.username if user else "Unknown"
+
+        logger.info("User exited conversation", user_id=user.id if user else None, username=username)
+
+        goodbye_msg = self.messages.get(
+            "goodbye",
+            "Grazie per aver usato HappyKube! 👋\n\n"
+            "Torna quando vuoi per condividere le tue emozioni.\n"
+            "Ricorda: /start per ricominciare!"
+        )
+
+        await update.message.reply_text(goodbye_msg)
