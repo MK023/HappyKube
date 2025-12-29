@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     )
 
     # Security
-    encryption_key: str = Field(..., description="Fernet encryption key for PII")
+    encryption_key: str | None = Field(default=None, description="Fernet encryption key for PII")
     jwt_secret_key: str = Field(..., description="JWT secret key")
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
     jwt_expire_minutes: int = Field(
