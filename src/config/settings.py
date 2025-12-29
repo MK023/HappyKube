@@ -106,8 +106,8 @@ class Settings(BaseSettings):
 
     # CORS
     cors_enabled: bool = Field(default=True, description="Enable CORS")
-    cors_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000"],
+    cors_origins: list[str] | None = Field(
+        default=None,
         description="Allowed CORS origins",
     )
 
@@ -136,10 +136,13 @@ class Settings(BaseSettings):
 
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+    def parse_cors_origins(cls, v: str | list[str] | None) -> list[str] | None:
         """Parse comma-separated CORS origins."""
+        if v is None:
+            return ["http://localhost:3000"]
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+            origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+            return origins if origins else ["http://localhost:3000"]
         return v
 
     def get_database_url(self) -> str:
