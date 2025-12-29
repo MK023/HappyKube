@@ -1,5 +1,8 @@
 """FastAPI application factory."""
 
+import gc
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -7,9 +10,45 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from config import get_logger, settings, setup_logging
-from .routes import emotion, health
 
 logger = get_logger(__name__)
+
+# Global cache for analyzers
+_analyzer_cache = {}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for resource optimization (512MB free tier).
+
+    Handles:
+    - Lazy loading of ML models
+    - Memory cleanup on shutdown
+    - Connection pool management
+    """
+    # Startup
+    logger.info(
+        "Application starting",
+        env=settings.app_env,
+        version=settings.app_version,
+    )
+
+    # Pre-warm critical connections (lazy load models)
+    logger.info("Resources initialized (models will load on-demand)")
+
+    yield
+
+    # Shutdown - cleanup resources
+    logger.info("Application shutting down, cleaning up resources")
+
+    # Clear analyzer cache
+    _analyzer_cache.clear()
+
+    # Force garbage collection
+    gc.collect()
+
+    logger.info("Cleanup completed")
 
 
 def create_app() -> FastAPI:
@@ -28,6 +67,7 @@ def create_app() -> FastAPI:
         description="Emotion analysis API using HuggingFace models",
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,
+        lifespan=lifespan,
     )
 
     # Configure CORS
@@ -46,12 +86,25 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # Include routers
+    # Add audit middleware (if enabled)
+    if settings.is_production:
+        from .middleware.audit import AuditMiddleware
+        app.add_middleware(AuditMiddleware)
+        logger.info("Audit logging enabled")
+
+    # Include routers (lazy import to avoid circular dependencies)
+    from .routes import emotion, health
     app.include_router(health.router)
     app.include_router(emotion.router)
 
+    # Add Prometheus metrics endpoint (if enabled)
+    if settings.prometheus_enabled:
+        from .routes import metrics
+        app.include_router(metrics.router)
+        logger.info("Prometheus metrics enabled", endpoint="/metrics")
+
     logger.info(
-        "FastAPI app created",
+        "FastAPI app created with lifespan management",
         env=settings.app_env,
         debug=settings.debug,
         version=settings.app_version,

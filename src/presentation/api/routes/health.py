@@ -11,6 +11,27 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["health"])
 
 
+@router.get("/")
+async def root():
+    """
+    Root endpoint.
+
+    Returns basic API information.
+    """
+    return {
+        "service": settings.app_name,
+        "version": settings.app_version,
+        "status": "running",
+        "environment": settings.app_env,
+        "endpoints": {
+            "health": "/healthz",
+            "ping": "/ping",
+            "readiness": "/readyz",
+            "docs": "/docs" if settings.debug else None,
+        }
+    }
+
+
 @router.get("/healthz")
 async def healthz():
     """

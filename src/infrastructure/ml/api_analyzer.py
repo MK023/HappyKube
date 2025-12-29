@@ -32,49 +32,102 @@ class APIAnalyzer:
 
         logger.info(f"Initialized {model_type.value} API analyzer", model=model_name)
 
-    async def _query_api(self, text: str) -> list[dict]:
+    async def _query_api(self, text: str, max_retries: int = 3) -> list[dict]:
         """
-        Query HuggingFace Inference API.
+        Query HuggingFace Inference API with retry logic.
 
         Args:
             text: Input text to analyze
+            max_retries: Maximum number of retry attempts
 
         Returns:
             API response with predictions
 
         Raises:
-            httpx.HTTPError: If API request fails
+            httpx.HTTPError: If API request fails after all retries
         """
         payload = {"inputs": text}
+        last_error = None
 
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    self.api_url,
-                    headers=self.headers,
-                    json=payload
-                )
-                response.raise_for_status()
-                result = response.json()
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(
+                        self.api_url,
+                        headers=self.headers,
+                        json=payload
+                    )
+                    response.raise_for_status()
+                    result = response.json()
 
-                logger.debug(
-                    f"{self.model_type.value} API response",
-                    model=self.model_name,
-                    status=response.status_code
-                )
+                    if attempt > 0:
+                        logger.info(
+                            f"{self.model_type.value} API retry successful",
+                            attempt=attempt + 1,
+                            model=self.model_name
+                        )
 
-                return result
+                    logger.debug(
+                        f"{self.model_type.value} API response",
+                        model=self.model_name,
+                        status=response.status_code
+                    )
 
-        except httpx.HTTPStatusError as e:
-            logger.error(
-                f"{self.model_type.value} API HTTP error",
-                status=e.response.status_code,
-                error=str(e)
-            )
-            raise
-        except Exception as e:
-            logger.error(f"{self.model_type.value} API error", error=str(e))
-            raise
+                    return result
+
+            except httpx.HTTPStatusError as e:
+                last_error = e
+                status_code = e.response.status_code
+
+                # Don't retry on client errors (4xx), only server errors (5xx) and rate limits
+                if status_code < 500 and status_code != 429:
+                    logger.error(
+                        f"{self.model_type.value} API client error - not retrying",
+                        status=status_code,
+                        error=str(e)
+                    )
+                    raise
+
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                    logger.warning(
+                        f"{self.model_type.value} API error, retrying",
+                        attempt=attempt + 1,
+                        max_retries=max_retries,
+                        wait_time=wait_time,
+                        status=status_code
+                    )
+                    import asyncio
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(
+                        f"{self.model_type.value} API failed after retries",
+                        attempts=max_retries,
+                        status=status_code
+                    )
+
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt
+                    logger.warning(
+                        f"{self.model_type.value} API error, retrying",
+                        attempt=attempt + 1,
+                        max_retries=max_retries,
+                        wait_time=wait_time,
+                        error=str(e)
+                    )
+                    import asyncio
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(
+                        f"{self.model_type.value} API failed after retries",
+                        attempts=max_retries,
+                        error=str(e)
+                    )
+
+        # If we get here, all retries failed
+        raise last_error if last_error else Exception("API request failed")
 
     @abstractmethod
     async def analyze(self, text: str) -> tuple[EmotionType | str, EmotionScore]:

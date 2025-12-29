@@ -3,18 +3,19 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, RedisDsn, field_validator
+from pydantic import Field, PostgresDsn, RedisDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Main application settings."""
+    """Main application settings with validation."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        validate_default=True,
     )
 
     # Application
@@ -176,6 +177,31 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.app_env == "production"
+
+    @model_validator(mode="after")
+    def validate_settings(self) -> "Settings":
+        """Validate settings after initialization."""
+        # Validate database connection can be built
+        if not self.database_url and not all([self.db_host, self.db_name, self.db_user, self.db_password]):
+            raise ValueError(
+                "Either DATABASE_URL or all of (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set"
+            )
+
+        # Validate Redis connection can be built
+        if not self.redis_url and not self.redis_host:
+            raise ValueError("Either REDIS_URL or REDIS_HOST must be set")
+
+        # Validate production settings
+        if self.is_production:
+            if self.debug:
+                raise ValueError("Debug mode cannot be enabled in production")
+            if not self.encryption_key:
+                raise ValueError("Encryption key must be set in production")
+            if not self.sentry_dsn:
+                import warnings
+                warnings.warn("Sentry DSN not set in production - error tracking disabled")
+
+        return self
 
 
 @lru_cache
