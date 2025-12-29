@@ -200,7 +200,7 @@ class EmotionModel(Base):
     )
 
     # Additional metadata (model version, etc.)
-    metadata: Mapped[dict[str, Any] | None] = mapped_column(
+    extra_data: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,
         nullable=True,
         comment="Additional metadata (model version, confidence breakdown, etc.)"
