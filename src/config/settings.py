@@ -65,8 +65,8 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = Field(
         default=1440, ge=5, le=43200, description="JWT expiration in minutes"
     )
-    api_keys: list[str] = Field(
-        default_factory=list, description="Allowed API keys (comma-separated)"
+    api_keys: list[str] | None = Field(
+        default=None, description="Allowed API keys (comma-separated)"
     )
 
     # Telegram Bot
@@ -125,10 +125,13 @@ class Settings(BaseSettings):
 
     @field_validator("api_keys", mode="before")
     @classmethod
-    def parse_api_keys(cls, v: str | list[str]) -> list[str]:
+    def parse_api_keys(cls, v: str | list[str] | None) -> list[str] | None:
         """Parse comma-separated API keys."""
+        if v is None:
+            return None
         if isinstance(v, str):
-            return [key.strip() for key in v.split(",") if key.strip()]
+            keys = [key.strip() for key in v.split(",") if key.strip()]
+            return keys if keys else None
         return v
 
     @field_validator("cors_origins", mode="before")
