@@ -1,10 +1,12 @@
 """Telegram bot application."""
 
+import asyncio
 import os
 import signal
 import sys
 from pathlib import Path
 
+from telegram.error import Conflict
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 from config import get_logger, settings, setup_logging
@@ -14,6 +16,7 @@ logger = get_logger(__name__)
 
 # Lock file to prevent multiple instances
 LOCK_FILE = Path("/tmp/happykube_bot.lock")
+STARTUP_DELAY = 5  # seconds to wait before starting (allow old instance to shutdown)
 
 
 # Load messages from environment (K8s ConfigMap) or use defaults
@@ -93,10 +96,15 @@ def create_bot() -> None:
     # Setup logging
     setup_logging()
 
+    # Wait for old instance to shutdown (rolling deployment)
+    logger.info(f"Waiting {STARTUP_DELAY}s for any old instances to shutdown")
+    import time
+    time.sleep(STARTUP_DELAY)
+
     # Acquire lock to prevent multiple instances
     if not acquire_lock():
-        logger.error("Failed to acquire lock, exiting")
-        sys.exit(1)
+        logger.warning("Another instance is running, exiting gracefully (this is normal during deployments)")
+        sys.exit(0)  # Exit cleanly - supervisord will keep container alive
 
     # Register signal handlers for graceful shutdown
     signal.signal(signal.SIGTERM, signal_handler)
@@ -131,11 +139,20 @@ def create_bot() -> None:
 
         logger.info("Telegram bot initialized, starting polling")
 
-        # Run bot
+        # Run bot with Conflict error handling
         app.run_polling(allowed_updates=["message"])
 
+    except Conflict as e:
+        logger.warning(
+            "Bot conflict detected - another instance is polling. Exiting gracefully.",
+            error=str(e)
+        )
+        # Exit cleanly - this is expected during rolling deployments
+        release_lock()
+        sys.exit(0)
     except Exception as e:
         logger.error("Bot crashed", error=str(e), exc_info=True)
+        release_lock()
         raise
     finally:
         release_lock()
