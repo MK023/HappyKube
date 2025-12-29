@@ -1,0 +1,86 @@
+services:
+  # Unified HappyKube Service (API + Bot)
+  - type: web
+    name: happykube
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: frankfurt
+    plan: free
+    healthCheckPath: /ping
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_NAME
+        value: HappyKube
+      - key: APP_VERSION
+        value: 2.0.0
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
+
+      # API Config
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        value: 5000
+      - key: API_WORKERS
+        value: 2
+      - key: API_TIMEOUT
+        value: 120
+
+      # Database (from Render PostgreSQL)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: happykube-db
+          property: connectionString
+
+      # Redis (from Render Redis)
+      - key: REDIS_URL
+        fromDatabase:
+          name: happykube-redis
+          property: connectionString
+
+      # Security (SET IN RENDER DASHBOARD - SECRET!)
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: API_KEYS
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+
+      # ML Models
+      - key: ITALIAN_EMOTION_MODEL
+        value: MilaNLProc/feel-it-italian-emotion
+      - key: ENGLISH_EMOTION_MODEL
+        value: j-hartmann/emotion-english-distilroberta-base
+      - key: SENTIMENT_MODEL
+        value: MilaNLProc/feel-it-italian-sentiment
+
+      # CORS
+      - key: CORS_ENABLED
+        value: "true"
+      - key: CORS_ORIGINS
+        value: "*"
+
+      # Rate Limiting
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_DEFAULT
+        value: 100 per minute
+
+databases:
+  # PostgreSQL Database
+  - name: happykube-db
+    databaseName: happykube
+    user: happykube
+    region: frankfurt
+    plan: free
+
+  # Redis Cache
+  - name: happykube-redis
+    region: frankfurt
+    plan: free

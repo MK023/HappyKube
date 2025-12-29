@@ -1,5 +1,5 @@
-# Multi-stage Dockerfile for HappyKube Telegram Bot
-# Shares model-downloader stage with API for efficiency
+# Production Dockerfile - API + Bot unified service
+# Optimized for Render.com deployment
 
 # ================================
 # Stage 1: Download ML Models
@@ -11,9 +11,13 @@ WORKDIR /models
 RUN pip install --no-cache-dir transformers==4.46.3 torch==2.5.1 huggingface-hub==0.26.5
 
 RUN python -c "from transformers import pipeline; \
+    print('Downloading Italian emotion model...'); \
     pipeline('text-classification', model='MilaNLProc/feel-it-italian-emotion'); \
+    print('Downloading English emotion model...'); \
     pipeline('text-classification', model='j-hartmann/emotion-english-distilroberta-base'); \
-    pipeline('text-classification', model='MilaNLProc/feel-it-italian-sentiment')"
+    print('Downloading sentiment model...'); \
+    pipeline('text-classification', model='MilaNLProc/feel-it-italian-sentiment'); \
+    print('All models downloaded!')"
 
 # ================================
 # Stage 2: Build Dependencies
@@ -26,8 +30,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/base.txt .
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r base.txt
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
 # ================================
 # Stage 3: Runtime
@@ -39,7 +43,13 @@ WORKDIR /app
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
 
-# Copy and install wheels
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python wheels
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 
@@ -48,13 +58,23 @@ COPY --from=model-downloader /root/.cache/huggingface /home/appuser/.cache/huggi
 RUN chown -R appuser:appuser /home/appuser/.cache
 
 # Copy application code
-COPY --chown=appuser:appuser src/ /app/src/
+COPY --chown=appuser:appuser src/ /app/
 
-# Set Python path to find modules from src directory
-ENV PYTHONPATH=/app/src
+# Copy supervisor config
+COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Switch to non-root user
-USER appuser
+# Create logs directory
+RUN mkdir -p /var/log/supervisor && chown -R appuser:appuser /var/log/supervisor
 
-# Run Telegram bot
-CMD ["python", "-m", "presentation.bot.telegram_bot"]
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Expose API port
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/ping || exit 1
+
+# Run supervisor as root (it will run processes as appuser)
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

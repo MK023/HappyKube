@@ -21,6 +21,29 @@ def healthz():
     return jsonify({"status": "healthy", "service": settings.app_name}), 200
 
 
+@health_bp.route("/ping", methods=["GET"])
+def ping():
+    """
+    Ping endpoint for UptimeRobot with DB and Redis check.
+
+    Returns 200 if DB and Redis are healthy.
+    """
+    try:
+        # Quick health check
+        db_ok = db_health_check()
+        cache = get_cache()
+        redis_ok = cache.health_check()
+
+        if db_ok and redis_ok:
+            return "pong", 200
+        else:
+            return "unhealthy", 503
+
+    except Exception as e:
+        logger.error("Ping check failed", error=str(e))
+        return "error", 503
+
+
 @health_bp.route("/readyz", methods=["GET"])
 def readyz():
     """

@@ -34,19 +34,21 @@ class Settings(BaseSettings):
     api_workers: int = Field(default=4, ge=1, le=32, description="Number of worker processes")
     api_timeout: int = Field(default=120, ge=30, le=300, description="Request timeout in seconds")
 
-    # Database
-    db_host: str = Field(..., description="PostgreSQL host")
+    # Database (supports both DATABASE_URL and individual fields)
+    database_url: str | None = Field(default=None, description="Full database URL (Render)")
+    db_host: str | None = Field(default=None, description="PostgreSQL host")
     db_port: int = Field(default=5432, ge=1, le=65535, description="PostgreSQL port")
-    db_name: str = Field(..., description="Database name")
-    db_user: str = Field(..., description="Database user")
-    db_password: str = Field(..., description="Database password")
+    db_name: str | None = Field(default=None, description="Database name")
+    db_user: str | None = Field(default=None, description="Database user")
+    db_password: str | None = Field(default=None, description="Database password")
     db_pool_size: int = Field(default=10, ge=1, le=100, description="Connection pool size")
     db_max_overflow: int = Field(
         default=20, ge=0, le=100, description="Max overflow connections"
     )
     db_echo: bool = Field(default=False, description="Echo SQL queries")
 
-    # Redis
+    # Redis (supports both REDIS_URL and individual fields)
+    redis_url: str | None = Field(default=None, description="Full Redis URL (Render)")
     redis_host: str = Field(default="localhost", description="Redis host")
     redis_port: int = Field(default=6379, ge=1, le=65535, description="Redis port")
     redis_db: int = Field(default=0, ge=0, le=15, description="Redis database number")
@@ -137,17 +139,19 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    @property
-    def database_url(self) -> str:
-        """Construct PostgreSQL connection URL."""
+    def get_database_url(self) -> str:
+        """Get PostgreSQL connection URL (Render or manual config)."""
+        if self.database_url:
+            return self.database_url
         return (
             f"postgresql://{self.db_user}:{self.db_password}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 
-    @property
-    def redis_url(self) -> str:
-        """Construct Redis connection URL."""
+    def get_redis_url(self) -> str:
+        """Get Redis connection URL (Render or manual config)."""
+        if self.redis_url:
+            return self.redis_url
         scheme = "rediss" if self.redis_ssl else "redis"
         auth = f":{self.redis_password}@" if self.redis_password else ""
         return f"{scheme}://{auth}{self.redis_host}:{self.redis_port}/{self.redis_db}"

@@ -36,7 +36,7 @@ def get_engine() -> Engine:
 
         # Create engine with connection pooling
         _engine = create_engine(
-            settings.database_url,
+            settings.get_database_url(),
             pool_size=settings.db_pool_size,
             max_overflow=settings.db_max_overflow,
             pool_pre_ping=True,  # Verify connections before using

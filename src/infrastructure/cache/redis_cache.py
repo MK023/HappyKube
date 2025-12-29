@@ -35,14 +35,14 @@ class RedisCache:
         else:
             # Create Redis client with connection pooling
             self._client = redis.from_url(
-                settings.redis_url,
+                settings.get_redis_url(),
                 decode_responses=False,  # We handle encoding/decoding ourselves
                 socket_connect_timeout=5,
                 socket_timeout=5,
                 retry_on_timeout=True,
             )
 
-        logger.info("Redis cache initialized", url=settings.redis_url)
+        logger.info("Redis cache initialized", url=settings.get_redis_url())
 
     def get(self, key: str) -> Any | None:
         """
