@@ -57,7 +57,8 @@ RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 COPY --from=model-downloader /root/.cache/huggingface /home/appuser/.cache/huggingface
 RUN chown -R appuser:appuser /home/appuser/.cache
 
-# Copy application code
+# Copy application code (with __init__.py files!)
+# Cache bust v2025-12-29-02
 COPY --chown=appuser:appuser src/ /app/
 
 # Copy supervisor config
