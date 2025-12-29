@@ -86,6 +86,25 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+    # Add security middlewares (CRITICAL - must be first)
+    from .middleware.security import (
+        APIKeyMiddleware,
+        RequestSizeLimitMiddleware,
+        SecurityHeadersMiddleware,
+    )
+
+    # Request size limit (first line of defense)
+    app.add_middleware(RequestSizeLimitMiddleware)
+    logger.info("Request size limit enabled", max_size="1MB")
+
+    # API Key authentication (blocks unauthorized access)
+    app.add_middleware(APIKeyMiddleware)
+    logger.info("API Key authentication enabled")
+
+    # Security headers (add to all responses)
+    app.add_middleware(SecurityHeadersMiddleware)
+    logger.info("Security headers enabled")
+
     # Add audit middleware (if enabled)
     if settings.is_production:
         from .middleware.audit import AuditMiddleware
