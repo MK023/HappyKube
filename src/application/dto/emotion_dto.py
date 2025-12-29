@@ -27,6 +27,8 @@ class EmotionAnalysisRequest(BaseModel):
 class EmotionAnalysisResponse(BaseModel):
     """Response DTO for emotion analysis."""
 
+    model_config = {"protected_namespaces": ()}
+
     emotion: str = Field(..., description="Detected emotion")
     sentiment: str | None = Field(None, description="Detected sentiment (optional)")
     score: float = Field(..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0)
@@ -49,6 +51,8 @@ class EmotionAnalysisResponse(BaseModel):
 
 class EmotionRecordDTO(BaseModel):
     """DTO for emotion record in reports."""
+
+    model_config = {"protected_namespaces": ()}
 
     id: str = Field(..., description="Record UUID")
     emotion: str = Field(..., description="Emotion label")
