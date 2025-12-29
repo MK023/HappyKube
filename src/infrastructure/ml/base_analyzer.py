@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 
 from transformers import pipeline
 
-from ...config import get_logger
-from ...domain import EmotionScore, EmotionType, ModelType
+from config import get_logger
+from domain import EmotionScore, EmotionType, ModelType
 
 logger = get_logger(__name__)
 

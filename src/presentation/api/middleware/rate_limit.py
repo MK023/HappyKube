@@ -5,8 +5,8 @@ from typing import Any, Callable
 
 from flask import g, jsonify, request
 
-from ....config import get_logger
-from ....infrastructure.cache import get_cache
+from config import get_logger
+from infrastructure.cache import get_cache
 
 logger = get_logger(__name__)
 

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from uuid import UUID
 
-from ...domain import EmotionRecord
+from domain import EmotionRecord
 
 
 class IEmotionRepository(ABC):

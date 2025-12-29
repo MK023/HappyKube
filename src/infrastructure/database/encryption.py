@@ -2,7 +2,7 @@
 
 from cryptography.fernet import Fernet
 
-from ...config import get_logger, settings
+from config import get_logger, settings
 
 logger = get_logger(__name__)
 

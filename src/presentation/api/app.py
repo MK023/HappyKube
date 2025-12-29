@@ -3,7 +3,7 @@
 from flask import Flask
 from flask_cors import CORS
 
-from ...config import get_logger, settings, setup_logging
+from config import get_logger, settings, setup_logging
 from .routes import emotion_bp, health_bp
 
 logger = get_logger(__name__)

@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from ...config import get_logger, settings
+from config import get_logger, settings
 
 logger = get_logger(__name__)
 

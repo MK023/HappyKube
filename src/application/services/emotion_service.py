@@ -3,10 +3,10 @@
 from datetime import datetime
 from uuid import UUID
 
-from ...config import get_logger
-from ...domain import EmotionRecord, ModelType
-from ...infrastructure.cache import RedisCache
-from ...infrastructure.ml import ModelFactory
+from config import get_logger
+from domain import EmotionRecord, ModelType
+from infrastructure.cache import RedisCache
+from infrastructure.ml import ModelFactory
 from ..dto.emotion_dto import (
     EmotionAnalysisResponse,
     EmotionRecordDTO,

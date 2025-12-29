@@ -1,7 +1,7 @@
 """Italian emotion analyzer."""
 
-from ...config import settings
-from ...domain import EmotionScore, EmotionType, ModelType
+from config import settings
+from domain import EmotionScore, EmotionType, ModelType
 from .base_analyzer import BaseAnalyzer
 
 

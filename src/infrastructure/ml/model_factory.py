@@ -1,6 +1,6 @@
 """ML model factory for dependency injection."""
 
-from ...config import get_logger
+from config import get_logger
 from .base_analyzer import BaseAnalyzer
 from .english_emotion_analyzer import EnglishEmotionAnalyzer
 from .italian_emotion_analyzer import ItalianEmotionAnalyzer

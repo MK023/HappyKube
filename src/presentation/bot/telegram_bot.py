@@ -4,7 +4,7 @@ import os
 
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
-from ...config import get_logger, settings, setup_logging
+from config import get_logger, settings, setup_logging
 from .handlers import CommandHandlers, MessageHandlers
 
 logger = get_logger(__name__)

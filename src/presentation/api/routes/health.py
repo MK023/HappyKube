@@ -2,9 +2,9 @@
 
 from flask import Blueprint, jsonify
 
-from ....config import get_logger, settings
-from ....infrastructure.cache import get_cache
-from ....infrastructure.database import health_check as db_health_check
+from config import get_logger, settings
+from infrastructure.cache import get_cache
+from infrastructure.database import health_check as db_health_check
 
 logger = get_logger(__name__)
 

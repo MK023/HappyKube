@@ -2,13 +2,13 @@
 
 from flask import Blueprint, jsonify, request
 
-from ....application.dto.emotion_dto import EmotionAnalysisRequest
-from ....application.services import EmotionService
-from ....config import get_logger
-from ....infrastructure.cache import get_cache
-from ....infrastructure.database import get_db_session
-from ....infrastructure.ml import get_model_factory
-from ....infrastructure.repositories import EmotionRepository, UserRepository
+from application.dto.emotion_dto import EmotionAnalysisRequest
+from application.services import EmotionService
+from config import get_logger
+from infrastructure.cache import get_cache
+from infrastructure.database import get_db_session
+from infrastructure.ml import get_model_factory
+from infrastructure.repositories import EmotionRepository, UserRepository
 from ..middleware import rate_limit, require_api_key
 
 logger = get_logger(__name__)

@@ -3,12 +3,12 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from ....application.services import EmotionService
-from ....config import get_logger
-from ....infrastructure.cache import get_cache
-from ....infrastructure.database import get_db_session
-from ....infrastructure.ml import get_model_factory
-from ....infrastructure.repositories import EmotionRepository, UserRepository
+from application.services import EmotionService
+from config import get_logger
+from infrastructure.cache import get_cache
+from infrastructure.database import get_db_session
+from infrastructure.ml import get_model_factory
+from infrastructure.repositories import EmotionRepository, UserRepository
 
 logger = get_logger(__name__)
 

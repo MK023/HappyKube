@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from ...domain import User
+from domain import User
 
 
 class IUserRepository(ABC):
