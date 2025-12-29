@@ -3,7 +3,7 @@
 from contextlib import contextmanager
 from typing import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -164,7 +164,7 @@ def health_check() -> bool:
     try:
         with get_db_session() as session:
             # Simple query to test connection
-            session.execute("SELECT 1")  # type: ignore
+            session.execute(text("SELECT 1"))
         logger.debug("Database health check passed")
         return True
     except Exception as e:
