@@ -1,6 +1,6 @@
 """Health check routes."""
 
-from flask import Blueprint, jsonify
+from fastapi import APIRouter, Response, status
 
 from config import get_logger, settings
 from infrastructure.cache import get_cache
@@ -8,21 +8,74 @@ from infrastructure.database import health_check as db_health_check
 
 logger = get_logger(__name__)
 
-health_bp = Blueprint("health", __name__)
+router = APIRouter(tags=["health"])
 
 
-@health_bp.route("/healthz", methods=["GET"])
-def healthz():
+@router.get("/healthz")
+async def healthz():
     """
     Basic health check (liveness probe).
 
     Returns 200 if service is running.
     """
-    return jsonify({"status": "healthy", "service": settings.app_name}), 200
+    return {"status": "healthy", "service": settings.app_name}
 
 
-@health_bp.route("/ping", methods=["GET"])
-def ping():
+@router.get("/healthz/db")
+async def healthz_db(response: Response):
+    """Database health check."""
+    try:
+        if db_health_check():
+            return {"status": "healthy", "service": "database"}
+        else:
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {"status": "unhealthy", "service": "database"}
+    except Exception as e:
+        logger.error("Database health check failed", error=str(e))
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "error", "service": "database", "error": str(e)}
+
+
+@router.get("/healthz/redis")
+async def healthz_redis(response: Response):
+    """Redis health check."""
+    try:
+        cache = get_cache()
+        if cache.health_check():
+            return {"status": "healthy", "service": "redis"}
+        else:
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {"status": "unhealthy", "service": "redis"}
+    except Exception as e:
+        logger.error("Redis health check failed", error=str(e))
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "error", "service": "redis", "error": str(e)}
+
+
+@router.get("/healthz/huggingface")
+async def healthz_huggingface(response: Response):
+    """HuggingFace API health check."""
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            hf_response = await client.get(
+                "https://api-inference.huggingface.co/status",
+                headers={"Authorization": f"Bearer {settings.huggingface_token}"}
+            )
+            if hf_response.status_code == 200:
+                return {"status": "healthy", "service": "huggingface_api"}
+            else:
+                response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+                return {"status": "unhealthy", "service": "huggingface_api"}
+    except Exception as e:
+        logger.error("HuggingFace API health check failed", error=str(e))
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "error", "service": "huggingface_api", "error": str(e)}
+
+
+@router.get("/ping")
+async def ping(response: Response):
     """
     Ping endpoint for UptimeRobot with DB and Redis check.
 
@@ -35,22 +88,26 @@ def ping():
         redis_ok = cache.health_check()
 
         if db_ok and redis_ok:
-            return "pong", 200
+            return "pong"
         else:
-            return "unhealthy", 503
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return "unhealthy"
 
     except Exception as e:
         logger.error("Ping check failed", error=str(e))
-        return "error", 503
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return "error"
 
 
-@health_bp.route("/readyz", methods=["GET"])
-def readyz():
+@router.get("/readyz")
+async def readyz(response: Response):
     """
     Readiness check (readiness probe).
 
-    Checks database and Redis connectivity.
+    Checks database, Redis, and HuggingFace API connectivity.
     """
+    import httpx
+
     try:
         # Check database
         db_healthy = db_health_check()
@@ -59,33 +116,42 @@ def readyz():
         cache = get_cache()
         redis_healthy = cache.health_check()
 
-        if db_healthy and redis_healthy:
-            return (
-                jsonify(
-                    {
-                        "status": "ready",
-                        "checks": {
-                            "database": "healthy",
-                            "redis": "healthy",
-                        },
-                    }
-                ),
-                200,
-            )
+        # Check HuggingFace API
+        hf_healthy = False
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                hf_response = await client.get(
+                    "https://api-inference.huggingface.co/status",
+                    headers={"Authorization": f"Bearer {settings.huggingface_token}"}
+                )
+                hf_healthy = hf_response.status_code == 200
+        except Exception as e:
+            logger.warning("HuggingFace API health check failed", error=str(e))
+            hf_healthy = False
+
+        all_healthy = db_healthy and redis_healthy and hf_healthy
+
+        if all_healthy:
+            return {
+                "status": "ready",
+                "checks": {
+                    "database": "healthy",
+                    "redis": "healthy",
+                    "huggingface_api": "healthy",
+                },
+            }
         else:
-            return (
-                jsonify(
-                    {
-                        "status": "not ready",
-                        "checks": {
-                            "database": "healthy" if db_healthy else "unhealthy",
-                            "redis": "healthy" if redis_healthy else "unhealthy",
-                        },
-                    }
-                ),
-                503,
-            )
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {
+                "status": "not ready",
+                "checks": {
+                    "database": "healthy" if db_healthy else "unhealthy",
+                    "redis": "healthy" if redis_healthy else "unhealthy",
+                    "huggingface_api": "healthy" if hf_healthy else "unhealthy",
+                },
+            }
 
     except Exception as e:
         logger.error("Readiness check failed", error=str(e))
-        return jsonify({"status": "error", "error": str(e)}), 503
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "error", "error": str(e)}

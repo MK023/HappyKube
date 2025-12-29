@@ -1,67 +1,64 @@
-"""Flask application factory."""
+"""FastAPI application factory."""
 
-from flask import Flask
-from flask_cors import CORS
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from config import get_logger, settings, setup_logging
-from .routes import emotion_bp, health_bp
+from .routes import emotion, health
 
 logger = get_logger(__name__)
 
 
-def create_app() -> Flask:
+def create_app() -> FastAPI:
     """
-    Create and configure Flask application.
+    Create and configure FastAPI application.
 
     Returns:
-        Configured Flask app
+        Configured FastAPI app
     """
     # Setup logging first
     setup_logging()
 
-    app = Flask(__name__)
+    app = FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        description="Emotion analysis API using HuggingFace models",
+        docs_url="/docs" if settings.debug else None,
+        redoc_url="/redoc" if settings.debug else None,
+    )
 
     # Configure CORS
     if settings.cors_enabled:
-        CORS(
-            app,
-            resources={r"/api/*": {"origins": settings.cors_origins}},
-            allow_headers=["Content-Type", "X-API-Key"],
-            methods=["GET", "POST", "OPTIONS"],
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.cors_origins,
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "OPTIONS"],
+            allow_headers=["Content-Type", "X-API-Key", "Authorization"],
         )
         logger.info("CORS enabled", origins=settings.cors_origins)
 
-    # Register blueprints
-    app.register_blueprint(health_bp)
-    app.register_blueprint(emotion_bp)
+    # Configure rate limiting
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Include routers
+    app.include_router(health.router)
+    app.include_router(emotion.router)
 
     logger.info(
-        "Flask app created",
+        "FastAPI app created",
         env=settings.app_env,
         debug=settings.debug,
         version=settings.app_version,
     )
 
-    # Add error handlers
-    @app.errorhandler(404)
-    def not_found(error):
-        """Handle 404 errors."""
-        return {"error": "Not found"}, 404
-
-    @app.errorhandler(500)
-    def internal_error(error):
-        """Handle 500 errors."""
-        logger.error("Internal server error", error=str(error))
-        return {"error": "Internal server error"}, 500
-
     return app
 
 
-if __name__ == "__main__":
-    # For local development only
-    app = create_app()
-    app.run(
-        host=settings.api_host,
-        port=settings.api_port,
-        debug=settings.debug,
-    )
+# Create app instance
+app = create_app()

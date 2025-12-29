@@ -1,7 +1,7 @@
 """ML model factory for dependency injection."""
 
 from config import get_logger
-from .base_analyzer import BaseAnalyzer
+from .api_analyzer import APIAnalyzer
 from .english_emotion_analyzer import EnglishEmotionAnalyzer
 from .italian_emotion_analyzer import ItalianEmotionAnalyzer
 from .language_detector import detect_language
@@ -59,7 +59,7 @@ class ModelFactory:
             self._sentiment = SentimentAnalyzer()
         return self._sentiment
 
-    def get_emotion_analyzer_for_text(self, text: str) -> BaseAnalyzer:
+    def get_emotion_analyzer_for_text(self, text: str) -> APIAnalyzer:
         """
         Get appropriate emotion analyzer based on text language.
 

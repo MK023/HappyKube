@@ -1,74 +1,42 @@
 """API authentication middleware."""
 
-from functools import wraps
-from typing import Any, Callable
-
-from flask import Request, g, jsonify, request
+from fastapi import Header, HTTPException, status
 
 from config import get_logger, settings
 
 logger = get_logger(__name__)
 
 
-def require_api_key(f: Callable) -> Callable:
+async def require_api_key(x_api_key: str | None = Header(None)) -> None:
     """
-    Decorator to require valid API key for endpoint.
+    FastAPI dependency to require valid API key.
 
     Checks X-API-Key header against configured API keys.
 
-    Usage:
-        @app.route("/protected")
-        @require_api_key
-        def protected_endpoint():
-            return {"data": "secret"}
+    Args:
+        x_api_key: API key from header
+
+    Raises:
+        HTTPException: If API key is missing or invalid
     """
+    if not x_api_key:
+        logger.warning("Missing API key in request")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing API key",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
 
-    @wraps(f)
-    def decorated_function(*args: Any, **kwargs: Any) -> Any:
-        # Get API key from header
-        api_key = request.headers.get("X-API-Key")
+    # Validate API key
+    if not settings.api_keys or x_api_key not in settings.api_keys:
+        logger.warning(
+            "Invalid API key",
+            key_prefix=x_api_key[:8] if x_api_key else "None",
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
 
-        if not api_key:
-            logger.warning("Missing API key in request", path=request.path, ip=request.remote_addr)
-            return jsonify({"error": "Missing API key"}), 401
-
-        # Validate API key
-        if api_key not in settings.api_keys:
-            logger.warning(
-                "Invalid API key",
-                path=request.path,
-                ip=request.remote_addr,
-                key_prefix=api_key[:8] if api_key else "None",
-            )
-            return jsonify({"error": "Invalid API key"}), 401
-
-        # Store API key in request context for rate limiting
-        g.api_key = api_key
-
-        logger.debug("API key validated", path=request.path)
-
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
-def optional_api_key(f: Callable) -> Callable:
-    """
-    Decorator for optional API key authentication.
-
-    Validates if present, but doesn't reject if missing.
-    """
-
-    @wraps(f)
-    def decorated_function(*args: Any, **kwargs: Any) -> Any:
-        api_key = request.headers.get("X-API-Key")
-
-        if api_key and api_key in settings.api_keys:
-            g.api_key = api_key
-            g.authenticated = True
-        else:
-            g.authenticated = False
-
-        return f(*args, **kwargs)
-
-    return decorated_function
+    logger.debug("API key validated")

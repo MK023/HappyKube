@@ -46,7 +46,7 @@ class EmotionService:
         self.model_factory = model_factory
         self.cache = cache
 
-    def analyze_emotion(self, telegram_id: str, text: str) -> EmotionAnalysisResponse:
+    async def analyze_emotion(self, telegram_id: str, text: str) -> EmotionAnalysisResponse:
         """
         Analyze emotion from text with caching.
 
@@ -71,9 +71,9 @@ class EmotionService:
         emotion_analyzer = self.model_factory.get_emotion_analyzer_for_text(text)
         sentiment_analyzer = self.model_factory.get_sentiment_analyzer()
 
-        # Perform analysis
-        emotion, emotion_score = emotion_analyzer.analyze(text)
-        sentiment, sentiment_score = sentiment_analyzer.analyze(text)
+        # Perform analysis (async API calls)
+        emotion, emotion_score = await emotion_analyzer.analyze(text)
+        sentiment, sentiment_score = await sentiment_analyzer.analyze(text)
 
         logger.info(
             "Emotion analyzed",

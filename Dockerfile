@@ -1,26 +1,8 @@
 # Production Dockerfile - API + Bot unified service
-# Optimized for Render.com deployment
+# Optimized for Render.com deployment with HuggingFace Inference API
 
 # ================================
-# Stage 1: Download ML Models
-# ================================
-FROM python:3.12-slim AS model-downloader
-
-WORKDIR /models
-
-RUN pip install --no-cache-dir transformers==4.46.3 torch==2.5.1 huggingface-hub==0.26.5
-
-RUN python -c "from transformers import pipeline; \
-    print('Downloading Italian emotion model...'); \
-    pipeline('text-classification', model='MilaNLProc/feel-it-italian-emotion'); \
-    print('Downloading English emotion model...'); \
-    pipeline('text-classification', model='j-hartmann/emotion-english-distilroberta-base'); \
-    print('Downloading sentiment model...'); \
-    pipeline('text-classification', model='MilaNLProc/feel-it-italian-sentiment'); \
-    print('All models downloaded!')"
-
-# ================================
-# Stage 2: Build Dependencies
+# Stage 1: Build Dependencies
 # ================================
 FROM python:3.12-slim AS builder
 
@@ -34,7 +16,7 @@ COPY requirements.txt .
 RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
 # ================================
-# Stage 3: Runtime
+# Stage 2: Runtime
 # ================================
 FROM python:3.12-slim
 
@@ -53,12 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 
-# Copy pre-downloaded models
-COPY --from=model-downloader /root/.cache/huggingface /home/appuser/.cache/huggingface
-RUN chown -R appuser:appuser /home/appuser/.cache
-
-# Copy application code (with __init__.py files!)
-# Cache bust v2025-12-29-03
+# Copy application code
 COPY --chown=appuser:appuser src/ /app/src/
 
 # Copy wsgi.py to root
@@ -77,7 +54,7 @@ ENV PYTHONPATH=/app/src:/app
 EXPOSE 5000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/ping || exit 1
 
 # Run supervisor as root (it will run processes as appuser)

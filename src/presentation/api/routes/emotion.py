@@ -1,46 +1,42 @@
 """Emotion analysis API routes."""
 
-from flask import Blueprint, jsonify, request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
-from application.dto.emotion_dto import EmotionAnalysisRequest
+from application.dto.emotion_dto import (
+    EmotionAnalysisRequest,
+    EmotionAnalysisResponse,
+    EmotionReportResponse,
+)
 from application.services import EmotionService
 from config import get_logger
 from infrastructure.cache import get_cache
 from infrastructure.database import get_db_session
 from infrastructure.ml import get_model_factory
 from infrastructure.repositories import EmotionRepository, UserRepository
-from ..middleware import rate_limit, require_api_key
+from ..middleware.auth import require_api_key
 
 logger = get_logger(__name__)
 
-# Create blueprint
-emotion_bp = Blueprint("emotion", __name__, url_prefix="/api/v1")
+router = APIRouter(prefix="/api/v1", tags=["emotion"])
+limiter = Limiter(key_func=get_remote_address)
 
 
-@emotion_bp.route("/emotion", methods=["POST"])
-@require_api_key
-@rate_limit(max_requests=100, window_seconds=60)
-def analyze_emotion():
+@router.post("/emotion", response_model=EmotionAnalysisResponse)
+@limiter.limit("100/minute")
+async def analyze_emotion(
+    request: Request,
+    emotion_request: EmotionAnalysisRequest,
+    _: None = Depends(require_api_key),
+):
     """
     Analyze emotion from text.
 
-    Request Body:
-        {
-            "user_id": "123456789",
-            "text": "I feel happy today!"
-        }
-
-    Returns:
-        EmotionAnalysisResponse JSON
+    Requires API key authentication.
+    Rate limited to 100 requests per minute.
     """
     try:
-        # Validate request
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid JSON"}), 400
-
-        emotion_request = EmotionAnalysisRequest(**data)
-
         # Create service with dependencies
         with get_db_session() as session:
             emotion_repo = EmotionRepository(session)
@@ -52,8 +48,8 @@ def analyze_emotion():
                 cache=get_cache(),
             )
 
-            # Analyze emotion
-            response = service.analyze_emotion(
+            # Analyze emotion (async)
+            response = await service.analyze_emotion(
                 telegram_id=emotion_request.user_id,
                 text=emotion_request.text,
             )
@@ -64,20 +60,27 @@ def analyze_emotion():
             emotion=response.emotion,
         )
 
-        return jsonify(response.model_dump()), 200
+        return response
 
     except ValueError as e:
         logger.warning("Validation error", error=str(e))
-        return jsonify({"error": str(e)}), 400
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error("Emotion analysis error", error=str(e))
-        return jsonify({"error": "Internal server error"}), 500
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )
 
 
-@emotion_bp.route("/report", methods=["GET"])
-@require_api_key
-@rate_limit(max_requests=50, window_seconds=60)
-def get_report():
+@router.get("/report", response_model=EmotionReportResponse)
+@limiter.limit("50/minute")
+async def get_report(
+    request: Request,
+    user_id: str,
+    month: str | None = None,
+    _: None = Depends(require_api_key),
+):
     """
     Get emotion report for user.
 
@@ -85,17 +88,10 @@ def get_report():
         user_id (required): Telegram user ID
         month (optional): Filter by month (YYYY-MM)
 
-    Returns:
-        EmotionReportResponse JSON
+    Requires API key authentication.
+    Rate limited to 50 requests per minute.
     """
     try:
-        # Get query parameters
-        user_id = request.args.get("user_id")
-        if not user_id:
-            return jsonify({"error": "Missing user_id parameter"}), 400
-
-        month = request.args.get("month")
-
         # Create service
         with get_db_session() as session:
             emotion_repo = EmotionRepository(session)
@@ -115,8 +111,11 @@ def get_report():
 
         logger.info("Report generated via API", user_id=user_id, records=response.total_records)
 
-        return jsonify(response.model_dump()), 200
+        return response
 
     except Exception as e:
         logger.error("Report generation error", error=str(e))
-        return jsonify({"error": "Internal server error"}), 500
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )

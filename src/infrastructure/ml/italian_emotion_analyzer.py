@@ -1,15 +1,17 @@
 """Italian emotion analyzer."""
 
-from config import settings
+from config import get_logger, settings
 from domain import EmotionScore, EmotionType, ModelType
-from .base_analyzer import BaseAnalyzer
+from .api_analyzer import APIAnalyzer
+
+logger = get_logger(__name__)
 
 
-class ItalianEmotionAnalyzer(BaseAnalyzer):
+class ItalianEmotionAnalyzer(APIAnalyzer):
     """
     Analyzer for Italian emotion classification.
 
-    Uses MilaNLProc/feel-it-italian-emotion model.
+    Uses MilaNLProc/feel-it-italian-emotion model via HF Inference API.
     Classifies into: anger, joy, sadness, fear
     """
 
@@ -20,7 +22,7 @@ class ItalianEmotionAnalyzer(BaseAnalyzer):
             model_type=ModelType.ITALIAN_EMOTION,
         )
 
-    def analyze(self, text: str) -> tuple[EmotionType, EmotionScore]:
+    async def analyze(self, text: str) -> tuple[EmotionType, EmotionScore]:
         """
         Analyze Italian text for emotion.
 
@@ -31,8 +33,17 @@ class ItalianEmotionAnalyzer(BaseAnalyzer):
             Tuple of (EmotionType, EmotionScore)
         """
         try:
-            results = self.classifier(text)
-            label, score = self._get_top_prediction(results)
+            results = await self._query_api(text)
+
+            # API returns a list of scores for each label
+            if results and isinstance(results, list) and len(results) > 0:
+                # If nested list (some models return [[{...}]])
+                if isinstance(results[0], list):
+                    results = results[0]
+
+                label, score = self._get_top_prediction(results)
+            else:
+                label, score = "unknown", 0.0
 
             emotion = EmotionType.from_label(label)
             emotion_score = EmotionScore.from_float(score)
@@ -40,5 +51,5 @@ class ItalianEmotionAnalyzer(BaseAnalyzer):
             return emotion, emotion_score
 
         except Exception as e:
-            self.logger.error("Italian emotion analysis failed", error=str(e), text=text[:50])
+            logger.error("Italian emotion analysis failed", error=str(e), text=text[:50])
             return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)

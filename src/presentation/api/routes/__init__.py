@@ -1,9 +1,8 @@
 """API routes."""
 
-from .emotion import emotion_bp
-from .health import health_bp
+from . import emotion, health
 
 __all__ = [
-    "emotion_bp",
-    "health_bp",
+    "emotion",
+    "health",
 ]

@@ -88,6 +88,11 @@ class Settings(BaseSettings):
         default="MilaNLProc/feel-it-italian-sentiment",
         description="Sentiment analysis model",
     )
+    huggingface_token: str = Field(..., description="HuggingFace API token for Inference API")
+    hf_api_url: str = Field(
+        default="https://api-inference.huggingface.co/models",
+        description="HuggingFace Inference API base URL"
+    )
     hf_home: str = Field(
         default="/app/.cache/huggingface", description="HuggingFace cache directory"
     )

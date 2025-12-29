@@ -63,8 +63,8 @@ class MessageHandlers:
                     cache=get_cache(),
                 )
 
-                # Analyze emotion
-                result = service.analyze_emotion(telegram_id=user_id, text=text)
+                # Analyze emotion (already async, handler is async)
+                result = await service.analyze_emotion(telegram_id=user_id, text=text)
 
             logger.info(
                 "Emotion analyzed via bot",
