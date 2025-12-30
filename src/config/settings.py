@@ -198,8 +198,9 @@ class Settings(BaseSettings):
             if not self.encryption_key:
                 raise ValueError("Encryption key must be set in production")
             if not self.sentry_dsn:
-                import warnings
-                warnings.warn("Sentry DSN not set in production - error tracking disabled")
+                # Log as info instead of warning - Sentry is optional
+                import logging
+                logging.getLogger(__name__).info("Sentry DSN not configured - error tracking disabled")
 
         return self
 

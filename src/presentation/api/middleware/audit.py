@@ -51,8 +51,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
         # Log to database (don't block response)
         try:
-            db = next(get_db_session())
-            try:
+            # Use context manager properly
+            with get_db_session() as db:
                 audit_entry = AuditLogModel(
                     id=uuid4(),
                     user_id=user_id,
@@ -65,8 +65,6 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 db.add(audit_entry)
                 db.commit()
                 logger.debug("Audit log created", action=action, ip=ip_address)
-            finally:
-                db.close()
         except Exception as e:
             logger.error("Failed to create audit log", error=str(e), action=action)
             # Don't fail the request if audit logging fails
