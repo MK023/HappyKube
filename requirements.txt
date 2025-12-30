@@ -27,6 +27,9 @@ python-telegram-bot==21.7
 # HTTP Client for HF API
 httpx==0.28.1
 
+# AI API Clients
+anthropic==0.40.0
+
 # Utilities
 python-dotenv==1.0.1
 prometheus-client==0.21.0

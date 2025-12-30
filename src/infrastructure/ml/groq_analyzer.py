@@ -1,0 +1,118 @@
+"""Groq-based emotion and sentiment analyzer using Llama."""
+
+import httpx
+
+from config import get_logger, settings
+from domain import EmotionScore, EmotionType, SentimentType
+
+logger = get_logger(__name__)
+
+
+class GroqAnalyzer:
+    """
+    Emotion and sentiment analyzer using Groq API with Llama 3.3 70B.
+
+    Groq provides free, ultra-fast inference for Llama models.
+    Rate limit: 14,400 requests/day (10 req/min average).
+    """
+
+    def __init__(self) -> None:
+        """Initialize Groq analyzer."""
+        self.api_url = "https://api.groq.com/openai/v1/chat/completions"
+        self.api_key = settings.groq_api_key
+        self.model = "llama-3.3-70b-versatile"
+        logger.info("Initialized Groq analyzer", model=self.model)
+
+    async def analyze_emotion(self, text: str) -> tuple[EmotionType, EmotionScore]:
+        """
+        Analyze text for emotion using Llama via Groq.
+
+        Args:
+            text: Input text (any language)
+
+        Returns:
+            Tuple of (EmotionType, EmotionScore)
+        """
+        try:
+            prompt = f"""Analyze the emotion in this text. Respond with ONLY one word from: anger, joy, fear, sadness, love, surprise, neutral
+
+Text: {text}
+
+Emotion:"""
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    self.api_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": self.model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 10,
+                        "temperature": 0
+                    }
+                )
+                response.raise_for_status()
+                result = response.json()
+
+            # Extract emotion label from response
+            label = result["choices"][0]["message"]["content"].strip().lower()
+
+            emotion = EmotionType.from_label(label)
+            score = EmotionScore.from_float(0.85)  # High confidence for Llama 70B
+
+            logger.debug("Groq emotion analysis", text=text[:50], emotion=emotion.value, score=str(score))
+            return emotion, score
+
+        except Exception as e:
+            logger.error("Groq emotion analysis failed", error=str(e), text=text[:50])
+            return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
+
+    async def analyze_sentiment(self, text: str) -> tuple[SentimentType, EmotionScore]:
+        """
+        Analyze text for sentiment using Llama via Groq.
+
+        Args:
+            text: Input text (any language)
+
+        Returns:
+            Tuple of (SentimentType, EmotionScore)
+        """
+        try:
+            prompt = f"""Analyze the sentiment in this text. Respond with ONLY one word: positive, negative, or neutral
+
+Text: {text}
+
+Sentiment:"""
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    self.api_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": self.model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 10,
+                        "temperature": 0
+                    }
+                )
+                response.raise_for_status()
+                result = response.json()
+
+            # Extract sentiment label from response
+            label = result["choices"][0]["message"]["content"].strip().lower()
+
+            sentiment = SentimentType.from_label(label)
+            score = EmotionScore.from_float(0.85)  # High confidence for Llama 70B
+
+            logger.debug("Groq sentiment analysis", text=text[:50], sentiment=sentiment.value, score=str(score))
+            return sentiment, score
+
+        except Exception as e:
+            logger.error("Groq sentiment analysis failed", error=str(e), text=text[:50])
+            return SentimentType.UNKNOWN, EmotionScore.from_float(0.0)

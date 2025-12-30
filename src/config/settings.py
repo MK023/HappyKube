@@ -86,6 +86,10 @@ class Settings(BaseSettings):
         description="Multilingual sentiment model (positive, negative, neutral)",
     )
     huggingface_token: str = Field(..., description="HuggingFace API token for Inference API")
+
+    # External AI APIs for emotion/sentiment analysis (fallback when HF fails)
+    anthropic_api_key: str | None = Field(default=None, description="Anthropic API key for Claude")
+    groq_api_key: str | None = Field(default=None, description="Groq API key for Llama (free)")
     hf_api_url: str = Field(
         default="https://api-inference.huggingface.co/models",
         description="HuggingFace Inference API base URL"
