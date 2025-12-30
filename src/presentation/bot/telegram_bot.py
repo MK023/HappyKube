@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from telegram import Update
-from telegram.error import Conflict
+from telegram.error import Conflict, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from config import get_logger, settings, setup_logging
@@ -106,6 +106,15 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         )
         # Don't raise - let the bot continue attempting to poll
         # The lock mechanism will eventually resolve this
+        return
+
+    # Handle TimedOut errors (network issues, retryable)
+    if isinstance(context.error, TimedOut):
+        logger.warning(
+            "Telegram API timed out - will retry automatically",
+            error=str(context.error)
+        )
+        # Don't raise - telegram-bot library will retry automatically
         return
 
     # Log all other errors
