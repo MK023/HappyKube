@@ -9,7 +9,7 @@ from telegram.error import Conflict
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 from config import get_logger, settings, setup_logging
-from .handlers import CommandHandlers, MessageHandlers
+from presentation.bot.handlers import CommandHandlers, MessageHandlers
 
 logger = get_logger(__name__)
 
