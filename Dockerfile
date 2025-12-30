@@ -41,8 +41,15 @@ COPY --chown=appuser:appuser src/ /app/src/
 # Copy wsgi.py to root
 COPY --chown=appuser:appuser wsgi.py /app/wsgi.py
 
+# Copy alembic config and migrations
+COPY --chown=appuser:appuser alembic.ini /app/alembic.ini
+
 # Copy supervisor config
 COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy entrypoint script
+COPY --chown=root:root docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Create logs directory
 RUN mkdir -p /var/log/supervisor && chown -R appuser:appuser /var/log/supervisor
@@ -56,6 +63,9 @@ EXPOSE 5000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/ping || exit 1
+
+# Set entrypoint to run migrations before starting services
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Run supervisor as root (it will run processes as appuser)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
