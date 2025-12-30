@@ -44,6 +44,7 @@ class UserRepository(IUserRepository):
         )
 
         self.session.merge(db_user)  # Use merge for update or insert
+        self.session.flush()  # Flush to DB to make ID available for foreign keys
         logger.info("User saved", user_id=str(user.id), hash=user.user_id.hashed_id[:8])
         return user
 

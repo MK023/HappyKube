@@ -78,7 +78,7 @@ class Settings(BaseSettings):
 
     # ML Models
     italian_emotion_model: str = Field(
-        default="MilaNLProc/feel-it-italian-emotion",
+        default="neuraly/bert-base-italian-cased-sentiment",
         description="Italian emotion classification model",
     )
     english_emotion_model: str = Field(
@@ -86,7 +86,7 @@ class Settings(BaseSettings):
         description="English emotion classification model",
     )
     sentiment_model: str = Field(
-        default="MilaNLProc/feel-it-italian-sentiment",
+        default="neuraly/bert-base-italian-cased-sentiment",
         description="Sentiment analysis model",
     )
     huggingface_token: str = Field(..., description="HuggingFace API token for Inference API")

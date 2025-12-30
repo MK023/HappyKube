@@ -5,8 +5,9 @@ import signal
 import sys
 from pathlib import Path
 
+from telegram import Update
 from telegram.error import Conflict
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from config import get_logger, settings, setup_logging
 from presentation.bot.handlers import CommandHandlers, MessageHandlers
@@ -90,6 +91,33 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle errors that occur during bot operation.
+
+    Logs errors and handles Conflict errors gracefully during rolling deployments.
+    """
+    # Handle Conflict errors (expected during rolling deployments)
+    if isinstance(context.error, Conflict):
+        logger.warning(
+            "Bot conflict detected during polling - another instance is active. "
+            "This is normal during rolling deployments.",
+            error=str(context.error)
+        )
+        # Don't raise - let the bot continue attempting to poll
+        # The lock mechanism will eventually resolve this
+        return
+
+    # Log all other errors
+    logger.error(
+        "Error occurred during bot operation",
+        error=str(context.error),
+        error_type=type(context.error).__name__,
+        update=update,
+        exc_info=context.error
+    )
+
+
 def create_bot() -> None:
     """Create and run Telegram bot with single-instance protection."""
     # Setup logging
@@ -135,6 +163,9 @@ def create_bot() -> None:
 
         # Register message handler (non-command text)
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handlers.handle_text))
+
+        # Register error handler
+        app.add_error_handler(error_handler)
 
         logger.info("Telegram bot initialized, starting polling")
 
