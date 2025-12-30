@@ -12,7 +12,8 @@ class EmotionType(str, Enum):
     SADNESS = "sadness"
     FEAR = "fear"
 
-    # English emotion model labels (additional)
+    # Additional emotion labels (supported by Groq)
+    LOVE = "love"
     SURPRISE = "surprise"
     DISGUST = "disgust"
     NEUTRAL = "neutral"
@@ -44,7 +45,7 @@ class EmotionType(str, Enum):
     @property
     def is_positive(self) -> bool:
         """Check if emotion is positive."""
-        return self in {self.JOY, self.SURPRISE}
+        return self in {self.JOY, self.LOVE, self.SURPRISE}
 
     @property
     def is_neutral(self) -> bool:

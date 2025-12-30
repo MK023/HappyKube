@@ -24,11 +24,8 @@ bleach==6.2.0
 # Telegram Bot
 python-telegram-bot==21.7
 
-# HTTP Client for HF API
+# HTTP Client
 httpx==0.28.1
-
-# AI API Clients
-anthropic==0.40.0
 
 # Utilities
 python-dotenv==1.0.1

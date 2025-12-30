@@ -18,8 +18,11 @@ class UserId:
 
     def __post_init__(self) -> None:
         """Validate user ID."""
+        # Skip validation if telegram_id is empty (used in from_hash for DB queries)
         if not self.telegram_id:
-            raise ValueError("Telegram ID cannot be empty")
+            if not self.hashed_id:
+                raise ValueError("Either telegram_id or hashed_id must be provided")
+            return
 
         if not self.telegram_id.isdigit():
             raise ValueError(f"Telegram ID must be numeric, got: {self.telegram_id}")

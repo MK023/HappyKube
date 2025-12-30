@@ -76,30 +76,8 @@ class Settings(BaseSettings):
         default=30, ge=10, le=60, description="Telegram API timeout"
     )
 
-    # ML Models - Multilingual (italiano, inglese, +17 lingue)
-    emotion_model: str = Field(
-        default="MilaNLProc/xlm-emo-t",
-        description="Multilingual emotion model (anger, joy, fear, sadness) - 19 languages",
-    )
-    sentiment_model: str = Field(
-        default="cardiffnlp/twitter-xlm-roberta-base-sentiment",
-        description="Multilingual sentiment model (positive, negative, neutral)",
-    )
-    huggingface_token: str = Field(..., description="HuggingFace API token for Inference API")
-
-    # External AI APIs for emotion/sentiment analysis (fallback when HF fails)
-    anthropic_api_key: str | None = Field(default=None, description="Anthropic API key for Claude")
-    groq_api_key: str | None = Field(default=None, description="Groq API key for Llama (free)")
-    hf_api_url: str = Field(
-        default="https://api-inference.huggingface.co/models",
-        description="HuggingFace Inference API base URL"
-    )
-    hf_home: str = Field(
-        default="/app/.cache/huggingface", description="HuggingFace cache directory"
-    )
-    transformers_cache: str = Field(
-        default="/app/.cache/transformers", description="Transformers cache directory"
-    )
+    # ML API - Groq (Llama 3.3 70B)
+    groq_api_key: str = Field(..., description="Groq API key for Llama inference (free)")
 
     # Rate Limiting
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
