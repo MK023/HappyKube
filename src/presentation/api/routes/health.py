@@ -96,10 +96,12 @@ async def healthz_huggingface(response: Response):
 
 
 @router.get("/ping")
+@router.head("/ping")
 async def ping(response: Response):
     """
     Ping endpoint for UptimeRobot with DB and Redis check.
 
+    Supports both GET and HEAD methods.
     Returns 200 if DB and Redis are healthy.
     """
     try:
