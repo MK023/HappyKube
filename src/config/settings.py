@@ -76,18 +76,14 @@ class Settings(BaseSettings):
         default=30, ge=10, le=60, description="Telegram API timeout"
     )
 
-    # ML Models
-    italian_emotion_model: str = Field(
-        default="neuraly/bert-base-italian-cased-sentiment",
-        description="Italian emotion classification model",
-    )
-    english_emotion_model: str = Field(
-        default="j-hartmann/emotion-english-distilroberta-base",
-        description="English emotion classification model",
+    # ML Models - Multilingual (italiano, inglese, +17 lingue)
+    emotion_model: str = Field(
+        default="MilaNLProc/xlm-emo-t",
+        description="Multilingual emotion model (anger, joy, fear, sadness) - 19 languages",
     )
     sentiment_model: str = Field(
-        default="neuraly/bert-base-italian-cased-sentiment",
-        description="Sentiment analysis model",
+        default="cardiffnlp/twitter-xlm-roberta-base-sentiment",
+        description="Multilingual sentiment model (positive, negative, neutral)",
     )
     huggingface_token: str = Field(..., description="HuggingFace API token for Inference API")
     hf_api_url: str = Field(

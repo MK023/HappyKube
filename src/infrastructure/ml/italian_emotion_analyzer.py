@@ -9,25 +9,26 @@ logger = get_logger(__name__)
 
 class ItalianEmotionAnalyzer(APIAnalyzer):
     """
-    Analyzer for Italian emotion classification.
+    Analyzer for multilingual emotion classification.
 
-    Uses MilaNLProc/feel-it-italian-emotion model via HF Inference API.
+    Uses MilaNLProc/xlm-emo-t model via HF Inference API.
+    Supports 19 languages including Italian and English.
     Classifies into: anger, joy, sadness, fear
     """
 
     def __init__(self) -> None:
-        """Initialize Italian emotion analyzer."""
+        """Initialize multilingual emotion analyzer."""
         super().__init__(
-            model_name=settings.italian_emotion_model,
+            model_name=settings.emotion_model,
             model_type=ModelType.ITALIAN_EMOTION,
         )
 
     async def analyze(self, text: str) -> tuple[EmotionType, EmotionScore]:
         """
-        Analyze Italian text for emotion.
+        Analyze text for emotion (supports 19 languages).
 
         Args:
-            text: Italian text input
+            text: Input text in any supported language
 
         Returns:
             Tuple of (EmotionType, EmotionScore)
@@ -51,5 +52,5 @@ class ItalianEmotionAnalyzer(APIAnalyzer):
             return emotion, emotion_score
 
         except Exception as e:
-            logger.error("Italian emotion analysis failed", error=str(e), text=text[:50])
+            logger.error("Multilingual emotion analysis failed", error=str(e), text=text[:50])
             return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)

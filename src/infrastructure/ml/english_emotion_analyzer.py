@@ -1,4 +1,4 @@
-"""English emotion analyzer."""
+"""English emotion analyzer (uses same multilingual model as Italian)."""
 
 from config import get_logger, settings
 from domain import EmotionScore, EmotionType, ModelType
@@ -9,25 +9,26 @@ logger = get_logger(__name__)
 
 class EnglishEmotionAnalyzer(APIAnalyzer):
     """
-    Analyzer for English emotion classification.
+    Analyzer for multilingual emotion classification.
 
-    Uses j-hartmann/emotion-english-distilroberta-base model via HF Inference API.
-    Classifies into 7 emotions: anger, disgust, fear, joy, neutral, sadness, surprise
+    Uses MilaNLProc/xlm-emo-t model via HF Inference API (same as Italian analyzer).
+    Supports 19 languages including English and Italian.
+    Classifies into: anger, joy, sadness, fear
     """
 
     def __init__(self) -> None:
-        """Initialize English emotion analyzer."""
+        """Initialize multilingual emotion analyzer."""
         super().__init__(
-            model_name=settings.english_emotion_model,
+            model_name=settings.emotion_model,
             model_type=ModelType.ENGLISH_EMOTION,
         )
 
     async def analyze(self, text: str) -> tuple[EmotionType, EmotionScore]:
         """
-        Analyze English text for emotion.
+        Analyze text for emotion (supports 19 languages).
 
         Args:
-            text: English text input
+            text: Input text in any supported language
 
         Returns:
             Tuple of (EmotionType, EmotionScore)
@@ -51,5 +52,5 @@ class EnglishEmotionAnalyzer(APIAnalyzer):
             return emotion, emotion_score
 
         except Exception as e:
-            logger.error("English emotion analysis failed", error=str(e), text=text[:50])
+            logger.error("Multilingual emotion analysis failed", error=str(e), text=text[:50])
             return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
