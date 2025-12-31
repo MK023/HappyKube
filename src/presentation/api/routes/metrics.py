@@ -46,7 +46,39 @@ telegram_messages_total = Counter(
 )
 
 
-@router.get("/metrics")
+@router.get(
+    "/metrics",
+    summary="Prometheus metrics",
+    description="""
+    Prometheus-compatible metrics endpoint for monitoring.
+
+    **Available Metrics:**
+    - `happykube_emotion_requests_total` - Total emotion analysis requests (by language, status)
+    - `happykube_emotion_analysis_duration_seconds` - Emotion analysis latency (by model_type)
+    - `happykube_active_users` - Active users in 7-day window
+    - `happykube_api_requests_total` - API request counts (by method, endpoint, status)
+    - `happykube_telegram_messages_total` - Telegram messages processed (by command)
+
+    **Note:** Only available if `PROMETHEUS_ENABLED=true` in environment.
+    """,
+    responses={
+        200: {
+            "description": "Prometheus metrics in text format",
+            "content": {
+                "text/plain; version=0.0.4": {
+                    "example": """# HELP happykube_emotion_requests_total Total emotion analysis requests
+# TYPE happykube_emotion_requests_total counter
+happykube_emotion_requests_total{language="it",status="success"} 1523.0
+happykube_emotion_requests_total{language="en",status="success"} 847.0
+# HELP happykube_active_users Number of active users
+# TYPE happykube_active_users gauge
+happykube_active_users 342.0"""
+                }
+            }
+        },
+        404: {"description": "Metrics collection disabled"}
+    }
+)
 async def metrics():
     """
     Prometheus metrics endpoint.

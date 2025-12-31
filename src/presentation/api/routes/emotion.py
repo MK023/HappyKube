@@ -23,7 +23,51 @@ router = APIRouter(prefix="/api/v1", tags=["emotion"])
 limiter = Limiter(key_func=get_remote_address)
 
 
-@router.post("/emotion", response_model=EmotionAnalysisResponse)
+@router.post(
+    "/emotion",
+    response_model=EmotionAnalysisResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Analyze emotion and sentiment from text",
+    description="""
+    Analyze emotion and sentiment from user text using Groq (Llama 3.3 70B).
+
+    **Authentication:** Requires API key (X-API-Key header)
+
+    **Features:**
+    - Emotion detection (joy, sadness, anger, fear, love, surprise)
+    - Sentiment analysis (positive, negative, neutral)
+    - Confidence scores (0.0 - 1.0)
+    - Automatic storage in database for reporting
+    - Results cached for 1 hour
+
+    **Rate limit:** 100 requests per minute
+
+    **Errors:**
+    - 400: Invalid text or user_id
+    - 401: Missing or invalid API key
+    - 429: Rate limit exceeded
+    - 500: ML model error
+    """,
+    responses={
+        200: {
+            "description": "Emotion analysis successful",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "emotion": "joy",
+                        "sentiment": "positive",
+                        "score": 0.92,
+                        "message": "Emotion detected successfully"
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid input (empty text or invalid user_id)"},
+        401: {"description": "Missing or invalid API key"},
+        429: {"description": "Rate limit exceeded (100/min)"},
+        500: {"description": "ML model error or internal server error"}
+    }
+)
 @limiter.limit("100/minute")
 async def analyze_emotion(
     request: Request,
@@ -73,7 +117,60 @@ async def analyze_emotion(
         )
 
 
-@router.get("/report", response_model=EmotionReportResponse)
+@router.get(
+    "/report",
+    response_model=EmotionReportResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get user emotion history report",
+    description="""
+    Retrieve emotion history for a specific user with optional month filter.
+
+    **Authentication:** Requires API key (X-API-Key header)
+
+    **Query Parameters:**
+    - user_id (required): Telegram user ID
+    - month (optional): Filter by month in YYYY-MM format (e.g., 2026-01)
+
+    **Features:**
+    - Complete emotion history
+    - Optional monthly filtering
+    - Sorted by date (most recent first)
+    - Includes emotion type, sentiment, score, timestamp
+
+    **Rate limit:** 50 requests per minute
+
+    **Errors:**
+    - 400: Invalid user_id or month format
+    - 401: Missing or invalid API key
+    - 404: User not found
+    - 429: Rate limit exceeded
+    """,
+    responses={
+        200: {
+            "description": "Report retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user_id": "123456789",
+                        "total_records": 42,
+                        "emotions": [
+                            {
+                                "emotion": "joy",
+                                "sentiment": "positive",
+                                "score": 0.89,
+                                "timestamp": "2026-01-15T14:30:00Z"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid user_id or month format"},
+        401: {"description": "Missing or invalid API key"},
+        404: {"description": "User not found"},
+        429: {"description": "Rate limit exceeded (50/min)"}
+    }
+)
 @limiter.limit("50/minute")
 async def get_report(
     request: Request,

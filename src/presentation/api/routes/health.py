@@ -11,7 +11,31 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["health"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    summary="API Information",
+    description="Get basic API metadata including version, environment, and available endpoints.",
+    responses={
+        200: {
+            "description": "API information",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "service": "HappyKube API",
+                        "version": "2.0.0",
+                        "status": "running",
+                        "environment": "production",
+                        "endpoints": {
+                            "health": "/healthz",
+                            "ping": "/ping",
+                            "readiness": "/readyz"
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
 async def root():
     """
     Root endpoint.
@@ -32,7 +56,21 @@ async def root():
     }
 
 
-@router.get("/healthz")
+@router.get(
+    "/healthz",
+    summary="Liveness probe",
+    description="Kubernetes liveness probe. Returns 200 if service process is running.",
+    responses={
+        200: {
+            "description": "Service is alive",
+            "content": {
+                "application/json": {
+                    "example": {"status": "healthy", "service": "HappyKube API"}
+                }
+            }
+        }
+    }
+)
 async def healthz():
     """
     Basic health check (liveness probe).
@@ -100,7 +138,52 @@ async def ping(response: Response):
         return "error"
 
 
-@router.get("/readyz")
+@router.get(
+    "/readyz",
+    summary="Readiness probe",
+    description="""
+    Kubernetes readiness probe. Checks if service is ready to accept traffic.
+
+    **Checks:**
+    - PostgreSQL database connectivity
+    - Redis cache connectivity
+    - Groq API availability
+
+    Returns 200 if all dependencies are healthy, 503 otherwise.
+    """,
+    responses={
+        200: {
+            "description": "Service is ready",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "ready",
+                        "checks": {
+                            "database": "healthy",
+                            "redis": "healthy",
+                            "groq_api": "healthy"
+                        }
+                    }
+                }
+            }
+        },
+        503: {
+            "description": "Service not ready",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "not ready",
+                        "checks": {
+                            "database": "healthy",
+                            "redis": "unhealthy",
+                            "groq_api": "healthy"
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
 async def readyz(response: Response):
     """
     Readiness check (readiness probe).
