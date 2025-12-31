@@ -67,20 +67,19 @@ class EmotionService:
         # Find or create user
         user = self.user_repo.find_or_create_by_telegram_id(telegram_id)
 
-        # Get appropriate analyzer based on language
-        emotion_analyzer = self.model_factory.get_emotion_analyzer_for_text(text)
-        sentiment_analyzer = self.model_factory.get_sentiment_analyzer()
+        # Get Groq analyzer (handles all languages)
+        analyzer = self.model_factory.get_groq_analyzer()
 
         # Perform analysis (async API calls)
-        emotion, emotion_score = await emotion_analyzer.analyze(text)
-        sentiment, sentiment_score = await sentiment_analyzer.analyze(text)
+        emotion, emotion_score = await analyzer.analyze_emotion(text)
+        sentiment, sentiment_score = await analyzer.analyze_sentiment(text)
 
         logger.info(
             "Emotion analyzed",
             user_id=str(user.id),
             emotion=emotion.value,
             score=emotion_score.to_float(),
-            model=emotion_analyzer.model_type.value,
+            model=analyzer.model_type.value,
         )
 
         # Save to database
@@ -89,10 +88,10 @@ class EmotionService:
             text=text,
             emotion=emotion,
             score=emotion_score,
-            model_type=emotion_analyzer.model_type,
+            model_type=analyzer.model_type,
             sentiment=sentiment,
             metadata={
-                "model_name": emotion_analyzer.model_name,
+                "model_name": analyzer.model_name,
                 "sentiment_score": sentiment_score.to_float(),
             },
         )

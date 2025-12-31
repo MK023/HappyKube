@@ -4,6 +4,7 @@ import httpx
 
 from config import get_logger, settings
 from domain import EmotionScore, EmotionType, SentimentType
+from domain.enums import ModelType
 
 logger = get_logger(__name__)
 
@@ -21,6 +22,8 @@ class GroqAnalyzer:
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
         self.api_key = settings.groq_api_key
         self.model = "llama-3.3-70b-versatile"
+        self.model_name = "llama-3.3-70b-versatile"
+        self.model_type = ModelType.GROQ
         logger.info("Initialized Groq analyzer", model=self.model)
 
     async def analyze_emotion(self, text: str) -> tuple[EmotionType, EmotionScore]:
