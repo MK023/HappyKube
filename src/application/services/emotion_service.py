@@ -104,7 +104,7 @@ class EmotionService:
             sentiment=sentiment.value if sentiment else None,
             score=emotion_score.to_float(),
             confidence=str(emotion_score),
-            model_type=emotion_analyzer.model_type.value,
+            model_type=analyzer.model_type.value,
         )
 
         # Cache for 1 hour
