@@ -39,6 +39,7 @@ dependencies = [
     "bleach>=6.2.0",
     "structlog>=24.4.0",
     "sentry-sdk[fastapi,sqlalchemy]>=2.19.2",
+    "click>=8.1.0",
 ]
 
 [project.optional-dependencies]

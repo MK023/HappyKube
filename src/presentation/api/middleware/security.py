@@ -2,26 +2,48 @@
 
 import secrets
 from typing import Optional
+from uuid import UUID
 
 from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse, Response
 
 from config import get_logger, settings
+from infrastructure.database import get_engine
+from infrastructure.repositories import APIKeyRepository
 
 logger = get_logger(__name__)
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
     """
-    API Key authentication middleware.
+    API Key authentication middleware with database backend.
 
     Protects ALL endpoints except health checks and metrics.
-    Requires X-API-Key header with valid key.
+    Requires X-API-Key header with valid key stored in database.
+
+    Security features:
+    - Bcrypt-hashed keys (no plaintext storage)
+    - Expiration checking
+    - Rate limit per key
+    - Last used timestamp tracking
     """
 
     # Endpoints that don't require authentication
     PUBLIC_PATHS = {"/", "/healthz", "/ping", "/readyz", "/metrics", "/docs", "/redoc", "/openapi.json"}
+
+    def __init__(self, app):
+        """Initialize middleware with database connection."""
+        super().__init__(app)
+        self._engine = None
+        self._api_key_repo = None
+
+    def _get_repository(self) -> APIKeyRepository:
+        """Lazy-load API key repository."""
+        if self._api_key_repo is None:
+            self._engine = get_engine()
+            self._api_key_repo = APIKeyRepository(self._engine)
+        return self._api_key_repo
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
@@ -57,29 +79,53 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                 }
             )
 
-        # Validate API key (constant-time comparison to prevent timing attacks)
-        if not settings.api_keys or not self._validate_key(api_key, settings.api_keys):
-            logger.warning(
-                "Unauthorized request - invalid API key",
+        # Validate API key against database (with bcrypt verification)
+        try:
+            repo = self._get_repository()
+            is_valid, api_key_id, rate_limit = repo.validate_key(api_key)
+
+            if not is_valid:
+                logger.warning(
+                    "Unauthorized request - invalid API key",
+                    path=request.url.path,
+                    ip=request.client.host if request.client else None,
+                    key_prefix=api_key[:8] if len(api_key) >= 8 else "***"
+                )
+                return JSONResponse(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    content={
+                        "detail": "Invalid API key",
+                        "error": "unauthorized"
+                    }
+                )
+
+            # Store API key ID in request state for audit logging
+            request.state.api_key_id = api_key_id
+            request.state.rate_limit = rate_limit
+
+        except Exception as e:
+            logger.error(
+                "Error validating API key",
                 path=request.url.path,
-                ip=request.client.host if request.client else None,
-                key_prefix=api_key[:8] if len(api_key) >= 8 else "***"
+                error=str(e),
+                exc_info=e
             )
             return JSONResponse(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={
-                    "detail": "Invalid API key",
-                    "error": "unauthorized"
+                    "detail": "Authentication service error",
+                    "error": "internal_error"
                 }
             )
 
         # Valid key - proceed
         return await call_next(request)
 
+    # Fallback method for environment variable-based keys (backwards compatibility)
     @staticmethod
-    def _validate_key(provided_key: str, valid_keys: list[str]) -> bool:
+    def _validate_key_fallback(provided_key: str, valid_keys: list[str]) -> bool:
         """
-        Validate API key using constant-time comparison.
+        Validate API key using constant-time comparison (fallback for env vars).
 
         Args:
             provided_key: Key from request
