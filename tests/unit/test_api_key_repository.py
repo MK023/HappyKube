@@ -15,9 +15,15 @@ from infrastructure.repositories import APIKeyRepository
 def in_memory_db():
     """Create in-memory SQLite database for testing."""
     engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
+
+    # Create only the tables needed for API key tests (avoid JSONB issues)
+    # EmotionModel uses JSONB which is PostgreSQL-only
+    APIKeyModel.__table__.create(engine)
+
     yield engine
-    Base.metadata.drop_all(engine)
+
+    # Cleanup
+    APIKeyModel.__table__.drop(engine)
 
 
 @pytest.fixture

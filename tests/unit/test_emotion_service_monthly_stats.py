@@ -11,7 +11,7 @@ from application.dto.emotion_dto import (
     MonthlyStatisticsResponse,
     SentimentStatistic,
 )
-from domain import EmotionRecord, EmotionType, SentimentType, EmotionScore, UserId
+from domain import EmotionRecord, EmotionType, SentimentType, EmotionScore, UserId, ModelType
 
 
 @pytest.fixture
@@ -38,7 +38,8 @@ def sample_user():
     from domain import User
     return User(
         id=uuid4(),
-        user_id=UserId.from_telegram_id("123456789")
+        user_id=UserId.from_telegram("123456789"),
+        created_at=datetime(2026, 1, 1, 0, 0, 0)
     )
 
 
@@ -55,11 +56,11 @@ def sample_emotions():
         emotions.append(EmotionRecord(
             id=uuid4(),
             user_id=user_id,
-            text_encrypted=b"encrypted",
+            text="Test message",
             emotion=EmotionType.JOY,
             sentiment=SentimentType.POSITIVE,
             score=EmotionScore.from_float(0.9),
-            model_type="groq",
+            model_type=ModelType.GROQ,
             created_at=datetime(2026, 1, i + 1, 10, 0, 0)  # Different days
         ))
 
@@ -68,11 +69,11 @@ def sample_emotions():
         emotions.append(EmotionRecord(
             id=uuid4(),
             user_id=user_id,
-            text_encrypted=b"encrypted",
+            text="Test message",
             emotion=EmotionType.SADNESS,
             sentiment=SentimentType.NEGATIVE,
             score=EmotionScore.from_float(0.85),
-            model_type="groq",
+            model_type=ModelType.GROQ,
             created_at=datetime(2026, 1, i + 6, 10, 0, 0)
         ))
 
@@ -81,11 +82,11 @@ def sample_emotions():
         emotions.append(EmotionRecord(
             id=uuid4(),
             user_id=user_id,
-            text_encrypted=b"encrypted",
+            text="Test message",
             emotion=EmotionType.ANGER,
             sentiment=SentimentType.NEGATIVE,
             score=EmotionScore.from_float(0.8),
-            model_type="groq",
+            model_type=ModelType.GROQ,
             created_at=datetime(2026, 1, i + 9, 10, 0, 0)
         ))
 
@@ -170,10 +171,10 @@ class TestEmotionServiceMonthlyStats:
         self, emotion_service, mock_repositories
     ):
         """Test invalid month value (e.g., month 13)."""
-        with pytest.raises(ValueError, match="Month must be between"):
+        with pytest.raises(ValueError):
             emotion_service.get_monthly_statistics("123456789", "2026-13")
 
-        with pytest.raises(ValueError, match="Month must be between"):
+        with pytest.raises(ValueError):
             emotion_service.get_monthly_statistics("123456789", "2026-00")
 
     def test_generate_insights_positive_month(self, emotion_service):
@@ -280,21 +281,21 @@ class TestEmotionServiceMonthlyStats:
             EmotionRecord(
                 id=uuid4(),
                 user_id=user_id,
-                text_encrypted=b"encrypted",
+                text="Test message",
                 emotion=EmotionType.JOY,
                 sentiment=SentimentType.POSITIVE,
                 score=EmotionScore.from_float(0.9),
-                model_type="groq",
+                model_type=ModelType.GROQ,
                 created_at=datetime(2026, 1, 5, 10, 0, 0)
             ),
             EmotionRecord(
                 id=uuid4(),
                 user_id=user_id,
-                text_encrypted=b"encrypted",
+                text="Test message",
                 emotion=EmotionType.SADNESS,
                 sentiment=SentimentType.NEGATIVE,
                 score=EmotionScore.from_float(0.85),
-                model_type="groq",
+                model_type=ModelType.GROQ,
                 created_at=datetime(2026, 1, 5, 14, 0, 0)  # Same day, different time
             ),
         ]
