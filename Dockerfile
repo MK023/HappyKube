@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy pyproject.toml and src directory for building
 COPY pyproject.toml .
+COPY src/ ./src/
 RUN pip wheel --no-cache-dir --wheel-dir /wheels .
 
 # ================================
