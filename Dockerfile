@@ -1,5 +1,5 @@
 # Production Dockerfile - API + Bot unified service
-# Optimized for Render.com deployment with HuggingFace Inference API
+# Optimized for Render.com deployment with Groq API
 
 # ================================
 # Stage 1: Build Dependencies
@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+COPY pyproject.toml .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels .
 
 # ================================
 # Stage 2: Runtime

@@ -73,28 +73,6 @@ async def healthz_redis(response: Response):
         return {"status": "error", "service": "redis", "error": str(e)}
 
 
-@router.get("/healthz/huggingface")
-async def healthz_huggingface(response: Response):
-    """HuggingFace API health check."""
-    import httpx
-
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            hf_response = await client.get(
-                "https://api-inference.huggingface.co/status",
-                headers={"Authorization": f"Bearer {settings.huggingface_token}"}
-            )
-            if hf_response.status_code == 200:
-                return {"status": "healthy", "service": "huggingface_api"}
-            else:
-                response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-                return {"status": "unhealthy", "service": "huggingface_api"}
-    except Exception as e:
-        logger.error("HuggingFace API health check failed", error=str(e))
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        return {"status": "error", "service": "huggingface_api", "error": str(e)}
-
-
 @router.get("/ping")
 @router.head("/ping")
 async def ping(response: Response):
@@ -127,7 +105,7 @@ async def readyz(response: Response):
     """
     Readiness check (readiness probe).
 
-    Checks database, Redis, and HuggingFace API connectivity.
+    Checks database, Redis, and Groq API connectivity.
     """
     import httpx
 
@@ -139,20 +117,20 @@ async def readyz(response: Response):
         cache = get_cache()
         redis_healthy = cache.health_check()
 
-        # Check HuggingFace API
-        hf_healthy = False
+        # Check Groq API (quick health check)
+        groq_healthy = False
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                hf_response = await client.get(
-                    "https://api-inference.huggingface.co/status",
-                    headers={"Authorization": f"Bearer {settings.huggingface_token}"}
+                groq_response = await client.get(
+                    "https://api.groq.com/openai/v1/models",
+                    headers={"Authorization": f"Bearer {settings.groq_api_key}"}
                 )
-                hf_healthy = hf_response.status_code == 200
+                groq_healthy = groq_response.status_code == 200
         except Exception as e:
-            logger.warning("HuggingFace API health check failed", error=str(e))
-            hf_healthy = False
+            logger.warning("Groq API health check failed", error=str(e))
+            groq_healthy = False
 
-        all_healthy = db_healthy and redis_healthy and hf_healthy
+        all_healthy = db_healthy and redis_healthy and groq_healthy
 
         if all_healthy:
             return {
@@ -160,7 +138,7 @@ async def readyz(response: Response):
                 "checks": {
                     "database": "healthy",
                     "redis": "healthy",
-                    "huggingface_api": "healthy",
+                    "groq_api": "healthy",
                 },
             }
         else:
@@ -170,7 +148,7 @@ async def readyz(response: Response):
                 "checks": {
                     "database": "healthy" if db_healthy else "unhealthy",
                     "redis": "healthy" if redis_healthy else "unhealthy",
-                    "huggingface_api": "healthy" if hf_healthy else "unhealthy",
+                    "groq_api": "healthy" if groq_healthy else "unhealthy",
                 },
             }
 

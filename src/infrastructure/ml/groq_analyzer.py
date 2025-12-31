@@ -8,6 +8,10 @@ from domain.enums import ModelType
 
 logger = get_logger(__name__)
 
+# Constants
+GROQ_DEFAULT_CONFIDENCE = 0.85  # High confidence for Llama 3.3 70B model
+GROQ_API_TIMEOUT = 10.0  # API timeout in seconds
+
 
 class GroqAnalyzer:
     """
@@ -43,7 +47,7 @@ Text: {text}
 
 Emotion:"""
 
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=GROQ_API_TIMEOUT) as client:
                 response = await client.post(
                     self.api_url,
                     headers={
@@ -64,7 +68,7 @@ Emotion:"""
             label = result["choices"][0]["message"]["content"].strip().lower()
 
             emotion = EmotionType.from_label(label)
-            score = EmotionScore.from_float(0.85)  # High confidence for Llama 70B
+            score = EmotionScore.from_float(GROQ_DEFAULT_CONFIDENCE)
 
             logger.debug("Groq emotion analysis", text=text[:50], emotion=emotion.value, score=str(score))
             return emotion, score
@@ -90,7 +94,7 @@ Text: {text}
 
 Sentiment:"""
 
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=GROQ_API_TIMEOUT) as client:
                 response = await client.post(
                     self.api_url,
                     headers={
@@ -111,7 +115,7 @@ Sentiment:"""
             label = result["choices"][0]["message"]["content"].strip().lower()
 
             sentiment = SentimentType.from_label(label)
-            score = EmotionScore.from_float(0.85)  # High confidence for Llama 70B
+            score = EmotionScore.from_float(GROQ_DEFAULT_CONFIDENCE)
 
             logger.debug("Groq sentiment analysis", text=text[:50], sentiment=sentiment.value, score=str(score))
             return sentiment, score

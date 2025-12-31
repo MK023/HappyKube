@@ -1,5 +1,6 @@
 """Emotion analysis service (business logic layer)."""
 
+import hashlib
 from datetime import datetime
 from uuid import UUID
 
@@ -58,7 +59,9 @@ class EmotionService:
             EmotionAnalysisResponse DTO
         """
         # Check cache first (same text = same result)
-        cache_key = f"emotion:{telegram_id}:{hash(text)}"
+        # Use deterministic hash (MD5) for cross-process cache consistency
+        text_hash = hashlib.md5(text.encode()).hexdigest()
+        cache_key = f"emotion:{telegram_id}:{text_hash}"
         cached = self.cache.get(cache_key)
         if cached:
             logger.info("Returning cached emotion analysis", telegram_id=telegram_id)
