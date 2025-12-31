@@ -9,7 +9,7 @@ from telegram import Update
 from telegram.error import Conflict, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-from config import get_logger, settings, setup_logging
+from config import get_logger, init_sentry, settings, setup_logging
 from presentation.bot.handlers import CommandHandlers, MessageHandlers
 
 logger = get_logger(__name__)
@@ -131,6 +131,9 @@ def create_bot() -> None:
     """Create and run Telegram bot with single-instance protection."""
     # Setup logging
     setup_logging()
+
+    # Initialize Sentry for error tracking (production only)
+    init_sentry()
 
     # Wait for old instance to shutdown (rolling deployment)
     logger.info(f"Waiting {STARTUP_DELAY}s for any old instances to shutdown")

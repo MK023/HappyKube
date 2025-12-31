@@ -9,7 +9,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from config import get_logger, settings, setup_logging
+from config import get_logger, init_sentry, settings, setup_logging
 
 logger = get_logger(__name__)
 
@@ -61,10 +61,13 @@ def create_app() -> FastAPI:
     # Setup logging first
     setup_logging()
 
+    # Initialize Sentry for error tracking (production only)
+    init_sentry()
+
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Emotion analysis API using HuggingFace models",
+        description="Emotion analysis API using Groq (Llama 3.3 70B)",
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,
         lifespan=lifespan,

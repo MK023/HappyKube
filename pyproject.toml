@@ -38,6 +38,7 @@ dependencies = [
     "bcrypt>=4.2.1",
     "bleach>=6.2.0",
     "structlog>=24.4.0",
+    "sentry-sdk[fastapi,sqlalchemy]>=2.19.2",
 ]
 
 [project.optional-dependencies]
