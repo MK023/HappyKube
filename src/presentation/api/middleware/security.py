@@ -1,6 +1,5 @@
 """Security middleware for API protection."""
 
-import secrets
 from typing import Optional
 from uuid import UUID
 
@@ -120,21 +119,6 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         # Valid key - proceed
         return await call_next(request)
-
-    # Fallback method for environment variable-based keys (backwards compatibility)
-    @staticmethod
-    def _validate_key_fallback(provided_key: str, valid_keys: list[str]) -> bool:
-        """
-        Validate API key using constant-time comparison (fallback for env vars).
-
-        Args:
-            provided_key: Key from request
-            valid_keys: List of valid keys
-
-        Returns:
-            True if valid, False otherwise
-        """
-        return any(secrets.compare_digest(provided_key, valid_key) for valid_key in valid_keys)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

@@ -1,6 +1,6 @@
 """Monthly report routes."""
 
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -8,7 +8,7 @@ from application.dto.emotion_dto import MonthlyStatisticsResponse
 from application.services.emotion_service import EmotionService
 from config import get_logger
 from infrastructure.cache import get_cache
-from infrastructure.database import get_engine
+from infrastructure.database import get_db_session
 from infrastructure.ml import ModelFactory
 from infrastructure.repositories import EmotionRepository, UserRepository
 
@@ -22,12 +22,12 @@ limiter = Limiter(key_func=get_remote_address)
 
 def _get_emotion_service() -> EmotionService:
     """Create EmotionService instance with dependencies."""
-    engine = get_engine()
+    session = get_db_session()
     cache = get_cache()
     model_factory = ModelFactory()
 
-    emotion_repo = EmotionRepository(engine)
-    user_repo = UserRepository(engine)
+    emotion_repo = EmotionRepository(session)
+    user_repo = UserRepository(session)
 
     return EmotionService(
         emotion_repo=emotion_repo,
@@ -119,16 +119,15 @@ def _get_emotion_service() -> EmotionService:
 async def get_monthly_report(
     request: Request,
     telegram_id: str,
-    month: str,
-    response: Response
+    month: str
 ) -> MonthlyStatisticsResponse:
     """
     Get monthly emotion statistics.
 
     Args:
+        request: FastAPI request object (for rate limiting)
         telegram_id: Telegram user ID
         month: Month in YYYY-MM format
-        response: FastAPI response object
 
     Returns:
         MonthlyStatisticsResponse with complete statistics
