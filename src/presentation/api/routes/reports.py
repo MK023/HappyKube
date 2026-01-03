@@ -1,6 +1,6 @@
 """Monthly report routes."""
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -117,6 +117,7 @@ def _get_emotion_service() -> EmotionService:
 )
 @limiter.limit("30/minute")
 async def get_monthly_report(
+    request: Request,
     telegram_id: str,
     month: str,
     response: Response
