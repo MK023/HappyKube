@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # API Configuration
     api_host: str = Field(default="0.0.0.0", description="API host")
     api_port: int = Field(default=5000, ge=1, le=65535, description="API port")
-    api_workers: int = Field(default=4, ge=1, le=32, description="Number of worker processes")
+    api_workers: int = Field(default=2, ge=1, le=32, description="Number of worker processes")
     api_timeout: int = Field(default=120, ge=30, le=300, description="Request timeout in seconds")
 
     # Database (supports both DATABASE_URL and individual fields)
@@ -42,9 +42,9 @@ class Settings(BaseSettings):
     db_name: str | None = Field(default=None, description="Database name")
     db_user: str | None = Field(default=None, description="Database user")
     db_password: str | None = Field(default=None, description="Database password")
-    db_pool_size: int = Field(default=10, ge=1, le=100, description="Connection pool size")
+    db_pool_size: int = Field(default=3, ge=1, le=100, description="Connection pool size")
     db_max_overflow: int = Field(
-        default=20, ge=0, le=100, description="Max overflow connections"
+        default=2, ge=0, le=100, description="Max overflow connections"
     )
     db_echo: bool = Field(default=False, description="Echo SQL queries")
 

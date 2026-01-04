@@ -1,5 +1,6 @@
 """Emotion analysis service (business logic layer)."""
 
+import asyncio
 import hashlib
 from datetime import datetime
 from uuid import UUID
@@ -21,6 +22,10 @@ from ..interfaces.emotion_repository import IEmotionRepository
 from ..interfaces.user_repository import IUserRepository
 
 logger = get_logger(__name__)
+
+# Cache TTL configuration (in seconds)
+CACHE_TTL_EMOTION = 7200  # 2 hours - same text will have same emotion
+CACHE_TTL_MONTHLY = 1800  # 30 minutes - stats update frequently
 
 
 class EmotionService:
@@ -63,9 +68,9 @@ class EmotionService:
             EmotionAnalysisResponse DTO
         """
         # Check cache first (same text = same result)
-        # Use deterministic hash (MD5) for cross-process cache consistency
-        text_hash = hashlib.md5(text.encode()).hexdigest()
-        cache_key = f"emotion:{telegram_id}:{text_hash}"
+        # Use SHA256 hash (shortened to 16 chars for memory efficiency)
+        text_hash = hashlib.sha256(text.encode()).hexdigest()[:16]
+        cache_key = f"emo:{telegram_id[:8]}:{text_hash}"  # Shorter keys = less Redis memory
         cached = self.cache.get(cache_key)
         if cached:
             logger.info("Returning cached emotion analysis", telegram_id=telegram_id)
@@ -77,9 +82,11 @@ class EmotionService:
         # Get Groq analyzer (handles all languages)
         analyzer = self.model_factory.get_groq_analyzer()
 
-        # Perform analysis (async API calls)
-        emotion, emotion_score = await analyzer.analyze_emotion(text)
-        sentiment, sentiment_score = await analyzer.analyze_sentiment(text)
+        # Perform analysis (async API calls in parallel for speed)
+        (emotion, emotion_score), (sentiment, sentiment_score) = await asyncio.gather(
+            analyzer.analyze_emotion(text),
+            analyzer.analyze_sentiment(text)
+        )
 
         logger.info(
             "Emotion analyzed",
@@ -114,8 +121,8 @@ class EmotionService:
             model_type=analyzer.model_type.value,
         )
 
-        # Cache for 1 hour
-        self.cache.set(cache_key, response.model_dump(), ttl=3600)
+        # Cache for 2 hours (longer TTL for stable emotion analysis)
+        self.cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_EMOTION)
 
         return response
 
@@ -265,10 +272,23 @@ class EmotionService:
 
         # Build sentiment statistics
         sentiment_total = sum(sentiment_counts.values())
+        pos_pct = (
+            round(sentiment_counts["positive"] / sentiment_total * 100, 1)
+            if sentiment_total > 0
+            else 0.0
+        )
+        neg_pct = (
+            round(sentiment_counts["negative"] / sentiment_total * 100, 1)
+            if sentiment_total > 0
+            else 0.0
+        )
+        neu_pct = (
+            round(sentiment_counts["neutral"] / sentiment_total * 100, 1)
+            if sentiment_total > 0
+            else 0.0
+        )
         sentiment_stats = SentimentStatistic(
-            positive=round(sentiment_counts["positive"] / sentiment_total * 100, 1) if sentiment_total > 0 else 0.0,
-            negative=round(sentiment_counts["negative"] / sentiment_total * 100, 1) if sentiment_total > 0 else 0.0,
-            neutral=round(sentiment_counts["neutral"] / sentiment_total * 100, 1) if sentiment_total > 0 else 0.0,
+            positive=pos_pct, negative=neg_pct, neutral=neu_pct
         )
 
         # Find dominant emotion
@@ -326,18 +346,21 @@ class EmotionService:
         insights: list[MonthlyInsight] = []
 
         # Insight 1: Overall sentiment
+        month_name = self._get_month_name(month)
         if sentiment_stats.positive > 60:
-            insights.append(MonthlyInsight(
-                type="positive_month",
-                message=f"🎉 {self._get_month_name(month)} è stato un mese positivo! ({sentiment_stats.positive}% emozioni positive)",
-                icon="🎉"
-            ))
+            msg = (
+                f"🎉 {month_name} è stato un mese positivo! "
+                f"({sentiment_stats.positive}% emozioni positive)"
+            )
+            insights.append(MonthlyInsight(type="positive_month", message=msg, icon="🎉"))
         elif sentiment_stats.negative > 50:
-            insights.append(MonthlyInsight(
-                type="challenging_month",
-                message=f"💪 {self._get_month_name(month)} è stato difficile, ma ce l'hai fatta! ({sentiment_stats.negative}% emozioni negative)",
-                icon="💪"
-            ))
+            msg = (
+                f"💪 {month_name} è stato difficile, ma ce l'hai fatta! "
+                f"({sentiment_stats.negative}% emozioni negative)"
+            )
+            insights.append(
+                MonthlyInsight(type="challenging_month", message=msg, icon="💪")
+            )
         else:
             insights.append(MonthlyInsight(
                 type="balanced_month",
@@ -367,11 +390,11 @@ class EmotionService:
         # Insight 3: Consistency
         consistency_pct = round(active_days / total_days_in_month * 100, 1)
         if consistency_pct >= 80:
-            insights.append(MonthlyInsight(
-                type="high_consistency",
-                message=f"🔥 Fantastico! Hai registrato emozioni per {active_days}/{total_days_in_month} giorni ({consistency_pct}%)",
-                icon="🔥"
-            ))
+            msg = (
+                f"🔥 Fantastico! Hai registrato emozioni per "
+                f"{active_days}/{total_days_in_month} giorni ({consistency_pct}%)"
+            )
+            insights.append(MonthlyInsight(type="high_consistency", message=msg, icon="🔥"))
         elif consistency_pct >= 50:
             insights.append(MonthlyInsight(
                 type="good_consistency",

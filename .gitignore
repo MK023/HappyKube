@@ -52,3 +52,8 @@ build/
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+
+# Doppler secrets management
+doppler.yaml
+.doppler.yaml
+.env.doppler

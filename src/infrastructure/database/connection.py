@@ -34,14 +34,18 @@ def get_engine() -> Engine:
             pool_size=settings.db_pool_size,
         )
 
-        # Create engine with connection pooling
+        # Create engine with connection pooling optimized for NeonDB
         _engine = create_engine(
             settings.get_database_url(),
             pool_size=settings.db_pool_size,
             max_overflow=settings.db_max_overflow,
             pool_pre_ping=True,  # Verify connections before using
-            pool_recycle=3600,  # Recycle connections after 1 hour
+            pool_recycle=300,  # Recycle after 5min (NeonDB serverless optimization)
             echo=settings.db_echo,  # Log SQL queries if enabled
+            connect_args={
+                "options": "-c statement_timeout=30000",  # 30s query timeout
+                "connect_timeout": 10,
+            }
         )
 
         # Add connection event listeners for debugging

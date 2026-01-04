@@ -42,6 +42,33 @@ async def lifespan(app: FastAPI):
     # Shutdown - cleanup resources
     logger.info("Application shutting down, cleaning up resources")
 
+    # Close Groq analyzer HTTP client
+    try:
+        from infrastructure.ml.model_factory import ModelFactory
+        factory = ModelFactory()
+        if hasattr(factory, '_groq_analyzer') and factory._groq_analyzer:
+            await factory._groq_analyzer.close()
+            logger.info("Groq analyzer closed")
+    except Exception as e:
+        logger.error("Error closing Groq analyzer", error=str(e))
+
+    # Close Redis connection
+    try:
+        from infrastructure.cache import get_cache
+        cache = get_cache()
+        cache.close()
+        logger.info("Redis connection closed")
+    except Exception as e:
+        logger.error("Error closing Redis", error=str(e))
+
+    # Close database connections
+    try:
+        from infrastructure.database import close_database
+        close_database()
+        logger.info("Database connections closed")
+    except Exception as e:
+        logger.error("Error closing database", error=str(e))
+
     # Clear analyzer cache
     _analyzer_cache.clear()
 

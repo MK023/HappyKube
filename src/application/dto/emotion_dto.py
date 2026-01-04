@@ -4,24 +4,23 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EmotionAnalysisRequest(BaseModel):
     """Request DTO for emotion analysis."""
 
-    user_id: str = Field(..., description="Telegram user ID", min_length=1, max_length=64)
-    text: str = Field(..., description="Text to analyze", min_length=1, max_length=500)
-
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_id": "123456789",
                 "text": "Oggi mi sento molto felice!",
             }
         }
+    )
+
+    user_id: str = Field(..., description="Telegram user ID", min_length=1, max_length=64)
+    text: str = Field(..., description="Text to analyze", min_length=1, max_length=500)
 
 
 class EmotionAnalysisResponse(BaseModel):
@@ -77,15 +76,8 @@ class EmotionRecordDTO(BaseModel):
 class EmotionReportResponse(BaseModel):
     """Response DTO for emotion reports."""
 
-    user_id: str = Field(..., description="User identifier (hashed)")
-    period: str | None = Field(None, description="Report period (if filtered)")
-    total_records: int = Field(..., description="Total emotion records")
-    emotions: list[EmotionRecordDTO] = Field(..., description="List of emotion records")
-
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_id": "abc123...",
                 "period": "2025-12",
@@ -93,6 +85,12 @@ class EmotionReportResponse(BaseModel):
                 "emotions": [],
             }
         }
+    )
+
+    user_id: str = Field(..., description="User identifier (hashed)")
+    period: str | None = Field(None, description="Report period (if filtered)")
+    total_records: int = Field(..., description="Total emotion records")
+    emotions: list[EmotionRecordDTO] = Field(..., description="List of emotion records")
 
 
 class EmotionStatistic(BaseModel):
