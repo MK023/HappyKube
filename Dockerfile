@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy pyproject.toml and src directory for building
 COPY pyproject.toml .
 COPY src/ ./src/
-RUN pip wheel --no-cache-dir --wheel-dir /wheels .
+RUN pip wheel --no-cache-dir --no-warn-script-location --root-user-action=ignore --wheel-dir /wheels .
 
 # ================================
 # Stage 2: Runtime
@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy and install Python wheels
 COPY --from=builder /wheels /wheels
-RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+RUN pip install --no-cache-dir --no-warn-script-location --root-user-action=ignore /wheels/* && rm -rf /wheels
 
 # Copy application code
 COPY --chown=appuser:appuser src/ /app/src/
