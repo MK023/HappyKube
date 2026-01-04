@@ -1,5 +1,6 @@
 """Application configuration using Pydantic Settings."""
 
+import os
 from functools import lru_cache
 from typing import Literal
 
@@ -159,6 +160,11 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_settings(self) -> "Settings":
         """Validate settings after initialization."""
+        # Skip validation during Docker build (env vars not available yet)
+        # They will be injected by Doppler at runtime
+        if os.getenv("DOCKER_BUILD_SKIP_VALIDATION") == "1":
+            return self
+
         # Validate database connection can be built
         if not self.database_url and not all([self.db_host, self.db_name, self.db_user, self.db_password]):
             raise ValueError(
