@@ -7,11 +7,12 @@ from typing import Any
 import structlog
 from structlog.types import Processor
 
-from .settings import settings
+from .settings import get_settings
 
 
 def setup_logging() -> None:
     """Configure structured logging with structlog."""
+    settings = get_settings()
 
     # Define log processors
     shared_processors: list[Processor] = [
