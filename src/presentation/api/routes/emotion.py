@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlalchemy.orm import Session
 
 from application.dto.emotion_dto import (
     EmotionAnalysisRequest,
@@ -12,7 +13,7 @@ from application.dto.emotion_dto import (
 from application.services import EmotionService
 from config import get_logger
 from infrastructure.cache import get_cache
-from infrastructure.database import get_db_session
+from infrastructure.database import get_db
 from infrastructure.ml import get_model_factory
 from infrastructure.repositories import EmotionRepository, UserRepository
 from ..middleware.auth import require_api_key
@@ -72,6 +73,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def analyze_emotion(
     request: Request,
     emotion_request: EmotionAnalysisRequest,
+    db: Session = Depends(get_db),
     _: None = Depends(require_api_key),
 ):
     """
@@ -82,21 +84,20 @@ async def analyze_emotion(
     """
     try:
         # Create service with dependencies
-        with get_db_session() as session:
-            emotion_repo = EmotionRepository(session)
-            user_repo = UserRepository(session)
-            service = EmotionService(
-                emotion_repo=emotion_repo,
-                user_repo=user_repo,
-                model_factory=get_model_factory(),
-                cache=get_cache(),
-            )
+        emotion_repo = EmotionRepository(db)
+        user_repo = UserRepository(db)
+        service = EmotionService(
+            emotion_repo=emotion_repo,
+            user_repo=user_repo,
+            model_factory=get_model_factory(),
+            cache=get_cache(),
+        )
 
-            # Analyze emotion (async)
-            response = await service.analyze_emotion(
-                telegram_id=emotion_request.user_id,
-                text=emotion_request.text,
-            )
+        # Analyze emotion (async)
+        response = await service.analyze_emotion(
+            telegram_id=emotion_request.user_id,
+            text=emotion_request.text,
+        )
 
         logger.info(
             "Emotion analyzed via API",
@@ -176,6 +177,7 @@ async def get_report(
     request: Request,
     user_id: str,
     month: str | None = None,
+    db: Session = Depends(get_db),
     _: None = Depends(require_api_key),
 ):
     """
@@ -190,21 +192,20 @@ async def get_report(
     """
     try:
         # Create service
-        with get_db_session() as session:
-            emotion_repo = EmotionRepository(session)
-            user_repo = UserRepository(session)
-            service = EmotionService(
-                emotion_repo=emotion_repo,
-                user_repo=user_repo,
-                model_factory=get_model_factory(),
-                cache=get_cache(),
-            )
+        emotion_repo = EmotionRepository(db)
+        user_repo = UserRepository(db)
+        service = EmotionService(
+            emotion_repo=emotion_repo,
+            user_repo=user_repo,
+            model_factory=get_model_factory(),
+            cache=get_cache(),
+        )
 
-            # Get report
-            response = service.get_user_report(
-                telegram_id=user_id,
-                month=month,
-            )
+        # Get report
+        response = service.get_user_report(
+            telegram_id=user_id,
+            month=month,
+        )
 
         logger.info("Report generated via API", user_id=user_id, records=response.total_records)
 
