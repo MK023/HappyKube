@@ -85,9 +85,9 @@ def release_lock() -> None:
         logger.info("Lock released", lock_file=str(LOCK_FILE))
 
 
-def signal_handler(signum, frame):
+def signal_handler(signum: int, frame: object) -> None:
     """Handle shutdown signals gracefully."""
-    logger.info(f"Received signal {signum}, shutting down gracefully")
+    logger.info("Received signal %s, shutting down gracefully", signum)
     release_lock()
     sys.exit(0)
 
@@ -137,7 +137,7 @@ def create_bot() -> None:
     init_sentry()
 
     # Wait for old instance to shutdown (rolling deployment)
-    logger.info(f"Waiting {STARTUP_DELAY}s for any old instances to shutdown")
+    logger.info("Waiting %ss for any old instances to shutdown", STARTUP_DELAY)
     import time
     time.sleep(STARTUP_DELAY)
 

@@ -1,5 +1,7 @@
 """Sentry integration for error tracking."""
 
+from typing import Any
+
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
@@ -64,7 +66,7 @@ def init_sentry() -> None:
         logger.error("Failed to initialize Sentry", error=str(e))
 
 
-def _before_send(event, hint):
+def _before_send(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
     """
     Filter/modify events before sending to Sentry.
 

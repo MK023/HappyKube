@@ -45,20 +45,18 @@ async def lifespan(app: FastAPI):
 
     # Close Groq analyzer HTTP client
     try:
-        from infrastructure.ml.model_factory import ModelFactory
-        factory = ModelFactory()
-        if hasattr(factory, '_groq_analyzer') and factory._groq_analyzer:
-            await factory._groq_analyzer.close()
-            logger.info("Groq analyzer closed")
+        from infrastructure.ml.model_factory import get_model_factory
+        factory = get_model_factory()
+        await factory.cleanup()
+        logger.info("Groq analyzer closed")
     except Exception as e:
         logger.error("Error closing Groq analyzer", error=str(e))
 
-    # Close Redis connection
+    # Close Redis connection (sync operation)
     try:
         from infrastructure.cache import get_cache
         cache = get_cache()
         cache.close()
-        logger.info("Redis connection closed")
     except Exception as e:
         logger.error("Error closing Redis", error=str(e))
 

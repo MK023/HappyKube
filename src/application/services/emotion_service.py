@@ -369,18 +369,10 @@ class EmotionService:
             ))
 
         # Insight 2: Dominant emotion
+        from domain.enums.emotion_emojis import EMOTION_EMOJIS
+
         dominant = max(emotion_stats.items(), key=lambda x: x[1].percentage)
-        emotion_icons = {
-            "joy": "😊",
-            "sadness": "😢",
-            "anger": "😠",
-            "fear": "😰",
-            "love": "❤️",
-            "surprise": "😲",
-            "neutral": "😐",
-            "disgust": "🤢"
-        }
-        icon = emotion_icons.get(dominant[0], "💭")
+        icon = EMOTION_EMOJIS.get(dominant[0], "💭")
         insights.append(MonthlyInsight(
             type="dominant_emotion",
             message=f"{icon} Emozione più frequente: {dominant[0]} ({dominant[1].percentage}%)",

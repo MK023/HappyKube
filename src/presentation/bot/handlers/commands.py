@@ -218,14 +218,6 @@ I tuoi messaggi sono criptati e sicuri.
     @staticmethod
     def _get_emotion_emoji(emotion: str) -> str:
         """Get emoji for emotion type."""
-        emotion_emojis = {
-            "joy": "😊",
-            "sadness": "😢",
-            "anger": "😠",
-            "fear": "😨",
-            "surprise": "😲",
-            "disgust": "🤢",
-            "neutral": "😐",
-            "love": "❤️"
-        }
-        return emotion_emojis.get(emotion.lower(), "🎭")
+        from domain.enums.emotion_emojis import EMOTION_EMOJIS
+
+        return EMOTION_EMOJIS.get(emotion.lower(), "🎭")

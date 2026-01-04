@@ -20,12 +20,13 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add performance indexes for monthly statistics queries."""
-    # Composite index for monthly aggregations (user_id + month)
+    # Composite index for user_id + created_at queries
     # Optimizes: SELECT ... WHERE user_id = X AND created_at >= 'YYYY-MM-01' AND created_at < 'YYYY-MM+1-01'
+    # Note: Using standard columns instead of DATE_TRUNC to avoid IMMUTABLE requirement
     op.create_index(
-        'idx_emotions_user_month',
+        'idx_emotions_user_created',
         'emotions',
-        ['user_id', sa.text("DATE_TRUNC('month', created_at)")],
+        ['user_id', 'created_at'],
         postgresql_using='btree'
     )
 
@@ -34,7 +35,7 @@ def upgrade() -> None:
     op.create_index(
         'idx_emotions_created_desc',
         'emotions',
-        [sa.text('created_at DESC')],
+        [sa.desc('created_at')],
         postgresql_using='btree'
     )
 
@@ -52,4 +53,4 @@ def downgrade() -> None:
     """Remove performance indexes."""
     op.drop_index('idx_emotions_type_created', table_name='emotions')
     op.drop_index('idx_emotions_created_desc', table_name='emotions')
-    op.drop_index('idx_emotions_user_month', table_name='emotions')
+    op.drop_index('idx_emotions_user_created', table_name='emotions')

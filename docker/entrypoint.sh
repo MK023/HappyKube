@@ -1,23 +1,105 @@
 #!/bin/bash
 set -e
 
-echo "🔄 Waiting for environment variables..."
+echo "🔄 Validating environment variables..."
 
-# Wait for DATABASE_URL to be available (injected by Doppler/Render)
-MAX_WAIT=30
-COUNTER=0
-while [ -z "$DATABASE_URL" ] && [ $COUNTER -lt $MAX_WAIT ]; do
-    echo "⏳ Waiting for DATABASE_URL... ($COUNTER/$MAX_WAIT)"
-    sleep 1
-    COUNTER=$((COUNTER + 1))
+# Define required environment variables based on APP_ENV
+REQUIRED_VARS=()
+OPTIONAL_VARS=()
+MISSING_VARS=()
+WARNING_VARS=()
+
+# Always required variables
+REQUIRED_VARS+=("TELEGRAM_BOT_TOKEN")
+REQUIRED_VARS+=("GROQ_API_KEY")
+
+# Database validation (DATABASE_URL OR individual DB fields)
+if [ -z "$DATABASE_URL" ]; then
+    REQUIRED_VARS+=("DB_HOST" "DB_NAME" "DB_USER" "DB_PASSWORD")
+fi
+
+# Redis validation (REDIS_URL OR REDIS_HOST)
+if [ -z "$REDIS_URL" ] && [ -z "$REDIS_HOST" ]; then
+    REQUIRED_VARS+=("REDIS_HOST")
+fi
+
+# Production-specific requirements
+if [ "$APP_ENV" = "production" ]; then
+    REQUIRED_VARS+=("ENCRYPTION_KEY")
+    OPTIONAL_VARS+=("SENTRY_DSN")
+fi
+
+# Check required variables
+echo "🔍 Checking required environment variables..."
+for var in "${REQUIRED_VARS[@]}"; do
+    if [ -z "${!var}" ]; then
+        MISSING_VARS+=("$var")
+        echo "  ❌ $var is NOT set"
+    else
+        # Mask sensitive values in logs
+        if [[ "$var" == *"TOKEN"* ]] || [[ "$var" == *"KEY"* ]] || [[ "$var" == *"PASSWORD"* ]]; then
+            echo "  ✅ $var is set (***masked***)"
+        else
+            echo "  ✅ $var is set"
+        fi
+    fi
 done
 
-if [ -z "$DATABASE_URL" ]; then
-    echo "❌ DATABASE_URL not set after ${MAX_WAIT}s. Cannot run migrations."
+# Check optional variables (warnings only)
+if [ ${#OPTIONAL_VARS[@]} -gt 0 ]; then
+    echo ""
+    echo "⚠️  Checking optional environment variables..."
+    for var in "${OPTIONAL_VARS[@]}"; do
+        if [ -z "${!var}" ]; then
+            WARNING_VARS+=("$var")
+            echo "  ⚠️  $var is NOT set (optional)"
+        else
+            echo "  ✅ $var is set"
+        fi
+    done
+fi
+
+# Exit if any required variable is missing
+if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+    echo ""
+    echo "❌ FATAL: The following required environment variables are missing:"
+    printf '   - %s\n' "${MISSING_VARS[@]}"
+    echo ""
+    echo "💡 Please set these variables in Doppler or your .env file"
     exit 1
 fi
 
-echo "✅ DATABASE_URL available"
+# Show warnings but continue
+if [ ${#WARNING_VARS[@]} -gt 0 ]; then
+    echo ""
+    echo "⚠️  WARNING: The following optional variables are not set:"
+    printf '   - %s\n' "${WARNING_VARS[@]}"
+    echo "💡 The application will continue but some features may be disabled"
+fi
+
+echo ""
+echo "✅ All required environment variables are properly configured!"
+echo ""
+
+# Wait for DATABASE_URL to be available (injected by Doppler/Render)
+if [ -n "$DATABASE_URL" ]; then
+    echo "🔄 Waiting for DATABASE_URL to be fully available..."
+    MAX_WAIT=30
+    COUNTER=0
+
+    # Give a moment for the database service to be ready
+    while [ $COUNTER -lt $MAX_WAIT ]; do
+        if [ -n "$DATABASE_URL" ]; then
+            echo "✅ DATABASE_URL is available"
+            break
+        fi
+        echo "⏳ Waiting for DATABASE_URL... ($COUNTER/$MAX_WAIT)"
+        sleep 1
+        COUNTER=$((COUNTER + 1))
+    done
+fi
+
+echo ""
 echo "🔄 Running database migrations..."
 cd /app
 
@@ -31,5 +113,9 @@ else
     exit 1
 fi
 
+echo ""
 echo "🚀 Starting application services..."
+echo "   📡 API will be available on port ${API_PORT:-5000}"
+echo "   🤖 Telegram bot will start shortly"
+echo ""
 exec "$@"

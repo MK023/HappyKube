@@ -24,6 +24,13 @@ class ModelFactory:
             self._groq = GroqAnalyzer()
         return self._groq
 
+    async def cleanup(self) -> None:
+        """Cleanup resources and close connections."""
+        if self._groq is not None:
+            await self._groq.close()
+            self._groq = None
+            logger.info("Groq analyzer resources cleaned up")
+
 
 # Global singleton
 _factory: ModelFactory | None = None
