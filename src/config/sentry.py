@@ -5,7 +5,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from .logging import get_logger
-from .settings import settings
+from .settings import get_settings
 
 logger = get_logger(__name__)
 
@@ -18,6 +18,8 @@ def init_sentry() -> None:
     - Running in production environment
     - SENTRY_DSN is configured
     """
+    settings = get_settings()
+
     if not settings.sentry_dsn:
         logger.info("Sentry not configured (SENTRY_DSN missing)")
         return
