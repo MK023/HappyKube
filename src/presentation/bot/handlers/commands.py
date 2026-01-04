@@ -5,9 +5,10 @@ from datetime import datetime
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 class CommandHandlers:

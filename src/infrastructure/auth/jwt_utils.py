@@ -5,9 +5,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 class JWTUtils:

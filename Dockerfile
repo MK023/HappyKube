@@ -60,9 +60,6 @@ RUN mkdir -p /var/log/supervisor && chown -R appuser:appuser /var/log/supervisor
 # Set Python path to include src
 ENV PYTHONPATH=/app/src:/app
 
-# Skip settings validation during build (env vars injected by Doppler at runtime)
-ENV DOCKER_BUILD_SKIP_VALIDATION=1
-
 # Expose API port
 EXPOSE 5000
 

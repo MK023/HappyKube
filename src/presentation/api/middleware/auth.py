@@ -2,9 +2,10 @@
 
 from fastapi import Header, HTTPException, status
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 async def require_api_key(x_api_key: str | None = Header(None)) -> None:

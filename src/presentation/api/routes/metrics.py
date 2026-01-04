@@ -9,9 +9,10 @@ from prometheus_client import (
     generate_latest,
 )
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 router = APIRouter(tags=["monitoring"])
 

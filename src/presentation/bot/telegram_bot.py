@@ -9,10 +9,11 @@ from telegram import Update
 from telegram.error import Conflict, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-from config import get_logger, init_sentry, settings, setup_logging
+from config import get_logger, get_settings, init_sentry, setup_logging
 from presentation.bot.handlers import CommandHandlers, MessageHandlers
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 # Lock file to prevent multiple instances
 LOCK_FILE = Path("/tmp/happykube_bot.lock")

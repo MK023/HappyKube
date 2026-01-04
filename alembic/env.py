@@ -1,3 +1,4 @@
+import os
 import sys
 from logging.config import fileConfig
 from pathlib import Path
@@ -9,16 +10,29 @@ from alembic import context
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-# Import config and models
-from config import settings
+# Import models only (no settings to avoid validation during build)
 from infrastructure.database.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Set database URL from settings
-config.set_main_option("sqlalchemy.url", settings.get_database_url())
+# Get database URL directly from environment
+# This avoids importing settings and triggering validation during Docker build
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    config.set_main_option("sqlalchemy.url", database_url)
+else:
+    # Fallback: construct from individual env vars
+    db_host = os.getenv("DB_HOST", "localhost")
+    db_port = os.getenv("DB_PORT", "5432")
+    db_name = os.getenv("DB_NAME")
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+
+    if db_name and db_user and db_password:
+        url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+        config.set_main_option("sqlalchemy.url", url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

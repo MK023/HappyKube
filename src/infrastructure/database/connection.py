@@ -7,9 +7,10 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 # Global engine instance (created once)

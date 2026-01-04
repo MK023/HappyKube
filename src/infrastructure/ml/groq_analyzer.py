@@ -2,11 +2,12 @@
 
 import httpx
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 from domain import EmotionScore, EmotionType, SentimentType
 from domain.enums import ModelType
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 # Constants
 GROQ_DEFAULT_CONFIDENCE = 0.85  # High confidence for Llama 3.3 70B model

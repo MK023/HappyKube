@@ -7,11 +7,12 @@ from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse, Response
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 from infrastructure.database import get_engine
 from infrastructure.repositories import APIKeyRepository
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):

@@ -2,11 +2,12 @@
 
 from fastapi import APIRouter, Response, status
 
-from config import get_logger, settings
+from config import get_logger, get_settings
 from infrastructure.cache import get_cache
 from infrastructure.database import health_check as db_health_check
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 router = APIRouter(tags=["health"])
 
