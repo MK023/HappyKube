@@ -54,6 +54,9 @@ dev = [
     "pre-commit>=4.0.1",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
