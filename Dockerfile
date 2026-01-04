@@ -12,11 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy pyproject.toml for dependencies
+# Copy pyproject.toml and src directory for building
 COPY pyproject.toml .
-
-# Install dependencies directly (simpler than wheels for this case)
-RUN pip install --no-cache-dir --no-warn-script-location --root-user-action=ignore .
+COPY src/ ./src/
+RUN pip wheel --no-cache-dir --wheel-dir /wheels .
 
 # ================================
 # Stage 2: Runtime
@@ -34,9 +33,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy pyproject.toml and install dependencies
-COPY pyproject.toml .
-RUN pip install --no-cache-dir --no-warn-script-location --root-user-action=ignore .
+# Copy and install Python wheels
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 
 # Copy application code
 COPY --chown=appuser:appuser src/ /app/src/
