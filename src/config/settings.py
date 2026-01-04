@@ -61,7 +61,7 @@ class Settings(BaseSettings):
 
     # Security
     encryption_key: str | None = Field(default=None, description="Fernet encryption key for PII")
-    jwt_secret_key: str = Field(..., description="JWT secret key")
+    jwt_secret_key: str = Field(default="", description="JWT secret key")
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
     jwt_expire_minutes: int = Field(
         default=1440, ge=5, le=43200, description="JWT expiration in minutes"
@@ -71,13 +71,13 @@ class Settings(BaseSettings):
     )
 
     # Telegram Bot
-    telegram_bot_token: str = Field(..., description="Telegram bot token")
+    telegram_bot_token: str = Field(default="", description="Telegram bot token")
     telegram_api_timeout: int = Field(
         default=30, ge=10, le=60, description="Telegram API timeout"
     )
 
     # ML API - Groq (Llama 3.3 70B)
-    groq_api_key: str = Field(..., description="Groq API key for Llama inference (free)")
+    groq_api_key: str = Field(default="", description="Groq API key for Llama inference (free)")
 
     # Rate Limiting
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
