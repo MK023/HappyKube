@@ -45,6 +45,7 @@ COPY --chown=appuser:appuser wsgi.py /app/wsgi.py
 
 # Copy alembic config and migrations
 COPY --chown=appuser:appuser alembic.ini /app/alembic.ini
+COPY --chown=appuser:appuser alembic/ /app/alembic/
 
 # Copy supervisor config
 COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
