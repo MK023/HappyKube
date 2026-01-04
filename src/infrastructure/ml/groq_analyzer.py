@@ -22,13 +22,30 @@ class GroqAnalyzer:
     """
 
     def __init__(self) -> None:
-        """Initialize Groq analyzer."""
+        """Initialize Groq analyzer with connection pooling."""
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
         self.api_key = settings.groq_api_key
         self.model = "llama-3.3-70b-versatile"
         self.model_name = "llama-3.3-70b-versatile"
         self.model_type = ModelType.GROQ
-        logger.info("Initialized Groq analyzer", model=self.model)
+
+        # Create shared HTTP client with connection pooling and HTTP/2
+        self._client = httpx.AsyncClient(
+            timeout=httpx.Timeout(15.0, connect=5.0),
+            limits=httpx.Limits(
+                max_connections=5,
+                max_keepalive_connections=3,
+                keepalive_expiry=30.0
+            ),
+            http2=True  # HTTP/2 multiplexing for better performance
+        )
+
+        logger.info("Initialized Groq analyzer with connection pool", model=self.model)
+
+    async def close(self) -> None:
+        """Close HTTP client gracefully."""
+        await self._client.aclose()
+        logger.info("Groq analyzer HTTP client closed")
 
     async def analyze_emotion(self, text: str) -> tuple[EmotionType, EmotionScore]:
         """
@@ -47,22 +64,21 @@ Text: {text}
 
 Emotion:"""
 
-            async with httpx.AsyncClient(timeout=GROQ_API_TIMEOUT) as client:
-                response = await client.post(
-                    self.api_url,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": self.model,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "max_tokens": 10,
-                        "temperature": 0
-                    }
-                )
-                response.raise_for_status()
-                result = response.json()
+            response = await self._client.post(
+                self.api_url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 10,
+                    "temperature": 0
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
 
             # Extract emotion label from response
             label = result["choices"][0]["message"]["content"].strip().lower()
@@ -94,22 +110,21 @@ Text: {text}
 
 Sentiment:"""
 
-            async with httpx.AsyncClient(timeout=GROQ_API_TIMEOUT) as client:
-                response = await client.post(
-                    self.api_url,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": self.model,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "max_tokens": 10,
-                        "temperature": 0
-                    }
-                )
-                response.raise_for_status()
-                result = response.json()
+            response = await self._client.post(
+                self.api_url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 10,
+                    "temperature": 0
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
 
             # Extract sentiment label from response
             label = result["choices"][0]["message"]["content"].strip().lower()

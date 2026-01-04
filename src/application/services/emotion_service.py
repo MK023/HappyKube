@@ -1,5 +1,6 @@
 """Emotion analysis service (business logic layer)."""
 
+import asyncio
 import hashlib
 from datetime import datetime
 from uuid import UUID
@@ -21,6 +22,10 @@ from ..interfaces.emotion_repository import IEmotionRepository
 from ..interfaces.user_repository import IUserRepository
 
 logger = get_logger(__name__)
+
+# Cache TTL configuration (in seconds)
+CACHE_TTL_EMOTION = 7200  # 2 hours - same text will have same emotion
+CACHE_TTL_MONTHLY = 1800  # 30 minutes - stats update frequently
 
 
 class EmotionService:
@@ -63,9 +68,9 @@ class EmotionService:
             EmotionAnalysisResponse DTO
         """
         # Check cache first (same text = same result)
-        # Use deterministic hash (SHA256) for cross-process cache consistency
-        text_hash = hashlib.sha256(text.encode()).hexdigest()
-        cache_key = f"emotion:{telegram_id}:{text_hash}"
+        # Use SHA256 hash (shortened to 16 chars for memory efficiency)
+        text_hash = hashlib.sha256(text.encode()).hexdigest()[:16]
+        cache_key = f"emo:{telegram_id[:8]}:{text_hash}"  # Shorter keys = less Redis memory
         cached = self.cache.get(cache_key)
         if cached:
             logger.info("Returning cached emotion analysis", telegram_id=telegram_id)
@@ -77,9 +82,11 @@ class EmotionService:
         # Get Groq analyzer (handles all languages)
         analyzer = self.model_factory.get_groq_analyzer()
 
-        # Perform analysis (async API calls)
-        emotion, emotion_score = await analyzer.analyze_emotion(text)
-        sentiment, sentiment_score = await analyzer.analyze_sentiment(text)
+        # Perform analysis (async API calls in parallel for speed)
+        (emotion, emotion_score), (sentiment, sentiment_score) = await asyncio.gather(
+            analyzer.analyze_emotion(text),
+            analyzer.analyze_sentiment(text)
+        )
 
         logger.info(
             "Emotion analyzed",
@@ -114,8 +121,8 @@ class EmotionService:
             model_type=analyzer.model_type.value,
         )
 
-        # Cache for 1 hour
-        self.cache.set(cache_key, response.model_dump(), ttl=3600)
+        # Cache for 2 hours (longer TTL for stable emotion analysis)
+        self.cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_EMOTION)
 
         return response
 

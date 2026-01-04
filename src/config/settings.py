@@ -42,9 +42,9 @@ class Settings(BaseSettings):
     db_name: str | None = Field(default=None, description="Database name")
     db_user: str | None = Field(default=None, description="Database user")
     db_password: str | None = Field(default=None, description="Database password")
-    db_pool_size: int = Field(default=5, ge=1, le=100, description="Connection pool size")
+    db_pool_size: int = Field(default=3, ge=1, le=100, description="Connection pool size")
     db_max_overflow: int = Field(
-        default=10, ge=0, le=100, description="Max overflow connections"
+        default=2, ge=0, le=100, description="Max overflow connections"
     )
     db_echo: bool = Field(default=False, description="Echo SQL queries")
 
