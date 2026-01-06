@@ -115,6 +115,45 @@ else
 fi
 
 echo ""
+echo "🔑 Bootstrapping API keys..."
+
+# Bootstrap API key if INTERNAL_API_KEY is set and database is empty
+if [ -n "$INTERNAL_API_KEY" ]; then
+    python -c "
+import sys
+sys.path.insert(0, '/app/src')
+from infrastructure.database import get_engine
+from infrastructure.repositories import APIKeyRepository
+
+engine = get_engine()
+repo = APIKeyRepository(engine)
+
+# Check if any API keys exist
+existing_keys = repo.list_keys(include_inactive=True)
+
+if not existing_keys:
+    import os
+    api_key = os.environ.get('INTERNAL_API_KEY')
+    print(f'📝 Creating initial API key from INTERNAL_API_KEY...')
+    repo.create_key(
+        api_key=api_key,
+        name='Bootstrap API Key',
+        rate_limit_per_minute=1000
+    )
+    print('✅ Initial API key created successfully')
+else:
+    print(f'ℹ️  Found {len(existing_keys)} existing API key(s) - skipping bootstrap')
+"
+    if [ $? -eq 0 ]; then
+        echo "✅ API key bootstrap completed"
+    else
+        echo "⚠️  API key bootstrap failed (non-fatal)"
+    fi
+else
+    echo "ℹ️  INTERNAL_API_KEY not set - skipping API key bootstrap"
+fi
+
+echo ""
 echo "🚀 Starting application services..."
 echo "   📡 API will be available on port ${API_PORT:-5000}"
 echo "   🤖 Telegram bot will start shortly"

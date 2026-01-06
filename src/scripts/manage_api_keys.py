@@ -56,7 +56,8 @@ def cli():
 @click.argument("name")
 @click.option("--rate-limit", default=100, type=int, help="Requests per minute limit")
 @click.option("--expires", type=str, help="Expiration date (YYYY-MM-DD)")
-def create(name: str, rate_limit: int, expires: str | None):
+@click.option("--key", type=str, help="Use existing API key instead of generating new one")
+def create(name: str, rate_limit: int, expires: str | None, key: str | None):
     """Create a new API key."""
     # Parse expiration date
     expires_at = None
@@ -67,8 +68,13 @@ def create(name: str, rate_limit: int, expires: str | None):
             click.echo(f"❌ Invalid date format: {expires}. Use YYYY-MM-DD", err=True)
             sys.exit(1)
 
-    # Generate secure key
-    api_key = generate_secure_api_key()
+    # Use provided key or generate new one
+    if key:
+        api_key = key
+        click.echo(f"📝 Using provided API key: {api_key[:12]}...\n")
+    else:
+        api_key = generate_secure_api_key()
+        click.echo(f"🔑 Generated new API key: {api_key[:12]}...\n")
 
     # Store in database
     engine = get_engine()
@@ -87,11 +93,13 @@ def create(name: str, rate_limit: int, expires: str | None):
         click.echo(f"Name:       {model.name}")
         click.echo(f"Rate Limit: {model.rate_limit_per_minute} req/min")
         click.echo(f"Expires:    {model.expires_at or 'Never'}")
-        click.echo(f"\n🔑 API Key (COPY THIS NOW - won't be shown again):")
-        click.echo(f"    {api_key}\n")
 
-        click.echo("💡 Add this to your .env or Render environment:")
-        click.echo(f'    API_KEYS="{api_key}"\n')
+        if not key:
+            # Only show the key if it was generated (not provided)
+            click.echo(f"\n🔑 API Key (COPY THIS NOW - won't be shown again):")
+            click.echo(f"    {api_key}\n")
+            click.echo("💡 Add this to your .env or Render environment:")
+            click.echo(f'    API_KEYS="{api_key}"\n')
 
     except Exception as e:
         click.echo(f"❌ Error creating API key: {e}", err=True)
