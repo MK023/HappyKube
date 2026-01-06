@@ -163,9 +163,11 @@ I tuoi messaggi sono criptati e sicuri.
                 response = await client.get(api_url, headers=headers)
 
             if response.status_code == 404:
+                month_name = self._get_month_name(current_month)
                 await update.message.reply_text(
-                    "📭 Nessun dato disponibile per questo mese.\n\n"
-                    "Inizia a condividere le tue emozioni e torna tra qualche giorno!"
+                    f"📭 Non ho ancora nessun dato disponibile per {month_name}.\n\n"
+                    "💡 Condividi le tue emozioni con me e poi riprova!\n"
+                    "Basta scrivermi come ti senti 😊"
                 )
                 return
 
@@ -226,3 +228,18 @@ I tuoi messaggi sono criptati e sicuri.
         from domain.enums.emotion_emojis import EMOTION_EMOJIS
 
         return EMOTION_EMOJIS.get(emotion.lower(), "🎭")
+
+    @staticmethod
+    def _get_month_name(month: str) -> str:
+        """Convert YYYY-MM to Italian month name."""
+        month_names = {
+            "01": "Gennaio", "02": "Febbraio", "03": "Marzo",
+            "04": "Aprile", "05": "Maggio", "06": "Giugno",
+            "07": "Luglio", "08": "Agosto", "09": "Settembre",
+            "10": "Ottobre", "11": "Novembre", "12": "Dicembre"
+        }
+        try:
+            _, mon = month.split("-")
+            return month_names.get(mon, month)
+        except (ValueError, KeyError):
+            return month

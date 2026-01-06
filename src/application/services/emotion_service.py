@@ -235,7 +235,7 @@ class EmotionService:
         )
 
         if not emotions:
-            logger.warning("No emotions found for month", user_id=str(user.id), month=month)
+            logger.info("No emotions found for month", user_id=str(user.id), month=month)
             raise ValueError(f"No emotion data found for {month}")
 
         total = len(emotions)
