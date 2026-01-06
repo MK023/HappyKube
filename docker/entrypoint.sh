@@ -12,6 +12,7 @@ WARNING_VARS=()
 # Always required variables
 REQUIRED_VARS+=("TELEGRAM_BOT_TOKEN")
 REQUIRED_VARS+=("GROQ_API_KEY")
+REQUIRED_VARS+=("INTERNAL_API_KEY")
 
 # Database validation (DATABASE_URL OR individual DB fields)
 if [ -z "$DATABASE_URL" ]; then

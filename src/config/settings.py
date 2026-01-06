@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     api_keys: list[str] | None = Field(
         default=None, description="Allowed API keys (comma-separated)"
     )
+    internal_api_key: str = Field(
+        default="", description="Internal API key for bot-to-API communication (use existing API key)"
+    )
 
     # Telegram Bot
     telegram_bot_token: str = Field(default="", description="Telegram bot token")

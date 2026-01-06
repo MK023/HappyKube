@@ -116,27 +116,15 @@ async def healthz_redis(response: Response):
 @router.head("/ping")
 async def ping(response: Response):
     """
-    Ping endpoint for UptimeRobot with DB and Redis check.
+    Lightweight ping endpoint for Render health checks.
 
     Supports both GET and HEAD methods.
-    Returns 200 if DB and Redis are healthy.
+    Returns 200 if the service is running (minimal resource usage).
+    For comprehensive health checks, use /readyz instead.
     """
-    try:
-        # Quick health check
-        db_ok = db_health_check()
-        cache = get_cache()
-        redis_ok = cache.health_check()
-
-        if db_ok and redis_ok:
-            return "pong"
-        else:
-            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-            return "unhealthy"
-
-    except Exception as e:
-        logger.error("Ping check failed", error=str(e))
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        return "error"
+    # Lightweight response - just confirms service is alive
+    # No DB/Redis checks to reduce resource consumption from frequent health checks
+    return "pong"
 
 
 @router.get(

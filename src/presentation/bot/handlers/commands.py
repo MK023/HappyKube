@@ -151,11 +151,16 @@ I tuoi messaggi sono criptati e sicuri.
         await update.message.reply_text("📊 Recupero le tue statistiche mensili...")
 
         try:
-            # Call internal API endpoint
+            # Call internal API endpoint with authentication
             api_url = f"http://localhost:{settings.api_port}/reports/monthly/{telegram_id}/{current_month}"
 
+            # Add API key header for authentication
+            headers = {}
+            if settings.internal_api_key:
+                headers["X-API-Key"] = settings.internal_api_key
+
             async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(api_url)
+                response = await client.get(api_url, headers=headers)
 
             if response.status_code == 404:
                 await update.message.reply_text(
