@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         default="development", description="Application environment"
     )
     app_name: str = Field(default="HappyKube", description="Application name")
-    app_version: str = Field(default="2.0.0", description="Application version")
+    app_version: str = Field(default="2.0.1", description="Application version")
     debug: bool = Field(default=False, description="Debug mode")
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         default="INFO", description="Logging level"

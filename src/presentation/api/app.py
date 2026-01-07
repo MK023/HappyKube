@@ -84,8 +84,8 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI app
     """
-    # Setup logging first
-    setup_logging()
+    # Setup logging first with service identifier
+    setup_logging(service_name="api")
 
     # Initialize Sentry for error tracking (production only)
     init_sentry()

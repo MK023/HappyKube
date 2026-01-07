@@ -10,8 +10,12 @@ from structlog.types import Processor
 from .settings import get_settings
 
 
-def setup_logging() -> None:
-    """Configure structured logging with structlog."""
+def setup_logging(service_name: str | None = None) -> None:
+    """Configure structured logging with structlog.
+
+    Args:
+        service_name: Optional service identifier (e.g., 'bot', 'api') to distinguish logs
+    """
     settings = get_settings()
 
     # Define log processors
@@ -60,6 +64,10 @@ def setup_logging() -> None:
     logging.getLogger("sqlalchemy.engine").setLevel(
         logging.INFO if settings.db_echo else logging.WARNING
     )
+
+    # Bind service name to all logs if provided
+    if service_name:
+        structlog.contextvars.bind_contextvars(service=service_name)
 
 
 def get_logger(name: str) -> Any:

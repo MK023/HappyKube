@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from telegram import Update
-from telegram.error import Conflict, TimedOut
+from telegram.error import Conflict, NetworkError, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from config import get_logger, get_settings, init_sentry, setup_logging
@@ -118,6 +118,16 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         # Don't raise - telegram-bot library will retry automatically
         return
 
+    # Handle NetworkError (connection issues, retryable)
+    if isinstance(context.error, NetworkError):
+        logger.warning(
+            "Network error during Telegram API request - will retry automatically",
+            error=str(context.error),
+            error_type=type(context.error).__name__
+        )
+        # Don't raise - telegram-bot library will retry automatically
+        return
+
     # Log all other errors
     logger.error(
         "Error occurred during bot operation",
@@ -130,8 +140,8 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def create_bot() -> None:
     """Create and run Telegram bot with single-instance protection."""
-    # Setup logging
-    setup_logging()
+    # Setup logging with service identifier
+    setup_logging(service_name="bot")
 
     # Initialize Sentry for error tracking (production only)
     init_sentry()
