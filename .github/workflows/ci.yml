@@ -79,7 +79,7 @@ jobs:
         run: black --check src/ tests/
 
       - name: Run mypy (type checker)
-        run: mypy src/ --ignore-missing-imports
+        run: cd src && mypy . --ignore-missing-imports
 
   security:
     name: Security Scan
