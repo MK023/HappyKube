@@ -21,10 +21,12 @@ def test_telegram_id():
 
 
 @pytest.fixture
-def mock_settings(monkeypatch):
-    """Mock settings for JWT secret."""
-    from config import settings
-    monkeypatch.setattr(settings, "jwt_secret_key", "test-secret-key-for-unit-tests")
+def mock_settings():
+    """Mock settings for JWT secret (env vars set in conftest.py)."""
+    from config.settings import get_settings
+
+    # Get settings instance (env vars already set in conftest.py)
+    settings = get_settings()
     return settings
 
 
