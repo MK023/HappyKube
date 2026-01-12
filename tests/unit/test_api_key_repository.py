@@ -1,13 +1,14 @@
 """Unit tests for APIKeyRepository."""
 
-import bcrypt
-import pytest
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from uuid import UUID
 
-from infrastructure.database.models import APIKeyModel, Base
+import bcrypt
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from infrastructure.database.models import APIKeyModel
 from infrastructure.repositories import APIKeyRepository
 
 

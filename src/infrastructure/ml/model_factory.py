@@ -1,6 +1,7 @@
 """ML model factory for Groq analyzer."""
 
 from config import get_logger, get_settings
+
 from .groq_analyzer import GroqAnalyzer
 
 logger = get_logger(__name__)

@@ -1,6 +1,5 @@
 """Security middleware for API protection."""
 
-from uuid import UUID
 
 from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint

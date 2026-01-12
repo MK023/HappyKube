@@ -3,9 +3,9 @@
 import os
 import signal
 import sys
+import tempfile
 from pathlib import Path
 
-from telegram import Update
 from telegram.error import Conflict, NetworkError, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 # Lock file to prevent multiple instances
-LOCK_FILE = Path("/tmp/happykube_bot.lock")
+LOCK_FILE = Path(tempfile.gettempdir()) / "happykube_bot.lock"
 STARTUP_DELAY = 5  # seconds to wait before starting (allow old instance to shutdown)
 
 

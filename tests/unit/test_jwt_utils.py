@@ -1,9 +1,10 @@
 """Unit tests for JWTUtils."""
 
+from datetime import UTC, datetime, timedelta
+from uuid import UUID, uuid4
+
 import jwt
 import pytest
-from datetime import datetime, timedelta, timezone
-from uuid import uuid4, UUID
 
 from infrastructure.auth import JWTUtils
 
@@ -47,8 +48,8 @@ class TestJWTUtils:
         # Decode to verify expiration
         payload = jwt.decode(token, mock_settings.jwt_secret_key, algorithms=["HS256"])
 
-        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
-        iat_time = datetime.fromtimestamp(payload["iat"], tz=timezone.utc)
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=UTC)
+        iat_time = datetime.fromtimestamp(payload["iat"], tz=UTC)
 
         # Should be ~1 hour difference
         delta = exp_time - iat_time
@@ -78,8 +79,8 @@ class TestJWTUtils:
         payload_data = {
             "user_id": str(test_user_id),
             "telegram_id": test_telegram_id,
-            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
-            "exp": datetime.now(timezone.utc) - timedelta(hours=1)  # Expired
+            "iat": datetime.now(UTC) - timedelta(hours=2),
+            "exp": datetime.now(UTC) - timedelta(hours=1)  # Expired
         }
 
         expired_token = jwt.encode(
@@ -99,7 +100,7 @@ class TestJWTUtils:
             {
                 "user_id": str(test_user_id),
                 "telegram_id": test_telegram_id,
-                "exp": datetime.now(timezone.utc) + timedelta(hours=1)
+                "exp": datetime.now(UTC) + timedelta(hours=1)
             },
             "wrong-secret-key",
             algorithm="HS256"
@@ -129,7 +130,7 @@ class TestJWTUtils:
         token = jwt.encode(
             {
                 "telegram_id": test_telegram_id,
-                "exp": datetime.now(timezone.utc) + timedelta(hours=1)
+                "exp": datetime.now(UTC) + timedelta(hours=1)
             },
             mock_settings.jwt_secret_key,
             algorithm="HS256"

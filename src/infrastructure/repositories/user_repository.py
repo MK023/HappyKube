@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from application.interfaces.user_repository import IUserRepository
 from config import get_logger
 from domain import User, UserId
+
 from ..database import UserModel
 
 logger = get_logger(__name__)

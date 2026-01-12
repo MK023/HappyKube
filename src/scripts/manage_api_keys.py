@@ -27,6 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import click
+
 from infrastructure.database import get_engine
 from infrastructure.repositories import APIKeyRepository
 
@@ -96,7 +97,7 @@ def create(name: str, rate_limit: int, expires: str | None, key: str | None):
 
         if not key:
             # Only show the key if it was generated (not provided)
-            click.echo(f"\n🔑 API Key (COPY THIS NOW - won't be shown again):")
+            click.echo("\n🔑 API Key (COPY THIS NOW - won't be shown again):")
             click.echo(f"    {api_key}\n")
             click.echo("💡 Add this to your .env or Render environment:")
             click.echo(f'    API_KEYS="{api_key}"\n')

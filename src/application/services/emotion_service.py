@@ -3,12 +3,12 @@
 import asyncio
 import hashlib
 from datetime import datetime
-from uuid import UUID
 
 from config import get_logger
-from domain import EmotionRecord, ModelType
+from domain import EmotionRecord
 from infrastructure.cache import RedisCache
 from infrastructure.ml import ModelFactory
+
 from ..dto.emotion_dto import (
     EmotionAnalysisResponse,
     EmotionRecordDTO,
@@ -218,7 +218,7 @@ class EmotionService:
             start_date = datetime(year, mon, 1)
         except (ValueError, AttributeError) as e:
             logger.error("Invalid month format", month=month, error=str(e))
-            raise ValueError(f"Invalid month format. Use YYYY-MM (e.g., 2026-01)") from e
+            raise ValueError("Invalid month format. Use YYYY-MM (e.g., 2026-01)") from e
 
         # Calculate end of month
         if mon == 12:
@@ -241,7 +241,7 @@ class EmotionService:
         total = len(emotions)
 
         # Calculate active days (unique dates)
-        active_days = len(set(e.created_at.date() for e in emotions))
+        active_days = len({e.created_at.date() for e in emotions})
 
         # Count emotions and scores
         emotion_counts: dict[str, list[float]] = {}  # emotion -> list of scores

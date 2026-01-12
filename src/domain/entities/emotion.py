@@ -1,7 +1,7 @@
 """Emotion domain entity."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -83,7 +83,7 @@ class EmotionRecord:
             sentiment=sentiment,
             score=score,
             model_type=model_type,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             metadata=metadata or {},
         )
 

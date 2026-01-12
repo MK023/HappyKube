@@ -1,9 +1,9 @@
 """JWT token utilities for authentication and audit logging."""
 
-import jwt
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
+
+import jwt
 
 from config import get_logger, get_settings
 
@@ -38,8 +38,8 @@ class JWTUtils:
         payload = {
             "user_id": str(user_id),
             "telegram_id": telegram_id,
-            "iat": datetime.now(timezone.utc),
-            "exp": datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
+            "iat": datetime.now(UTC),
+            "exp": datetime.now(UTC) + timedelta(hours=expires_in_hours)
         }
 
         token = jwt.encode(
@@ -52,7 +52,7 @@ class JWTUtils:
         return token
 
     @staticmethod
-    def decode_token(token: str) -> Optional[dict]:
+    def decode_token(token: str) -> dict | None:
         """
         Decode and validate a JWT token.
 
@@ -85,7 +85,7 @@ class JWTUtils:
             return None
 
     @staticmethod
-    def extract_user_id_from_token(token: str) -> Optional[UUID]:
+    def extract_user_id_from_token(token: str) -> UUID | None:
         """
         Extract user_id from JWT token.
 
@@ -110,7 +110,7 @@ class JWTUtils:
         return None
 
     @staticmethod
-    def extract_from_request_header(authorization_header: Optional[str]) -> Optional[UUID]:
+    def extract_from_request_header(authorization_header: str | None) -> UUID | None:
         """
         Extract user_id from Authorization header.
 

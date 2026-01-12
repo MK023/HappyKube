@@ -16,6 +16,7 @@ from infrastructure.cache import get_cache
 from infrastructure.database import get_db
 from infrastructure.ml import get_model_factory
 from infrastructure.repositories import EmotionRepository, UserRepository
+
 from ..middleware.auth import require_api_key
 
 logger = get_logger(__name__)
@@ -109,13 +110,13 @@ async def analyze_emotion(
 
     except ValueError as e:
         logger.warning("Validation error", error=str(e))
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         logger.error("Emotion analysis error", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from e
 
 
 @router.get(
@@ -216,4 +217,4 @@ async def get_report(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from e

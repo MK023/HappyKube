@@ -88,7 +88,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S106"]
+"tests/**" = ["S101", "S105", "S106"]  # S105: Allow test token strings
+"src/config/settings.py" = ["S104"]  # S104: Allow 0.0.0.0 binding for API server
+"src/presentation/api/routes/*.py" = ["B008"]  # B008: FastAPI Depends() pattern is standard
 
 [tool.mypy]
 python_version = "3.12"

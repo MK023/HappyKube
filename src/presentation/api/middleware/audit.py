@@ -1,6 +1,6 @@
 """Audit logging middleware."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from fastapi import Request
@@ -61,7 +61,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
                     endpoint=request.url.path,
                     ip_address=ip_address,
                     user_agent=user_agent,
-                    created_at=datetime.now(timezone.utc),
+                    created_at=datetime.now(UTC),
                 )
                 db.add(audit_entry)
                 db.commit()

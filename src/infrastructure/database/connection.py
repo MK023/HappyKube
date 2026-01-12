@@ -1,7 +1,7 @@
 """Database connection management with SQLAlchemy 2.0."""
 
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine

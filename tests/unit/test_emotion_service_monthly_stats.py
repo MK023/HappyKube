@@ -1,17 +1,18 @@
 """Unit tests for EmotionService monthly statistics."""
 
-import pytest
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from uuid import uuid4
 
-from application.services.emotion_service import EmotionService
+import pytest
+
 from application.dto.emotion_dto import (
     EmotionStatistic,
     MonthlyStatisticsResponse,
     SentimentStatistic,
 )
-from domain import EmotionRecord, EmotionType, SentimentType, EmotionScore, UserId, ModelType
+from application.services.emotion_service import EmotionService
+from domain import EmotionRecord, EmotionScore, EmotionType, ModelType, SentimentType, UserId
 
 
 @pytest.fixture

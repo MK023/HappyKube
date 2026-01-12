@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from application.interfaces.emotion_repository import IEmotionRepository
 from config import get_logger
 from domain import EmotionRecord, EmotionScore, EmotionType, ModelType, SentimentType
+
 from ..database import EmotionModel, get_encryption
 
 logger = get_logger(__name__)
