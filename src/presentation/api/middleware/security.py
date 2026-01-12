@@ -1,6 +1,5 @@
 """Security middleware for API protection."""
 
-
 from fastapi import Request, status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse, Response
@@ -28,7 +27,16 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     """
 
     # Endpoints that don't require authentication
-    PUBLIC_PATHS = {"/", "/healthz", "/ping", "/readyz", "/metrics", "/docs", "/redoc", "/openapi.json"}
+    PUBLIC_PATHS = {
+        "/",
+        "/healthz",
+        "/ping",
+        "/readyz",
+        "/metrics",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+    }
 
     def __init__(self, app):
         """Initialize middleware with database connection."""
@@ -43,9 +51,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             self._api_key_repo = APIKeyRepository(self._engine)
         return self._api_key_repo
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Verify API key before processing request.
 
@@ -67,14 +73,14 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             logger.warning(
                 "Unauthorized request - missing API key",
                 path=request.url.path,
-                ip=request.client.host if request.client else None
+                ip=request.client.host if request.client else None,
             )
             return JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
                 content={
                     "detail": "Missing API key. Include X-API-Key header.",
-                    "error": "unauthorized"
-                }
+                    "error": "unauthorized",
+                },
             )
 
         # Validate API key against database (with bcrypt verification)
@@ -87,14 +93,11 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                     "Unauthorized request - invalid API key",
                     path=request.url.path,
                     ip=request.client.host if request.client else None,
-                    key_prefix=api_key[:8] if len(api_key) >= 8 else "***"
+                    key_prefix=api_key[:8] if len(api_key) >= 8 else "***",
                 )
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    content={
-                        "detail": "Invalid API key",
-                        "error": "unauthorized"
-                    }
+                    content={"detail": "Invalid API key", "error": "unauthorized"},
                 )
 
             # Store API key ID in request state for audit logging
@@ -103,17 +106,11 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         except Exception as e:
             logger.error(
-                "Error validating API key",
-                path=request.url.path,
-                error=str(e),
-                exc_info=e
+                "Error validating API key", path=request.url.path, error=str(e), exc_info=e
             )
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={
-                    "detail": "Authentication service error",
-                    "error": "internal_error"
-                }
+                content={"detail": "Authentication service error", "error": "internal_error"},
             )
 
         # Valid key - proceed
@@ -127,9 +124,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     Adds security headers to all responses.
     """
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Add security headers to response.
 
@@ -177,9 +172,7 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
 
     MAX_REQUEST_SIZE = 1024 * 1024  # 1MB
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Check request size before processing.
 
@@ -201,14 +194,14 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                     size=content_length,
                     max_size=self.MAX_REQUEST_SIZE,
                     path=request.url.path,
-                    ip=request.client.host if request.client else None
+                    ip=request.client.host if request.client else None,
                 )
                 return JSONResponse(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     content={
                         "detail": f"Request size {content_length} bytes exceeds limit of {self.MAX_REQUEST_SIZE} bytes",
-                        "error": "payload_too_large"
-                    }
+                        "error": "payload_too_large",
+                    },
                 )
 
         return await call_next(request)

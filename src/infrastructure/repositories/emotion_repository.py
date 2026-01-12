@@ -164,7 +164,9 @@ class EmotionRepository(IEmotionRepository):
             user_id=db_emotion.user_id,
             text=decrypted_text,
             emotion=EmotionType.from_label(db_emotion.emotion),
-            sentiment=SentimentType.from_label(db_emotion.sentiment) if db_emotion.sentiment else None,
+            sentiment=(
+                SentimentType.from_label(db_emotion.sentiment) if db_emotion.sentiment else None
+            ),
             score=EmotionScore.from_float(db_emotion.score),
             model_type=ModelType(db_emotion.model_type),
             created_at=db_emotion.created_at,

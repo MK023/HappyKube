@@ -20,30 +20,23 @@ router = APIRouter(tags=["monitoring"])
 emotion_requests_total = Counter(
     "happykube_emotion_requests_total",
     "Total number of emotion analysis requests",
-    ["language", "status"]
+    ["language", "status"],
 )
 
 emotion_analysis_duration = Histogram(
-    "happykube_emotion_analysis_duration_seconds",
-    "Time spent analyzing emotions",
-    ["model_type"]
+    "happykube_emotion_analysis_duration_seconds", "Time spent analyzing emotions", ["model_type"]
 )
 
-active_users = Gauge(
-    "happykube_active_users",
-    "Number of active users (7-day window)"
-)
+active_users = Gauge("happykube_active_users", "Number of active users (7-day window)")
 
 api_requests_total = Counter(
     "happykube_api_requests_total",
     "Total number of API requests",
-    ["method", "endpoint", "status_code"]
+    ["method", "endpoint", "status_code"],
 )
 
 telegram_messages_total = Counter(
-    "happykube_telegram_messages_total",
-    "Total number of Telegram messages processed",
-    ["command"]
+    "happykube_telegram_messages_total", "Total number of Telegram messages processed", ["command"]
 )
 
 
@@ -75,10 +68,10 @@ happykube_emotion_requests_total{language="en",status="success"} 847.0
 # TYPE happykube_active_users gauge
 happykube_active_users 342.0"""
                 }
-            }
+            },
         },
-        404: {"description": "Metrics collection disabled"}
-    }
+        404: {"description": "Metrics collection disabled"},
+    },
 )
 async def metrics():
     """
@@ -89,15 +82,10 @@ async def metrics():
     """
     if not settings.prometheus_enabled:
         return Response(
-            content="Metrics collection is disabled",
-            status_code=404,
-            media_type="text/plain"
+            content="Metrics collection is disabled", status_code=404, media_type="text/plain"
         )
 
     # Generate metrics
     metrics_output = generate_latest()
 
-    return Response(
-        content=metrics_output,
-        media_type=CONTENT_TYPE_LATEST
-    )
+    return Response(content=metrics_output, media_type=CONTENT_TYPE_LATEST)

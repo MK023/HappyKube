@@ -95,7 +95,7 @@ def _get_emotion_service(db: Session) -> EmotionService:
                         "active_days": 28,
                         "emotions": {
                             "joy": {"count": 35, "percentage": 40.2, "avg_score": 0.89},
-                            "sadness": {"count": 12, "percentage": 13.8, "avg_score": 0.82}
+                            "sadness": {"count": 12, "percentage": 13.8, "avg_score": 0.82},
                         },
                         "sentiment": {"positive": 62.5, "negative": 20.1, "neutral": 17.4},
                         "dominant_emotion": "joy",
@@ -103,24 +103,21 @@ def _get_emotion_service(db: Session) -> EmotionService:
                             {
                                 "type": "positive_month",
                                 "message": "🎉 Gennaio è stato un mese positivo!",
-                                "icon": "🎉"
+                                "icon": "🎉",
                             }
-                        ]
+                        ],
                     }
                 }
-            }
+            },
         },
         400: {"description": "Invalid month format (use YYYY-MM)"},
         404: {"description": "No emotion data found for the specified month"},
-        429: {"description": "Rate limit exceeded"}
-    }
+        429: {"description": "Rate limit exceeded"},
+    },
 )
 @limiter.limit("30/minute")
 async def get_monthly_report(
-    request: Request,
-    telegram_id: str,
-    month: str,
-    db: Session = Depends(get_db)
+    request: Request, telegram_id: str, month: str, db: Session = Depends(get_db)
 ) -> MonthlyStatisticsResponse:
     """
     Get monthly emotion statistics.
@@ -145,7 +142,7 @@ async def get_monthly_report(
             "Monthly report generated",
             telegram_id=telegram_id,
             month=month,
-            total_messages=stats.total_messages
+            total_messages=stats.total_messages,
         )
 
         return stats
@@ -154,21 +151,14 @@ async def get_monthly_report(
         error_msg = str(e)
         if "Invalid month format" in error_msg:
             logger.warning("Invalid month format", telegram_id=telegram_id, month=month)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=error_msg
-            ) from e
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg) from e
         elif "No emotion data" in error_msg:
             logger.info("No data for month", telegram_id=telegram_id, month=month)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=error_msg
-            ) from e
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_msg) from e
         else:
             logger.error("Unexpected error", telegram_id=telegram_id, month=month, error=error_msg)
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal server error"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
             ) from e
 
     except Exception as e:
@@ -177,9 +167,9 @@ async def get_monthly_report(
             telegram_id=telegram_id,
             month=month,
             error=str(e),
-            exc_info=e
+            exc_info=e,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate monthly report"
+            detail="Failed to generate monthly report",
         ) from e

@@ -29,13 +29,13 @@ router = APIRouter(tags=["health"])
                         "endpoints": {
                             "health": "/healthz",
                             "ping": "/ping",
-                            "readiness": "/readyz"
-                        }
+                            "readiness": "/readyz",
+                        },
                     }
                 }
-            }
+            },
         }
-    }
+    },
 )
 async def root():
     """
@@ -53,7 +53,7 @@ async def root():
             "ping": "/ping",
             "readiness": "/readyz",
             "docs": "/docs" if settings.debug else None,
-        }
+        },
     }
 
 
@@ -65,12 +65,10 @@ async def root():
         200: {
             "description": "Service is alive",
             "content": {
-                "application/json": {
-                    "example": {"status": "healthy", "service": "HappyKube API"}
-                }
-            }
+                "application/json": {"example": {"status": "healthy", "service": "HappyKube API"}}
+            },
         }
-    }
+    },
 )
 async def healthz():
     """
@@ -150,11 +148,11 @@ async def ping(response: Response):
                         "checks": {
                             "database": "healthy",
                             "redis": "healthy",
-                            "groq_api": "healthy"
-                        }
+                            "groq_api": "healthy",
+                        },
                     }
                 }
-            }
+            },
         },
         503: {
             "description": "Service not ready",
@@ -165,13 +163,13 @@ async def ping(response: Response):
                         "checks": {
                             "database": "healthy",
                             "redis": "unhealthy",
-                            "groq_api": "healthy"
-                        }
+                            "groq_api": "healthy",
+                        },
                     }
                 }
-            }
-        }
-    }
+            },
+        },
+    },
 )
 async def readyz(response: Response):
     """
@@ -195,7 +193,7 @@ async def readyz(response: Response):
             async with httpx.AsyncClient(timeout=5.0) as client:
                 groq_response = await client.get(
                     "https://api.groq.com/openai/v1/models",
-                    headers={"Authorization": f"Bearer {settings.groq_api_key}"}
+                    headers={"Authorization": f"Bearer {settings.groq_api_key}"},
                 )
                 groq_healthy = groq_response.status_code == 200
         except Exception as e:

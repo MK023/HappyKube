@@ -43,9 +43,7 @@ class Settings(BaseSettings):
     db_user: str | None = Field(default=None, description="Database user")
     db_password: str | None = Field(default=None, description="Database password")
     db_pool_size: int = Field(default=3, ge=1, le=100, description="Connection pool size")
-    db_max_overflow: int = Field(
-        default=2, ge=0, le=100, description="Max overflow connections"
-    )
+    db_max_overflow: int = Field(default=2, ge=0, le=100, description="Max overflow connections")
     db_echo: bool = Field(default=False, description="Echo SQL queries")
 
     # Redis (supports both REDIS_URL and individual fields)
@@ -70,23 +68,20 @@ class Settings(BaseSettings):
         default=None, description="Allowed API keys (comma-separated)"
     )
     internal_api_key: str = Field(
-        default="", description="Internal API key for bot-to-API communication (use existing API key)"
+        default="",
+        description="Internal API key for bot-to-API communication (use existing API key)",
     )
 
     # Telegram Bot
     telegram_bot_token: str = Field(default="", description="Telegram bot token")
-    telegram_api_timeout: int = Field(
-        default=30, ge=10, le=60, description="Telegram API timeout"
-    )
+    telegram_api_timeout: int = Field(default=30, ge=10, le=60, description="Telegram API timeout")
 
     # ML API - Groq (Llama 3.3 70B)
     groq_api_key: str = Field(default="", description="Groq API key for Llama inference (free)")
 
     # Rate Limiting
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
-    rate_limit_default: str = Field(
-        default="100 per minute", description="Default rate limit"
-    )
+    rate_limit_default: str = Field(default="100 per minute", description="Default rate limit")
     rate_limit_storage_url: str | None = Field(
         default=None, description="Rate limit storage URL (Redis)"
     )
@@ -163,7 +158,9 @@ class Settings(BaseSettings):
     def validate_settings(self) -> "Settings":
         """Validate settings after initialization."""
         # Validate database connection can be built
-        if not self.database_url and not all([self.db_host, self.db_name, self.db_user, self.db_password]):
+        if not self.database_url and not all(
+            [self.db_host, self.db_name, self.db_user, self.db_password]
+        ):
             raise ValueError(
                 "Either DATABASE_URL or all of (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set"
             )
@@ -181,7 +178,10 @@ class Settings(BaseSettings):
             if not self.sentry_dsn:
                 # Log as info instead of warning - Sentry is optional
                 import logging
-                logging.getLogger(__name__).info("Sentry DSN not configured - error tracking disabled")
+
+                logging.getLogger(__name__).info(
+                    "Sentry DSN not configured - error tracking disabled"
+                )
 
         return self
 

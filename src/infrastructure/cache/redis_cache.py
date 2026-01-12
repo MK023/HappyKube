@@ -39,14 +39,11 @@ class RedisCache:
                 settings.get_redis_url(),
                 decode_responses=False,  # We handle encoding/decoding ourselves
                 socket_connect_timeout=10,  # 5 → 10s for Render free tier
-                socket_timeout=10,          # 5 → 10s
+                socket_timeout=10,  # 5 → 10s
                 retry_on_timeout=True,
-                retry_on_error=[
-                    redis.exceptions.ConnectionError,
-                    redis.exceptions.TimeoutError
-                ],
-                max_connections=10,         # Connection pooling
-                health_check_interval=30    # Check connections every 30s
+                retry_on_error=[redis.exceptions.ConnectionError, redis.exceptions.TimeoutError],
+                max_connections=10,  # Connection pooling
+                health_check_interval=30,  # Check connections every 30s
             )
 
         logger.info("Redis cache initialized with connection pool", url=settings.get_redis_url())

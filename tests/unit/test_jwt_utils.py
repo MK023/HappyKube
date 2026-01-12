@@ -80,14 +80,10 @@ class TestJWTUtils:
             "user_id": str(test_user_id),
             "telegram_id": test_telegram_id,
             "iat": datetime.now(UTC) - timedelta(hours=2),
-            "exp": datetime.now(UTC) - timedelta(hours=1)  # Expired
+            "exp": datetime.now(UTC) - timedelta(hours=1),  # Expired
         }
 
-        expired_token = jwt.encode(
-            payload_data,
-            mock_settings.jwt_secret_key,
-            algorithm="HS256"
-        )
+        expired_token = jwt.encode(payload_data, mock_settings.jwt_secret_key, algorithm="HS256")
 
         payload = JWTUtils.decode_token(expired_token)
 
@@ -100,10 +96,10 @@ class TestJWTUtils:
             {
                 "user_id": str(test_user_id),
                 "telegram_id": test_telegram_id,
-                "exp": datetime.now(UTC) + timedelta(hours=1)
+                "exp": datetime.now(UTC) + timedelta(hours=1),
             },
             "wrong-secret-key",
-            algorithm="HS256"
+            algorithm="HS256",
         )
 
         payload = JWTUtils.decode_token(wrong_token)
@@ -128,19 +124,18 @@ class TestJWTUtils:
         """Test extracting user_id from token missing user_id field."""
         # Create token without user_id
         token = jwt.encode(
-            {
-                "telegram_id": test_telegram_id,
-                "exp": datetime.now(UTC) + timedelta(hours=1)
-            },
+            {"telegram_id": test_telegram_id, "exp": datetime.now(UTC) + timedelta(hours=1)},
             mock_settings.jwt_secret_key,
-            algorithm="HS256"
+            algorithm="HS256",
         )
 
         extracted_id = JWTUtils.extract_user_id_from_token(token)
 
         assert extracted_id is None
 
-    def test_extract_from_request_header_bearer(self, test_user_id, test_telegram_id, mock_settings):
+    def test_extract_from_request_header_bearer(
+        self, test_user_id, test_telegram_id, mock_settings
+    ):
         """Test extracting user_id from Authorization header with Bearer prefix."""
         token = JWTUtils.create_token(test_user_id, test_telegram_id)
         auth_header = f"Bearer {token}"
@@ -150,7 +145,9 @@ class TestJWTUtils:
         assert isinstance(extracted_id, UUID)
         assert extracted_id == test_user_id
 
-    def test_extract_from_request_header_jwt_prefix(self, test_user_id, test_telegram_id, mock_settings):
+    def test_extract_from_request_header_jwt_prefix(
+        self, test_user_id, test_telegram_id, mock_settings
+    ):
         """Test extracting user_id from Authorization header with JWT prefix."""
         token = JWTUtils.create_token(test_user_id, test_telegram_id)
         auth_header = f"JWT {token}"
@@ -160,7 +157,9 @@ class TestJWTUtils:
         assert isinstance(extracted_id, UUID)
         assert extracted_id == test_user_id
 
-    def test_extract_from_request_header_no_prefix(self, test_user_id, test_telegram_id, mock_settings):
+    def test_extract_from_request_header_no_prefix(
+        self, test_user_id, test_telegram_id, mock_settings
+    ):
         """Test extracting user_id from raw token (no prefix)."""
         token = JWTUtils.create_token(test_user_id, test_telegram_id)
 
@@ -169,7 +168,9 @@ class TestJWTUtils:
         assert isinstance(extracted_id, UUID)
         assert extracted_id == test_user_id
 
-    def test_extract_from_request_header_invalid_scheme(self, test_user_id, test_telegram_id, mock_settings):
+    def test_extract_from_request_header_invalid_scheme(
+        self, test_user_id, test_telegram_id, mock_settings
+    ):
         """Test invalid authorization scheme."""
         token = JWTUtils.create_token(test_user_id, test_telegram_id)
         auth_header = f"Basic {token}"  # Wrong scheme

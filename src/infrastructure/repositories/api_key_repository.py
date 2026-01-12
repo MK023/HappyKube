@@ -41,9 +41,7 @@ class APIKeyRepository:
         """
         with Session(self.engine) as session:
             # Get all active API keys
-            stmt = select(APIKeyModel).where(
-                APIKeyModel.is_active == True  # noqa: E712
-            )
+            stmt = select(APIKeyModel).where(APIKeyModel.is_active == True)  # noqa: E712
             api_keys = session.scalars(stmt).all()
 
             # Check each key using constant-time bcrypt comparison
@@ -61,19 +59,13 @@ class APIKeyRepository:
                         session.commit()
 
                         logger.info(
-                            "API key validated",
-                            key_id=str(key_model.id),
-                            key_name=key_model.name
+                            "API key validated", key_id=str(key_model.id), key_name=key_model.name
                         )
 
                         return True, key_model.id, key_model.rate_limit_per_minute
 
                 except Exception as e:
-                    logger.error(
-                        "Error validating API key",
-                        key_id=str(key_model.id),
-                        error=str(e)
-                    )
+                    logger.error("Error validating API key", key_id=str(key_model.id), error=str(e))
                     continue
 
             logger.warning("Invalid API key attempt", key_prefix=api_key[:8])
@@ -84,7 +76,7 @@ class APIKeyRepository:
         api_key: str,
         name: str,
         rate_limit_per_minute: int = 100,
-        expires_at: datetime | None = None
+        expires_at: datetime | None = None,
     ) -> APIKeyModel:
         """
         Create new API key in database.
@@ -108,7 +100,7 @@ class APIKeyRepository:
                 name=name,
                 is_active=True,
                 rate_limit_per_minute=rate_limit_per_minute,
-                expires_at=expires_at
+                expires_at=expires_at,
             )
 
             session.add(model)
@@ -119,7 +111,7 @@ class APIKeyRepository:
                 "API key created",
                 key_id=str(model.id),
                 key_name=name,
-                rate_limit=rate_limit_per_minute
+                rate_limit=rate_limit_per_minute,
             )
 
             return model

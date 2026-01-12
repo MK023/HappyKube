@@ -59,16 +59,16 @@ limiter = Limiter(key_func=get_remote_address)
                         "emotion": "joy",
                         "sentiment": "positive",
                         "score": 0.92,
-                        "message": "Emotion detected successfully"
+                        "message": "Emotion detected successfully",
                     }
                 }
-            }
+            },
         },
         400: {"description": "Invalid input (empty text or invalid user_id)"},
         401: {"description": "Missing or invalid API key"},
         429: {"description": "Rate limit exceeded (100/min)"},
-        500: {"description": "ML model error or internal server error"}
-    }
+        500: {"description": "ML model error or internal server error"},
+    },
 )
 @limiter.limit("100/minute")
 async def analyze_emotion(
@@ -160,18 +160,18 @@ async def analyze_emotion(
                                 "emotion": "joy",
                                 "sentiment": "positive",
                                 "score": 0.89,
-                                "timestamp": "2026-01-15T14:30:00Z"
+                                "timestamp": "2026-01-15T14:30:00Z",
                             }
-                        ]
+                        ],
                     }
                 }
-            }
+            },
         },
         400: {"description": "Invalid user_id or month format"},
         401: {"description": "Missing or invalid API key"},
         404: {"description": "User not found"},
-        429: {"description": "Rate limit exceeded (50/min)"}
-    }
+        429: {"description": "Rate limit exceeded (50/min)"},
+    },
 )
 @limiter.limit("50/minute")
 async def get_report(

@@ -46,9 +46,7 @@ class TestAPIKeyRepository:
         """Test creating a new API key."""
         # Create key
         model = api_key_repo.create_key(
-            api_key=sample_api_key,
-            name="Test Key",
-            rate_limit_per_minute=100
+            api_key=sample_api_key, name="Test Key", rate_limit_per_minute=100
         )
 
         # Assertions
@@ -70,7 +68,7 @@ class TestAPIKeyRepository:
             api_key=sample_api_key,
             name="Expiring Key",
             rate_limit_per_minute=50,
-            expires_at=expires
+            expires_at=expires,
         )
 
         assert model.expires_at is not None
@@ -80,9 +78,7 @@ class TestAPIKeyRepository:
         """Test validating a valid API key."""
         # Create key
         created = api_key_repo.create_key(
-            api_key=sample_api_key,
-            name="Valid Key",
-            rate_limit_per_minute=150
+            api_key=sample_api_key, name="Valid Key", rate_limit_per_minute=150
         )
 
         # Validate key
@@ -95,11 +91,7 @@ class TestAPIKeyRepository:
     def test_validate_key_invalid(self, api_key_repo, sample_api_key):
         """Test validating an invalid API key."""
         # Create key
-        api_key_repo.create_key(
-            api_key=sample_api_key,
-            name="Valid Key",
-            rate_limit_per_minute=100
-        )
+        api_key_repo.create_key(api_key=sample_api_key, name="Valid Key", rate_limit_per_minute=100)
 
         # Try to validate wrong key
         is_valid, key_id, rate_limit = api_key_repo.validate_key("HK_P_wrong_key_123")
@@ -113,11 +105,7 @@ class TestAPIKeyRepository:
         # Create key with past expiration
         expires = datetime.now() - timedelta(days=1)
 
-        api_key_repo.create_key(
-            api_key=sample_api_key,
-            name="Expired Key",
-            expires_at=expires
-        )
+        api_key_repo.create_key(api_key=sample_api_key, name="Expired Key", expires_at=expires)
 
         # Validate key
         is_valid, key_id, rate_limit = api_key_repo.validate_key(sample_api_key)
@@ -128,10 +116,7 @@ class TestAPIKeyRepository:
     def test_validate_key_inactive(self, api_key_repo, sample_api_key, in_memory_db):
         """Test validating an inactive API key."""
         # Create and then deactivate key
-        created = api_key_repo.create_key(
-            api_key=sample_api_key,
-            name="Inactive Key"
-        )
+        created = api_key_repo.create_key(api_key=sample_api_key, name="Inactive Key")
 
         api_key_repo.deactivate_key(created.id)
 
@@ -143,10 +128,7 @@ class TestAPIKeyRepository:
     def test_validate_key_updates_last_used(self, api_key_repo, sample_api_key, in_memory_db):
         """Test that validating a key updates last_used_at."""
         # Create key
-        created = api_key_repo.create_key(
-            api_key=sample_api_key,
-            name="Usage Tracking Key"
-        )
+        created = api_key_repo.create_key(api_key=sample_api_key, name="Usage Tracking Key")
 
         # Verify last_used_at is None initially
         assert created.last_used_at is None
@@ -162,10 +144,7 @@ class TestAPIKeyRepository:
     def test_deactivate_key(self, api_key_repo, sample_api_key):
         """Test deactivating an API key."""
         # Create key
-        created = api_key_repo.create_key(
-            api_key=sample_api_key,
-            name="Key to Deactivate"
-        )
+        created = api_key_repo.create_key(api_key=sample_api_key, name="Key to Deactivate")
 
         # Deactivate
         success = api_key_repo.deactivate_key(created.id)

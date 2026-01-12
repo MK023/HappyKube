@@ -88,10 +88,7 @@ class UserModel(Base):
 
     # Primary key
     id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4,
-        comment="Internal user UUID"
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4, comment="Internal user UUID"
     )
 
     # Telegram ID (hashed with SHA-256 for privacy)
@@ -100,7 +97,7 @@ class UserModel(Base):
         unique=True,
         nullable=False,
         index=True,
-        comment="SHA-256 hash of Telegram user ID"
+        comment="SHA-256 hash of Telegram user ID",
     )
 
     # Timestamps
@@ -108,21 +105,16 @@ class UserModel(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        comment="User registration timestamp (UTC)"
+        comment="User registration timestamp (UTC)",
     )
 
     last_seen_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last interaction timestamp (UTC)"
+        DateTime(timezone=True), nullable=True, comment="Last interaction timestamp (UTC)"
     )
 
     # Status
     is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True,
-        comment="Whether user account is active"
+        Boolean, nullable=False, default=True, comment="Whether user account is active"
     )
 
     def __repr__(self) -> str:
@@ -142,25 +134,17 @@ class EmotionModel(Base):
 
     # Primary key
     id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4,
-        comment="Emotion record UUID"
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4, comment="Emotion record UUID"
     )
 
     # Foreign key to users table
     user_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        nullable=False,
-        index=True,
-        comment="Reference to users.id"
+        PG_UUID(as_uuid=True), nullable=False, index=True, comment="Reference to users.id"
     )
 
     # Encrypted user text (PII - AES-256 encrypted)
     text_encrypted: Mapped[bytes] = mapped_column(
-        LargeBinary,
-        nullable=False,
-        comment="User text encrypted with AES-256 (Fernet)"
+        LargeBinary, nullable=False, comment="User text encrypted with AES-256 (Fernet)"
     )
 
     # Analysis results
@@ -168,27 +152,22 @@ class EmotionModel(Base):
         String(50),
         nullable=False,
         index=True,
-        comment="Detected emotion (anger, joy, sadness, fear, etc.)"
+        comment="Detected emotion (anger, joy, sadness, fear, etc.)",
     )
 
-    score: Mapped[float] = mapped_column(
-        nullable=False,
-        comment="Confidence score (0.0 to 1.0)"
-    )
+    score: Mapped[float] = mapped_column(nullable=False, comment="Confidence score (0.0 to 1.0)")
 
     # Model information
     model_type: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
         index=True,
-        comment="ML model used (italian_emotion, english_emotion, sentiment)"
+        comment="ML model used (italian_emotion, english_emotion, sentiment)",
     )
 
     # Optional sentiment (for dual analysis)
     sentiment: Mapped[str | None] = mapped_column(
-        String(20),
-        nullable=True,
-        comment="Sentiment classification (positive, negative, neutral)"
+        String(20), nullable=True, comment="Sentiment classification (positive, negative, neutral)"
     )
 
     # Timestamp (used for partitioning)
@@ -197,14 +176,14 @@ class EmotionModel(Base):
         nullable=False,
         server_default=func.now(),
         index=True,
-        comment="Analysis timestamp (UTC)"
+        comment="Analysis timestamp (UTC)",
     )
 
     # Additional metadata (model version, etc.)
     extra_data: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,
         nullable=True,
-        comment="Additional metadata (model version, confidence breakdown, etc.)"
+        comment="Additional metadata (model version, confidence breakdown, etc.)",
     )
 
     def __repr__(self) -> str:
@@ -226,33 +205,21 @@ class APIKeyModel(Base):
 
     # Primary key
     id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4,
-        comment="API key UUID"
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4, comment="API key UUID"
     )
 
     # Bcrypt-hashed API key (never store plaintext!)
     key_hash: Mapped[str] = mapped_column(
-        String(64),
-        unique=True,
-        nullable=False,
-        index=True,
-        comment="Bcrypt hash of API key"
+        String(64), unique=True, nullable=False, index=True, comment="Bcrypt hash of API key"
     )
 
     # Metadata
     name: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-        comment="API key name/description"
+        String(100), nullable=False, comment="API key name/description"
     )
 
     is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True,
-        comment="Whether API key is active"
+        Boolean, nullable=False, default=True, comment="Whether API key is active"
     )
 
     # Rate limiting (requests per minute)
@@ -260,7 +227,7 @@ class APIKeyModel(Base):
         Integer,
         nullable=False,
         default=100,
-        comment="Rate limit for this API key (requests/minute)"
+        comment="Rate limit for this API key (requests/minute)",
     )
 
     # Timestamps
@@ -268,19 +235,15 @@ class APIKeyModel(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        comment="API key creation timestamp (UTC)"
+        comment="API key creation timestamp (UTC)",
     )
 
     expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="API key expiration timestamp (UTC)"
+        DateTime(timezone=True), nullable=True, comment="API key expiration timestamp (UTC)"
     )
 
     last_used_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last usage timestamp (UTC)"
+        DateTime(timezone=True), nullable=True, comment="Last usage timestamp (UTC)"
     )
 
     def __repr__(self) -> str:
@@ -299,10 +262,7 @@ class AuditLogModel(Base):
 
     # Primary key
     id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4,
-        comment="Audit log entry UUID"
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid4, comment="Audit log entry UUID"
     )
 
     # User reference (nullable for unauthenticated requests)
@@ -310,7 +270,7 @@ class AuditLogModel(Base):
         PG_UUID(as_uuid=True),
         nullable=True,
         index=True,
-        comment="Reference to users.id (if authenticated)"
+        comment="Reference to users.id (if authenticated)",
     )
 
     # Action details
@@ -318,27 +278,19 @@ class AuditLogModel(Base):
         String(50),
         nullable=False,
         index=True,
-        comment="Action performed (emotion_analysis, report_request, etc.)"
+        comment="Action performed (emotion_analysis, report_request, etc.)",
     )
 
     endpoint: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-        comment="API endpoint called"
+        String(100), nullable=True, comment="API endpoint called"
     )
 
     # Request metadata
     ip_address: Mapped[str | None] = mapped_column(
-        String(45),  # IPv6 max length
-        nullable=True,
-        comment="Client IP address"
+        String(45), nullable=True, comment="Client IP address"  # IPv6 max length
     )
 
-    user_agent: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-        comment="Client user agent"
-    )
+    user_agent: Mapped[str | None] = mapped_column(Text, nullable=True, comment="Client user agent")
 
     # Timestamp
     created_at: Mapped[datetime] = mapped_column(
@@ -346,7 +298,7 @@ class AuditLogModel(Base):
         nullable=False,
         server_default=func.now(),
         index=True,
-        comment="Log entry timestamp (UTC)"
+        comment="Log entry timestamp (UTC)",
     )
 
     def __repr__(self) -> str:

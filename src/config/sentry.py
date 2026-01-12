@@ -35,21 +35,17 @@ def init_sentry() -> None:
             dsn=settings.sentry_dsn,
             environment=settings.app_env,
             release=f"{settings.app_name}@{settings.app_version}",
-
             # Performance monitoring
             traces_sample_rate=settings.sentry_traces_sample_rate,
-
             # Integrations
             integrations=[
                 FastApiIntegration(transaction_style="endpoint"),
                 SqlalchemyIntegration(),
             ],
-
             # Additional options
             send_default_pii=False,  # Don't send PII by default (GDPR compliance)
             attach_stacktrace=True,
             max_breadcrumbs=50,
-
             # Filter events
             before_send=_before_send,
         )

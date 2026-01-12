@@ -19,11 +19,7 @@ class JWTUtils:
     """
 
     @staticmethod
-    def create_token(
-        user_id: UUID,
-        telegram_id: str,
-        expires_in_hours: int = 24
-    ) -> str:
+    def create_token(user_id: UUID, telegram_id: str, expires_in_hours: int = 24) -> str:
         """
         Create a new JWT token for a user.
 
@@ -39,14 +35,10 @@ class JWTUtils:
             "user_id": str(user_id),
             "telegram_id": telegram_id,
             "iat": datetime.now(UTC),
-            "exp": datetime.now(UTC) + timedelta(hours=expires_in_hours)
+            "exp": datetime.now(UTC) + timedelta(hours=expires_in_hours),
         }
 
-        token = jwt.encode(
-            payload,
-            settings.jwt_secret_key,
-            algorithm="HS256"
-        )
+        token = jwt.encode(payload, settings.jwt_secret_key, algorithm="HS256")
 
         logger.debug("JWT token created", user_id=str(user_id), expires_in=expires_in_hours)
         return token
@@ -63,11 +55,7 @@ class JWTUtils:
             Decoded payload dict or None if invalid
         """
         try:
-            payload = jwt.decode(
-                token,
-                settings.jwt_secret_key,
-                algorithms=["HS256"]
-            )
+            payload = jwt.decode(token, settings.jwt_secret_key, algorithms=["HS256"])
 
             logger.debug("JWT token decoded", user_id=payload.get("user_id"))
             return payload

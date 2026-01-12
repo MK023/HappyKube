@@ -37,10 +37,11 @@ def emotion_service(mock_repositories):
 def sample_user():
     """Create a sample user."""
     from domain import User
+
     return User(
         id=uuid4(),
         user_id=UserId.from_telegram("123456789"),
-        created_at=datetime(2026, 1, 1, 0, 0, 0)
+        created_at=datetime(2026, 1, 1, 0, 0, 0),
     )
 
 
@@ -54,42 +55,48 @@ def sample_emotions():
 
     # 5 joy (positive sentiment)
     for i in range(5):
-        emotions.append(EmotionRecord(
-            id=uuid4(),
-            user_id=user_id,
-            text="Test message",
-            emotion=EmotionType.JOY,
-            sentiment=SentimentType.POSITIVE,
-            score=EmotionScore.from_float(0.9),
-            model_type=ModelType.GROQ,
-            created_at=datetime(2026, 1, i + 1, 10, 0, 0)  # Different days
-        ))
+        emotions.append(
+            EmotionRecord(
+                id=uuid4(),
+                user_id=user_id,
+                text="Test message",
+                emotion=EmotionType.JOY,
+                sentiment=SentimentType.POSITIVE,
+                score=EmotionScore.from_float(0.9),
+                model_type=ModelType.GROQ,
+                created_at=datetime(2026, 1, i + 1, 10, 0, 0),  # Different days
+            )
+        )
 
     # 3 sadness (negative sentiment)
     for i in range(3):
-        emotions.append(EmotionRecord(
-            id=uuid4(),
-            user_id=user_id,
-            text="Test message",
-            emotion=EmotionType.SADNESS,
-            sentiment=SentimentType.NEGATIVE,
-            score=EmotionScore.from_float(0.85),
-            model_type=ModelType.GROQ,
-            created_at=datetime(2026, 1, i + 6, 10, 0, 0)
-        ))
+        emotions.append(
+            EmotionRecord(
+                id=uuid4(),
+                user_id=user_id,
+                text="Test message",
+                emotion=EmotionType.SADNESS,
+                sentiment=SentimentType.NEGATIVE,
+                score=EmotionScore.from_float(0.85),
+                model_type=ModelType.GROQ,
+                created_at=datetime(2026, 1, i + 6, 10, 0, 0),
+            )
+        )
 
     # 2 anger (negative sentiment)
     for i in range(2):
-        emotions.append(EmotionRecord(
-            id=uuid4(),
-            user_id=user_id,
-            text="Test message",
-            emotion=EmotionType.ANGER,
-            sentiment=SentimentType.NEGATIVE,
-            score=EmotionScore.from_float(0.8),
-            model_type=ModelType.GROQ,
-            created_at=datetime(2026, 1, i + 9, 10, 0, 0)
-        ))
+        emotions.append(
+            EmotionRecord(
+                id=uuid4(),
+                user_id=user_id,
+                text="Test message",
+                emotion=EmotionType.ANGER,
+                sentiment=SentimentType.NEGATIVE,
+                score=EmotionScore.from_float(0.8),
+                model_type=ModelType.GROQ,
+                created_at=datetime(2026, 1, i + 9, 10, 0, 0),
+            )
+        )
 
     return emotions
 
@@ -141,9 +148,7 @@ class TestEmotionServiceMonthlyStats:
         # Verify insights exist
         assert len(stats.insights) > 0
 
-    def test_get_monthly_statistics_no_data(
-        self, emotion_service, sample_user, mock_repositories
-    ):
+    def test_get_monthly_statistics_no_data(self, emotion_service, sample_user, mock_repositories):
         """Test monthly statistics with no emotion data."""
         emotion_repo, user_repo, _, _ = mock_repositories
 
@@ -155,9 +160,7 @@ class TestEmotionServiceMonthlyStats:
         with pytest.raises(ValueError, match="No emotion data found"):
             emotion_service.get_monthly_statistics("123456789", "2026-01")
 
-    def test_get_monthly_statistics_invalid_month_format(
-        self, emotion_service, mock_repositories
-    ):
+    def test_get_monthly_statistics_invalid_month_format(self, emotion_service, mock_repositories):
         """Test invalid month format."""
         with pytest.raises(ValueError, match="Invalid month format"):
             emotion_service.get_monthly_statistics("123456789", "2026/01")
@@ -168,9 +171,7 @@ class TestEmotionServiceMonthlyStats:
         with pytest.raises(ValueError, match="Invalid month format"):
             emotion_service.get_monthly_statistics("123456789", "01-2026")
 
-    def test_get_monthly_statistics_invalid_month_value(
-        self, emotion_service, mock_repositories
-    ):
+    def test_get_monthly_statistics_invalid_month_value(self, emotion_service, mock_repositories):
         """Test invalid month value (e.g., month 13)."""
         with pytest.raises(ValueError):
             emotion_service.get_monthly_statistics("123456789", "2026-13")
@@ -181,9 +182,7 @@ class TestEmotionServiceMonthlyStats:
     def test_generate_insights_positive_month(self, emotion_service):
         """Test insights generation for a positive month."""
         # Mock data: 70% positive
-        emotion_stats = {
-            "joy": EmotionStatistic(count=7, percentage=70.0, avg_score=0.9)
-        }
+        emotion_stats = {"joy": EmotionStatistic(count=7, percentage=70.0, avg_score=0.9)}
         sentiment_stats = SentimentStatistic(positive=70.0, negative=20.0, neutral=10.0)
 
         insights = emotion_service._generate_insights(
@@ -191,7 +190,7 @@ class TestEmotionServiceMonthlyStats:
             sentiment_stats=sentiment_stats,
             active_days=25,
             total_days_in_month=31,
-            month="2026-01"
+            month="2026-01",
         )
 
         # Should have positive month insight
@@ -200,9 +199,7 @@ class TestEmotionServiceMonthlyStats:
     def test_generate_insights_challenging_month(self, emotion_service):
         """Test insights generation for a challenging month."""
         # Mock data: 60% negative
-        emotion_stats = {
-            "sadness": EmotionStatistic(count=6, percentage=60.0, avg_score=0.85)
-        }
+        emotion_stats = {"sadness": EmotionStatistic(count=6, percentage=60.0, avg_score=0.85)}
         sentiment_stats = SentimentStatistic(positive=20.0, negative=60.0, neutral=20.0)
 
         insights = emotion_service._generate_insights(
@@ -210,7 +207,7 @@ class TestEmotionServiceMonthlyStats:
             sentiment_stats=sentiment_stats,
             active_days=15,
             total_days_in_month=31,
-            month="2026-01"
+            month="2026-01",
         )
 
         # Should have challenging month insight
@@ -218,9 +215,7 @@ class TestEmotionServiceMonthlyStats:
 
     def test_generate_insights_high_consistency(self, emotion_service):
         """Test insights for high consistency (80%+ active days)."""
-        emotion_stats = {
-            "joy": EmotionStatistic(count=10, percentage=100.0, avg_score=0.9)
-        }
+        emotion_stats = {"joy": EmotionStatistic(count=10, percentage=100.0, avg_score=0.9)}
         sentiment_stats = SentimentStatistic(positive=100.0, negative=0.0, neutral=0.0)
 
         insights = emotion_service._generate_insights(
@@ -228,7 +223,7 @@ class TestEmotionServiceMonthlyStats:
             sentiment_stats=sentiment_stats,
             active_days=25,  # 25/31 = 80.6%
             total_days_in_month=31,
-            month="2026-01"
+            month="2026-01",
         )
 
         # Should have high consistency insight
@@ -251,7 +246,7 @@ class TestEmotionServiceMonthlyStats:
             sentiment_stats=sentiment_stats,
             active_days=10,
             total_days_in_month=31,
-            month="2026-01"
+            month="2026-01",
         )
 
         # Should have variety insight
@@ -269,9 +264,7 @@ class TestEmotionServiceMonthlyStats:
         assert emotion_service._get_month_name("invalid") == "invalid"
         assert emotion_service._get_month_name("2026") == "2026"
 
-    def test_active_days_calculation(
-        self, emotion_service, sample_user, mock_repositories
-    ):
+    def test_active_days_calculation(self, emotion_service, sample_user, mock_repositories):
         """Test that active days are calculated correctly (unique dates)."""
         emotion_repo, user_repo, _, _ = mock_repositories
 
@@ -287,7 +280,7 @@ class TestEmotionServiceMonthlyStats:
                 sentiment=SentimentType.POSITIVE,
                 score=EmotionScore.from_float(0.9),
                 model_type=ModelType.GROQ,
-                created_at=datetime(2026, 1, 5, 10, 0, 0)
+                created_at=datetime(2026, 1, 5, 10, 0, 0),
             ),
             EmotionRecord(
                 id=uuid4(),
@@ -297,7 +290,7 @@ class TestEmotionServiceMonthlyStats:
                 sentiment=SentimentType.NEGATIVE,
                 score=EmotionScore.from_float(0.85),
                 model_type=ModelType.GROQ,
-                created_at=datetime(2026, 1, 5, 14, 0, 0)  # Same day, different time
+                created_at=datetime(2026, 1, 5, 14, 0, 0),  # Same day, different time
             ),
         ]
 

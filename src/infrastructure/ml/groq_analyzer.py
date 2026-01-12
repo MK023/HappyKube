@@ -34,11 +34,9 @@ class GroqAnalyzer:
         self._client = httpx.AsyncClient(
             timeout=httpx.Timeout(15.0, connect=5.0),
             limits=httpx.Limits(
-                max_connections=5,
-                max_keepalive_connections=3,
-                keepalive_expiry=30.0
+                max_connections=5, max_keepalive_connections=3, keepalive_expiry=30.0
             ),
-            http2=True  # HTTP/2 multiplexing for better performance
+            http2=True,  # HTTP/2 multiplexing for better performance
         )
 
         logger.info("Initialized Groq analyzer with connection pool", model=self.model)
@@ -69,14 +67,14 @@ Emotion:"""
                 self.api_url,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": self.model,
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 10,
-                    "temperature": 0
-                }
+                    "temperature": 0,
+                },
             )
             response.raise_for_status()
             result = response.json()
@@ -87,7 +85,9 @@ Emotion:"""
             emotion = EmotionType.from_label(label)
             score = EmotionScore.from_float(GROQ_DEFAULT_CONFIDENCE)
 
-            logger.debug("Groq emotion analysis", text=text[:50], emotion=emotion.value, score=str(score))
+            logger.debug(
+                "Groq emotion analysis", text=text[:50], emotion=emotion.value, score=str(score)
+            )
             return emotion, score
 
         except Exception as e:
@@ -115,14 +115,14 @@ Sentiment:"""
                 self.api_url,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": self.model,
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 10,
-                    "temperature": 0
-                }
+                    "temperature": 0,
+                },
             )
             response.raise_for_status()
             result = response.json()
@@ -133,7 +133,12 @@ Sentiment:"""
             sentiment = SentimentType.from_label(label)
             score = EmotionScore.from_float(GROQ_DEFAULT_CONFIDENCE)
 
-            logger.debug("Groq sentiment analysis", text=text[:50], sentiment=sentiment.value, score=str(score))
+            logger.debug(
+                "Groq sentiment analysis",
+                text=text[:50],
+                sentiment=sentiment.value,
+                score=str(score),
+            )
             return sentiment, score
 
         except Exception as e:

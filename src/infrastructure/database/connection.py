@@ -46,7 +46,7 @@ def get_engine() -> Engine:
             connect_args={
                 "options": "-c statement_timeout=30000",  # 30s query timeout
                 "connect_timeout": 10,
-            }
+            },
         )
 
         # Add connection event listeners for debugging

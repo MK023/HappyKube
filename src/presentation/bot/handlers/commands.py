@@ -93,9 +93,7 @@ I tuoi messaggi sono criptati e sicuri.
         if not update.message:
             return
 
-        ask_msg = self.messages.get(
-            "ask_emotion", "Dimmi come ti senti, sono qui per ascoltarti!"
-        )
+        ask_msg = self.messages.get("ask_emotion", "Dimmi come ti senti, sono qui per ascoltarti!")
 
         await update.message.reply_text(ask_msg)
 
@@ -113,13 +111,15 @@ I tuoi messaggi sono criptati e sicuri.
         user = update.effective_user
         username = user.username if user else "Unknown"
 
-        logger.info("User exited conversation", user_id=user.id if user else None, username=username)
+        logger.info(
+            "User exited conversation", user_id=user.id if user else None, username=username
+        )
 
         goodbye_msg = self.messages.get(
             "goodbye",
             "Grazie per aver usato HappyKube! 👋\n\n"
             "Torna quando vuoi per condividere le tue emozioni.\n"
-            "Ricorda: /start per ricominciare!"
+            "Ricorda: /start per ricominciare!",
         )
 
         await update.message.reply_text(goodbye_msg)
@@ -143,11 +143,7 @@ I tuoi messaggi sono criptati e sicuri.
         telegram_id = str(user.id)
         current_month = datetime.now().strftime("%Y-%m")
 
-        logger.info(
-            "User requested monthly stats",
-            user_id=telegram_id,
-            month=current_month
-        )
+        logger.info("User requested monthly stats", user_id=telegram_id, month=current_month)
 
         await update.message.reply_text("📊 Recupero le tue statistiche mensili...")
 
@@ -173,10 +169,7 @@ I tuoi messaggi sono criptati e sicuri.
                 return
 
             if response.status_code != 200:
-                logger.error(
-                    "Failed to fetch monthly stats",
-                    status_code=response.status_code
-                )
+                logger.error("Failed to fetch monthly stats", status_code=response.status_code)
                 await update.message.reply_text(
                     "❌ Errore nel recupero delle statistiche. Riprova tra poco."
                 )
@@ -190,11 +183,9 @@ I tuoi messaggi sono criptati e sicuri.
             msg += f"📅 Giorni attivi: {data['active_days']}\n\n"
 
             # Top 3 emotions
-            emotions = sorted(
-                data['emotions'].items(),
-                key=lambda x: x[1]['count'],
-                reverse=True
-            )[:3]
+            emotions = sorted(data["emotions"].items(), key=lambda x: x[1]["count"], reverse=True)[
+                :3
+            ]
 
             msg += "*🎭 Top 3 Emozioni:*\n"
             for emotion_name, stats in emotions:
@@ -205,23 +196,19 @@ I tuoi messaggi sono criptati e sicuri.
                 )
 
             # Insights
-            if data.get('insights'):
+            if data.get("insights"):
                 msg += "\n*💡 Insights:*\n"
-                for insight in data['insights'][:3]:
+                for insight in data["insights"][:3]:
                     msg += f"• {insight['message']}\n"
 
             await update.message.reply_text(msg, parse_mode="Markdown")
 
         except httpx.TimeoutException:
             logger.error("Timeout fetching monthly stats")
-            await update.message.reply_text(
-                "⏱️ Timeout nel recupero delle statistiche. Riprova."
-            )
+            await update.message.reply_text("⏱️ Timeout nel recupero delle statistiche. Riprova.")
         except Exception as e:
             logger.error("Error in monthly command", error=str(e), exc_info=True)
-            await update.message.reply_text(
-                "❌ Si è verificato un errore. Riprova più tardi."
-            )
+            await update.message.reply_text("❌ Si è verificato un errore. Riprova più tardi.")
 
     @staticmethod
     def _get_emotion_emoji(emotion: str) -> str:
@@ -234,10 +221,18 @@ I tuoi messaggi sono criptati e sicuri.
     def _get_month_name(month: str) -> str:
         """Convert YYYY-MM to Italian month name."""
         month_names = {
-            "01": "Gennaio", "02": "Febbraio", "03": "Marzo",
-            "04": "Aprile", "05": "Maggio", "06": "Giugno",
-            "07": "Luglio", "08": "Agosto", "09": "Settembre",
-            "10": "Ottobre", "11": "Novembre", "12": "Dicembre"
+            "01": "Gennaio",
+            "02": "Febbraio",
+            "03": "Marzo",
+            "04": "Aprile",
+            "05": "Maggio",
+            "06": "Giugno",
+            "07": "Luglio",
+            "08": "Agosto",
+            "09": "Settembre",
+            "10": "Ottobre",
+            "11": "Novembre",
+            "12": "Dicembre",
         }
         try:
             _, mon = month.split("-")

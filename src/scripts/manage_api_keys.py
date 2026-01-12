@@ -83,10 +83,7 @@ def create(name: str, rate_limit: int, expires: str | None, key: str | None):
 
     try:
         model = repo.create_key(
-            api_key=api_key,
-            name=name,
-            rate_limit_per_minute=rate_limit,
-            expires_at=expires_at
+            api_key=api_key, name=name, rate_limit_per_minute=rate_limit, expires_at=expires_at
         )
 
         click.echo("✅ API key created successfully!\n")

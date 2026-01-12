@@ -61,11 +61,7 @@ def acquire_lock() -> bool:
             # Check if process is still running
             pid = int(LOCK_FILE.read_text())
             os.kill(pid, 0)  # Check if process exists
-            logger.error(
-                "Another bot instance is running",
-                pid=pid,
-                lock_file=str(LOCK_FILE)
-            )
+            logger.error("Another bot instance is running", pid=pid, lock_file=str(LOCK_FILE))
             return False
         except (ProcessLookupError, ValueError):
             # Process not running, remove stale lock
@@ -103,7 +99,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         logger.warning(
             "Bot conflict detected during polling - another instance is active. "
             "This is normal during rolling deployments.",
-            error=str(context.error)
+            error=str(context.error),
         )
         # Don't raise - let the bot continue attempting to poll
         # The lock mechanism will eventually resolve this
@@ -112,8 +108,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     # Handle TimedOut errors (network issues, retryable)
     if isinstance(context.error, TimedOut):
         logger.warning(
-            "Telegram API timed out - will retry automatically",
-            error=str(context.error)
+            "Telegram API timed out - will retry automatically", error=str(context.error)
         )
         # Don't raise - telegram-bot library will retry automatically
         return
@@ -123,7 +118,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         logger.warning(
             "Network error during Telegram API request - will retry automatically",
             error=str(context.error),
-            error_type=type(context.error).__name__
+            error_type=type(context.error).__name__,
         )
         # Don't raise - telegram-bot library will retry automatically
         return
@@ -134,7 +129,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         error=str(context.error),
         error_type=type(context.error).__name__,
         update=update,
-        exc_info=context.error
+        exc_info=context.error,
     )
 
 
@@ -149,11 +144,14 @@ def create_bot() -> None:
     # Wait for old instance to shutdown (rolling deployment)
     logger.info("Waiting %ss for any old instances to shutdown", STARTUP_DELAY)
     import time
+
     time.sleep(STARTUP_DELAY)
 
     # Acquire lock to prevent multiple instances
     if not acquire_lock():
-        logger.warning("Another instance is running, exiting gracefully (this is normal during deployments)")
+        logger.warning(
+            "Another instance is running, exiting gracefully (this is normal during deployments)"
+        )
         sys.exit(0)  # Exit cleanly - supervisord will keep container alive
 
     # Register signal handlers for graceful shutdown
@@ -186,7 +184,9 @@ def create_bot() -> None:
         app.add_handler(CommandHandler("exit", command_handlers.exit))
 
         # Register message handler (non-command text)
-        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handlers.handle_text))
+        app.add_handler(
+            MessageHandler(filters.TEXT & ~filters.COMMAND, message_handlers.handle_text)
+        )
 
         # Register error handler
         app.add_error_handler(error_handler)
@@ -198,8 +198,7 @@ def create_bot() -> None:
 
     except Conflict as e:
         logger.warning(
-            "Bot conflict detected - another instance is polling. Exiting gracefully.",
-            error=str(e)
+            "Bot conflict detected - another instance is polling. Exiting gracefully.", error=str(e)
         )
         # Exit cleanly - this is expected during rolling deployments
         release_lock()

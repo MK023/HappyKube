@@ -5,6 +5,7 @@ Revises: None
 Create Date: 2025-12-26 01:00:00
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -25,7 +26,9 @@ def upgrade() -> None:
     # Create users table
     op.create_table(
         "users",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False, comment="Internal user UUID"),
+        sa.Column(
+            "id", postgresql.UUID(as_uuid=True), nullable=False, comment="Internal user UUID"
+        ),
         sa.Column(
             "telegram_id_hash",
             sa.String(length=64),
@@ -61,7 +64,9 @@ def upgrade() -> None:
     # Create emotions table
     op.create_table(
         "emotions",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False, comment="Emotion record UUID"),
+        sa.Column(
+            "id", postgresql.UUID(as_uuid=True), nullable=False, comment="Emotion record UUID"
+        ),
         sa.Column(
             "user_id",
             postgresql.UUID(as_uuid=True),
@@ -116,7 +121,10 @@ def upgrade() -> None:
     op.create_index("ix_emotions_created_at", "emotions", ["created_at"], unique=False)
     # Composite index for common query pattern (user_id + created_at DESC)
     op.create_index(
-        "ix_emotions_user_created", "emotions", ["user_id", sa.text("created_at DESC")], unique=False
+        "ix_emotions_user_created",
+        "emotions",
+        ["user_id", sa.text("created_at DESC")],
+        unique=False,
     )
 
     # Create api_keys table
@@ -129,7 +137,9 @@ def upgrade() -> None:
             nullable=False,
             comment="Bcrypt hash of API key",
         ),
-        sa.Column("name", sa.String(length=100), nullable=False, comment="API key name/description"),
+        sa.Column(
+            "name", sa.String(length=100), nullable=False, comment="API key name/description"
+        ),
         sa.Column(
             "is_active",
             sa.Boolean(),
@@ -172,7 +182,9 @@ def upgrade() -> None:
     # Create audit_log table
     op.create_table(
         "audit_log",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False, comment="Audit log entry UUID"),
+        sa.Column(
+            "id", postgresql.UUID(as_uuid=True), nullable=False, comment="Audit log entry UUID"
+        ),
         sa.Column(
             "user_id",
             postgresql.UUID(as_uuid=True),

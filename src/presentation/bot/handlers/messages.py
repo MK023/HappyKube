@@ -105,7 +105,5 @@ class MessageHandlers:
         except Exception as e:
             logger.error("Error analyzing emotion", error=str(e), user_id=user_id)
             await update.message.reply_text(
-                self.messages.get(
-                    "error", "Errore durante l'analisi. Riprova tra poco."
-                )
+                self.messages.get("error", "Errore durante l'analisi. Riprova tra poco.")
             )

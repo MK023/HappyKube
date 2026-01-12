@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI):
     # Close Groq analyzer HTTP client
     try:
         from infrastructure.ml.model_factory import get_model_factory
+
         factory = get_model_factory()
         await factory.cleanup()
         logger.info("Groq analyzer closed")
@@ -55,6 +56,7 @@ async def lifespan(app: FastAPI):
     # Close Redis connection (sync operation)
     try:
         from infrastructure.cache import get_cache
+
         cache = get_cache()
         cache.close()
     except Exception as e:
@@ -63,6 +65,7 @@ async def lifespan(app: FastAPI):
     # Close database connections
     try:
         from infrastructure.database import close_database
+
         close_database()
         logger.info("Database connections closed")
     except Exception as e:
@@ -137,11 +140,13 @@ def create_app() -> FastAPI:
     # Add audit middleware (if enabled)
     if settings.is_production:
         from .middleware.audit import AuditMiddleware
+
         app.add_middleware(AuditMiddleware)
         logger.info("Audit logging enabled")
 
     # Include routers (lazy import to avoid circular dependencies)
     from .routes import emotion, health, reports
+
     app.include_router(health.router)
     app.include_router(emotion.router)
     app.include_router(reports.router)
@@ -150,6 +155,7 @@ def create_app() -> FastAPI:
     # Add Prometheus metrics endpoint (if enabled)
     if settings.prometheus_enabled:
         from .routes import metrics
+
         app.include_router(metrics.router)
         logger.info("Prometheus metrics enabled", endpoint="/metrics")
 

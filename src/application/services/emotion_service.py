@@ -84,8 +84,7 @@ class EmotionService:
 
         # Perform analysis (async API calls in parallel for speed)
         (emotion, emotion_score), (sentiment, sentiment_score) = await asyncio.gather(
-            analyzer.analyze_emotion(text),
-            analyzer.analyze_sentiment(text)
+            analyzer.analyze_emotion(text), analyzer.analyze_sentiment(text)
         )
 
         logger.info(
@@ -157,9 +156,7 @@ class EmotionService:
                 else:
                     end_date = datetime(year, mon + 1, 1)
 
-                emotions = self.emotion_repo.find_by_user_and_period(
-                    user.id, start_date, end_date
-                )
+                emotions = self.emotion_repo.find_by_user_and_period(user.id, start_date, end_date)
                 period_label = month
             except ValueError:
                 logger.warning("Invalid month format", month=month)
@@ -230,9 +227,7 @@ class EmotionService:
         user = self.user_repo.find_or_create_by_telegram_id(telegram_id)
 
         # Get emotions for the month
-        emotions = self.emotion_repo.find_by_user_and_period(
-            user.id, start_date, end_date
-        )
+        emotions = self.emotion_repo.find_by_user_and_period(user.id, start_date, end_date)
 
         if not emotions:
             logger.info("No emotions found for month", user_id=str(user.id), month=month)
@@ -265,9 +260,7 @@ class EmotionService:
             avg_score = round(sum(scores) / count, 2)
 
             emotion_stats[emotion] = EmotionStatistic(
-                count=count,
-                percentage=percentage,
-                avg_score=avg_score
+                count=count, percentage=percentage, avg_score=avg_score
             )
 
         # Build sentiment statistics
@@ -287,9 +280,7 @@ class EmotionService:
             if sentiment_total > 0
             else 0.0
         )
-        sentiment_stats = SentimentStatistic(
-            positive=pos_pct, negative=neg_pct, neutral=neu_pct
-        )
+        sentiment_stats = SentimentStatistic(positive=pos_pct, negative=neg_pct, neutral=neu_pct)
 
         # Find dominant emotion
         dominant_emotion = max(emotion_stats.items(), key=lambda x: x[1].count)[0]
@@ -300,7 +291,7 @@ class EmotionService:
             sentiment_stats=sentiment_stats,
             active_days=active_days,
             total_days_in_month=(end_date - start_date).days,
-            month=month
+            month=month,
         )
 
         logger.info(
@@ -308,7 +299,7 @@ class EmotionService:
             user_id=str(user.id),
             month=month,
             total_messages=total,
-            dominant_emotion=dominant_emotion
+            dominant_emotion=dominant_emotion,
         )
 
         return MonthlyStatisticsResponse(
@@ -319,7 +310,7 @@ class EmotionService:
             emotions=emotion_stats,
             sentiment=sentiment_stats,
             dominant_emotion=dominant_emotion,
-            insights=insights
+            insights=insights,
         )
 
     def _generate_insights(
@@ -328,7 +319,7 @@ class EmotionService:
         sentiment_stats: SentimentStatistic,
         active_days: int,
         total_days_in_month: int,
-        month: str
+        month: str,
     ) -> list[MonthlyInsight]:
         """
         Generate actionable insights from statistics.
@@ -358,26 +349,28 @@ class EmotionService:
                 f"💪 {month_name} è stato difficile, ma ce l'hai fatta! "
                 f"({sentiment_stats.negative}% emozioni negative)"
             )
-            insights.append(
-                MonthlyInsight(type="challenging_month", message=msg, icon="💪")
-            )
+            insights.append(MonthlyInsight(type="challenging_month", message=msg, icon="💪"))
         else:
-            insights.append(MonthlyInsight(
-                type="balanced_month",
-                message=f"⚖️ {self._get_month_name(month)} è stato un mese equilibrato",
-                icon="⚖️"
-            ))
+            insights.append(
+                MonthlyInsight(
+                    type="balanced_month",
+                    message=f"⚖️ {self._get_month_name(month)} è stato un mese equilibrato",
+                    icon="⚖️",
+                )
+            )
 
         # Insight 2: Dominant emotion
         from domain.enums.emotion_emojis import EMOTION_EMOJIS
 
         dominant = max(emotion_stats.items(), key=lambda x: x[1].percentage)
         icon = EMOTION_EMOJIS.get(dominant[0], "💭")
-        insights.append(MonthlyInsight(
-            type="dominant_emotion",
-            message=f"{icon} Emozione più frequente: {dominant[0]} ({dominant[1].percentage}%)",
-            icon=icon
-        ))
+        insights.append(
+            MonthlyInsight(
+                type="dominant_emotion",
+                message=f"{icon} Emozione più frequente: {dominant[0]} ({dominant[1].percentage}%)",
+                icon=icon,
+            )
+        )
 
         # Insight 3: Consistency
         consistency_pct = round(active_days / total_days_in_month * 100, 1)
@@ -388,20 +381,24 @@ class EmotionService:
             )
             insights.append(MonthlyInsight(type="high_consistency", message=msg, icon="🔥"))
         elif consistency_pct >= 50:
-            insights.append(MonthlyInsight(
-                type="good_consistency",
-                message=f"👍 Buona costanza: {active_days}/{total_days_in_month} giorni attivi",
-                icon="👍"
-            ))
+            insights.append(
+                MonthlyInsight(
+                    type="good_consistency",
+                    message=f"👍 Buona costanza: {active_days}/{total_days_in_month} giorni attivi",
+                    icon="👍",
+                )
+            )
 
         # Insight 4: Emotional variety
         num_emotions = len(emotion_stats)
         if num_emotions >= 5:
-            insights.append(MonthlyInsight(
-                type="high_variety",
-                message=f"🌈 Hai sperimentato {num_emotions} emozioni diverse questo mese",
-                icon="🌈"
-            ))
+            insights.append(
+                MonthlyInsight(
+                    type="high_variety",
+                    message=f"🌈 Hai sperimentato {num_emotions} emozioni diverse questo mese",
+                    icon="🌈",
+                )
+            )
 
         return insights
 
@@ -409,10 +406,18 @@ class EmotionService:
     def _get_month_name(month: str) -> str:
         """Convert YYYY-MM to Italian month name."""
         month_names = {
-            "01": "Gennaio", "02": "Febbraio", "03": "Marzo",
-            "04": "Aprile", "05": "Maggio", "06": "Giugno",
-            "07": "Luglio", "08": "Agosto", "09": "Settembre",
-            "10": "Ottobre", "11": "Novembre", "12": "Dicembre"
+            "01": "Gennaio",
+            "02": "Febbraio",
+            "03": "Marzo",
+            "04": "Aprile",
+            "05": "Maggio",
+            "06": "Giugno",
+            "07": "Luglio",
+            "08": "Agosto",
+            "09": "Settembre",
+            "10": "Ottobre",
+            "11": "Novembre",
+            "12": "Dicembre",
         }
         try:
             _, mon = month.split("-")

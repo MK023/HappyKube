@@ -24,9 +24,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
     EXCLUDED_PATHS = {"/healthz", "/ping", "/readyz", "/metrics", "/"}
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Process request and log to audit table.
 
