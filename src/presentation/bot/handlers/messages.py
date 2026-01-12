@@ -73,6 +73,9 @@ class MessageHandlers:
                 score=result.score,
             )
 
+            # Delete user message for privacy (only after successful analysis)
+            await update.message.delete()
+
             # Prepare response with emoji
             emotion_emoji = {
                 "joy": "😊",
@@ -86,7 +89,6 @@ class MessageHandlers:
 
             response = (
                 f"{self.messages.get('thanks', 'Grazie per aver condiviso!')}\n\n"
-                f"📝 *Testo analizzato:* \"{text}\"\n"
                 f"{emotion_emoji} *Emozione rilevata:* {result.emotion.capitalize()}\n"
                 f"📊 *Confidenza:* {result.confidence}\n"
                 f"🤖 *Modello:* {result.model_type}"
