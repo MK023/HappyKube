@@ -27,7 +27,8 @@ def upgrade() -> None:
         'idx_emotions_user_created',
         'emotions',
         ['user_id', 'created_at'],
-        postgresql_using='btree'
+        postgresql_using='btree',
+        if_not_exists=True
     )
 
     # Index for sorting by created_at DESC (most recent first)
@@ -36,7 +37,8 @@ def upgrade() -> None:
         'idx_emotions_created_desc',
         'emotions',
         [sa.desc('created_at')],
-        postgresql_using='btree'
+        postgresql_using='btree',
+        if_not_exists=True
     )
 
     # Composite index for emotion type queries with timestamp
@@ -45,12 +47,13 @@ def upgrade() -> None:
         'idx_emotions_type_created',
         'emotions',
         ['emotion', 'created_at'],
-        postgresql_using='btree'
+        postgresql_using='btree',
+        if_not_exists=True
     )
 
 
 def downgrade() -> None:
     """Remove performance indexes."""
-    op.drop_index('idx_emotions_type_created', table_name='emotions')
-    op.drop_index('idx_emotions_created_desc', table_name='emotions')
-    op.drop_index('idx_emotions_user_created', table_name='emotions')
+    op.drop_index('idx_emotions_type_created', table_name='emotions', if_exists=True)
+    op.drop_index('idx_emotions_created_desc', table_name='emotions', if_exists=True)
+    op.drop_index('idx_emotions_user_created', table_name='emotions', if_exists=True)
