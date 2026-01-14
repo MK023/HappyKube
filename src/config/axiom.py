@@ -44,7 +44,7 @@ def init_axiom() -> None:
         from axiom_py import Client
 
         _axiom_client = Client(
-            api_token=settings.axiom_api_token,
+            token=settings.axiom_api_token,
             org_id=settings.axiom_org_id,
             url=settings.axiom_url,
         )

@@ -1,5 +1,6 @@
 """Structured logging configuration."""
 
+import logging
 import sys
 from typing import Any
 
@@ -52,8 +53,6 @@ def setup_logging(service_name: str | None = None, axiom_enabled: bool = False) 
             logger.info("Axiom logging processor enabled")
         except Exception as e:
             # Log error but don't crash - graceful degradation
-            import logging
-
             logging.getLogger(__name__).warning(
                 f"Failed to enable Axiom processor (non-fatal): {e}"
             )

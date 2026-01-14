@@ -31,9 +31,14 @@ HappyKube integrates with Axiom for centralized logging across all services (API
 doppler secrets set AXIOM_API_TOKEN="xaat-xxx-xxx"
 doppler secrets set AXIOM_DATASET="happykube"
 doppler secrets set AXIOM_ORG_ID="your-org-id"  # optional
-doppler secrets set AXIOM_URL="https://api.axiom.co"  # default, works globally
 
-# Optional: Use edge deployment for better ingest performance
+# AXIOM_URL Configuration:
+# Default (Recommended): Works globally, automatically routes to best region
+doppler secrets set AXIOM_URL="https://api.axiom.co"
+
+# Edge deployments (Advanced): Only use if you have specific GDPR/data residency requirements
+# AND your Axiom organization is configured for edge deployments.
+# Note: Edge deployments may have limited features and require org configuration.
 # EU: doppler secrets set AXIOM_URL="https://eu-central-1.aws.edge.axiom.co"
 # US: doppler secrets set AXIOM_URL="https://us-east-1.aws.edge.axiom.co"
 ```
@@ -148,6 +153,25 @@ All logs sent to Axiom include:
 - Log passwords, API keys, or tokens
 - Log full database queries with parameters
 - Enable in development (logs to console)
+
+## Edge Deployment Warning
+
+If you see this warning in Axiom dashboard:
+```
+Endpoints are not available in your organization's default region.
+EU Central 1 (AWS) includes a smaller set of ingest options, and some
+operations may be processed outside the EU.
+```
+
+**What it means:**
+- Your Axiom organization's default region doesn't match the edge deployment URL
+- Some Axiom features may not be available with edge deployments
+- Data ingestion will work, but some operations might route to other regions
+
+**Recommended action:**
+- **For most users**: Use the default global endpoint `https://api.axiom.co` - it automatically routes to the best region and supports all features
+- **For GDPR compliance**: Contact Axiom support to configure your organization for EU edge deployments
+- **Current setup**: The default `https://api.axiom.co` is already configured and will work globally
 
 ## Troubleshooting
 
