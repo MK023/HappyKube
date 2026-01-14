@@ -105,6 +105,11 @@ class Settings(BaseSettings):
         default=0.1, ge=0.0, le=1.0, description="Sentry traces sample rate"
     )
 
+    # Axiom (optional)
+    axiom_api_token: str | None = Field(default=None, description="Axiom API token")
+    axiom_dataset: str = Field(default="happykube", description="Axiom dataset name")
+    axiom_org_id: str | None = Field(default=None, description="Axiom organization ID")
+
     @field_validator("api_keys", mode="before")
     @classmethod
     def parse_api_keys(cls, v: str | list[str] | None) -> list[str] | None:

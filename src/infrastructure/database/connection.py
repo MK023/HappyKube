@@ -1,5 +1,6 @@
 """Database connection management with SQLAlchemy 2.0."""
 
+import time
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -59,6 +60,33 @@ def get_engine() -> Engine:
         def receive_close(dbapi_conn, connection_record):  # type: ignore
             """Log when connection is closed."""
             logger.debug("Database connection closed")
+
+        # Query logging (only in production when db_echo is False)
+        if not settings.db_echo:
+
+            @event.listens_for(_engine, "before_cursor_execute")
+            def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):  # type: ignore
+                """Record query start time."""
+                conn.info.setdefault("query_start_time", []).append(time.time())
+                # Sanitize parameters (don't log sensitive data)
+                safe_params = "..." if parameters else None
+                logger.debug(
+                    "Executing query", query_preview=statement[:100], has_params=bool(parameters)
+                )
+
+            @event.listens_for(_engine, "after_cursor_execute")
+            def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):  # type: ignore
+                """Log query execution time."""
+                total_time = time.time() - conn.info["query_start_time"].pop(-1)
+                # Log slow queries (> 1 second) with more detail
+                if total_time > 1.0:
+                    logger.warning(
+                        "Slow query detected",
+                        duration_ms=round(total_time * 1000, 2),
+                        query_preview=statement[:200],
+                    )
+                else:
+                    logger.debug("Query completed", duration_ms=round(total_time * 1000, 2))
 
         logger.info("Database engine created successfully")
 

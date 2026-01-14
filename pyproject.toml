@@ -39,6 +39,7 @@ dependencies = [
     "sentry-sdk>=2.19.2",
     "prometheus-client>=0.21.0",
     "click>=8.1.0",
+    "axiom-py>=0.6.0",
 ]
 
 [project.optional-dependencies]

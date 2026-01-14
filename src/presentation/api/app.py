@@ -9,7 +9,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from config import get_logger, get_settings, init_sentry, setup_logging
+from config import get_logger, get_settings, init_axiom, init_sentry, setup_logging
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -87,8 +87,11 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI app
     """
-    # Setup logging first with service identifier
-    setup_logging(service_name="api")
+    # Initialize Axiom for centralized logging (production only)
+    init_axiom()
+
+    # Setup logging with service identifier and Axiom
+    setup_logging(service_name="api", axiom_enabled=True)
 
     # Initialize Sentry for error tracking (production only)
     init_sentry()

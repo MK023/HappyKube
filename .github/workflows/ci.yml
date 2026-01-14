@@ -54,6 +54,9 @@ jobs:
           file: ./coverage.xml
           fail_ci_if_error: false
 
+      # TODO: Add Axiom GitHub Action when available
+      # For now, logs are sent via Render integration
+
   lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest
@@ -82,4 +85,7 @@ jobs:
       # TODO: Re-enable after adding proper type hints across codebase
       # - name: Run mypy (type checker)
       #   run: cd src && mypy . --ignore-missing-imports
+
+      # TODO: Add Axiom GitHub Action when available
+      # For now, logs are sent via Render integration
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from telegram.error import Conflict, NetworkError, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-from config import get_logger, get_settings, init_sentry, setup_logging
+from config import get_logger, get_settings, init_axiom, init_sentry, setup_logging
 from presentation.bot.handlers import CommandHandlers, MessageHandlers
 
 logger = get_logger(__name__)
@@ -135,8 +135,11 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def create_bot() -> None:
     """Create and run Telegram bot with single-instance protection."""
-    # Setup logging with service identifier
-    setup_logging(service_name="bot")
+    # Initialize Axiom for centralized logging (production only)
+    init_axiom()
+
+    # Setup logging with service identifier and Axiom
+    setup_logging(service_name="bot", axiom_enabled=True)
 
     # Initialize Sentry for error tracking (production only)
     init_sentry()
