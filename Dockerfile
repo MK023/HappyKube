@@ -24,8 +24,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
+# Create non-root user with home directory
+RUN groupadd -r appuser && useradd -r -g appuser -u 1000 -m -s /bin/bash appuser
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
