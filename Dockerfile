@@ -40,7 +40,7 @@ COPY --from=builder --chown=appuser:appuser /wheels /wheels
 USER appuser
 
 # Install Python wheels as non-root user (installs to ~/.local)
-RUN pip install --no-cache-dir --user /wheels/* && rm -rf /wheels
+RUN pip install --no-cache-dir --user /wheels/*
 
 # Add user site-packages to PATH for executables
 ENV PATH="/home/appuser/.local/bin:${PATH}"
@@ -57,6 +57,9 @@ COPY --chown=appuser:appuser alembic/ /app/alembic/
 
 # Switch back to root for supervisor setup
 USER root
+
+# Clean up wheels directory
+RUN rm -rf /wheels
 
 # Copy supervisor config
 COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
