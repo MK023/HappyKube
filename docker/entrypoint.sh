@@ -104,8 +104,8 @@ echo ""
 echo "🔄 Running database migrations..."
 cd /app
 
-# Run Alembic migrations
-python -m alembic upgrade head
+# Run Alembic migrations as appuser (not root)
+su - appuser -c "cd /app && PATH=/home/appuser/.local/bin:\$PATH python -m alembic upgrade head"
 
 if [ $? -eq 0 ]; then
     echo "✅ Database migrations completed successfully"
@@ -119,7 +119,7 @@ echo "🔑 Bootstrapping API keys..."
 
 # Bootstrap API key if INTERNAL_API_KEY is set and database is empty
 if [ -n "$INTERNAL_API_KEY" ]; then
-    python -c "
+    su - appuser -c "cd /app && PATH=/home/appuser/.local/bin:\$PATH python -c \"
 import sys
 sys.path.insert(0, '/app/src')
 from infrastructure.database import get_engine
@@ -143,7 +143,7 @@ if not existing_keys:
     print('✅ Initial API key created successfully')
 else:
     print(f'ℹ️  Found {len(existing_keys)} existing API key(s) - skipping bootstrap')
-"
+\""
     if [ $? -eq 0 ]; then
         echo "✅ API key bootstrap completed"
     else

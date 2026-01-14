@@ -33,9 +33,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python wheels
-COPY --from=builder /wheels /wheels
-RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+# Copy Python wheels and set ownership
+COPY --from=builder --chown=appuser:appuser /wheels /wheels
+
+# Switch to non-root user before pip install
+USER appuser
+
+# Install Python wheels as non-root user (installs to ~/.local)
+RUN pip install --no-cache-dir --user /wheels/* && rm -rf /wheels
+
+# Add user site-packages to PATH for executables
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 # Copy application code
 COPY --chown=appuser:appuser src/ /app/src/
@@ -46,6 +54,9 @@ COPY --chown=appuser:appuser wsgi.py /app/wsgi.py
 # Copy alembic config and migrations
 COPY --chown=appuser:appuser alembic.ini /app/alembic.ini
 COPY --chown=appuser:appuser alembic/ /app/alembic/
+
+# Switch back to root for supervisor setup
+USER root
 
 # Copy supervisor config
 COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
