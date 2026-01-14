@@ -31,6 +31,11 @@ HappyKube integrates with Axiom for centralized logging across all services (API
 doppler secrets set AXIOM_API_TOKEN="xaat-xxx-xxx"
 doppler secrets set AXIOM_DATASET="happykube"
 doppler secrets set AXIOM_ORG_ID="your-org-id"  # optional
+doppler secrets set AXIOM_URL="https://api.axiom.co"  # default, works globally
+
+# Optional: Use edge deployment for better ingest performance
+# EU: doppler secrets set AXIOM_URL="https://eu-central-1.aws.edge.axiom.co"
+# US: doppler secrets set AXIOM_URL="https://us-east-1.aws.edge.axiom.co"
 ```
 
 ## Step 4: Configure in Render
@@ -49,6 +54,7 @@ doppler secrets set AXIOM_ORG_ID="your-org-id"  # optional
    AXIOM_API_TOKEN=xaat-xxx-xxx
    AXIOM_DATASET=happykube
    AXIOM_ORG_ID=your-org-id
+   AXIOM_URL=https://api.axiom.co
    ```
 3. Redeploy the service
 

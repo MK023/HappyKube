@@ -46,6 +46,7 @@ def init_axiom() -> None:
         _axiom_client = Client(
             api_token=settings.axiom_api_token,
             org_id=settings.axiom_org_id,
+            url=settings.axiom_url,
         )
 
         _axiom_enabled = True
@@ -53,6 +54,7 @@ def init_axiom() -> None:
         logger.info(
             "Axiom initialized",
             dataset=settings.axiom_dataset,
+            url=settings.axiom_url,
             environment=settings.app_env,
         )
 

@@ -109,6 +109,10 @@ class Settings(BaseSettings):
     axiom_api_token: str | None = Field(default=None, description="Axiom API token")
     axiom_dataset: str = Field(default="happykube", description="Axiom dataset name")
     axiom_org_id: str | None = Field(default=None, description="Axiom organization ID")
+    axiom_url: str = Field(
+        default="https://api.axiom.co",
+        description="Axiom API URL (use edge deployment for better performance)",
+    )
 
     @field_validator("api_keys", mode="before")
     @classmethod
