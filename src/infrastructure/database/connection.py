@@ -68,8 +68,7 @@ def get_engine() -> Engine:
             def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):  # type: ignore
                 """Record query start time."""
                 conn.info.setdefault("query_start_time", []).append(time.time())
-                # Sanitize parameters (don't log sensitive data)
-                safe_params = "..." if parameters else None
+                # Log query (parameters are sanitized - not logged for security)
                 logger.debug(
                     "Executing query", query_preview=statement[:100], has_params=bool(parameters)
                 )

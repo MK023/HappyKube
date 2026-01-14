@@ -1,7 +1,6 @@
 """Axiom integration for centralized logging."""
 
 import atexit
-import json
 import threading
 from datetime import datetime
 from queue import Queue
@@ -98,9 +97,7 @@ class AxiomProcessor:
 
         logger.debug("AxiomProcessor initialized", batch_size=batch_size)
 
-    def __call__(
-        self, logger: WrappedLogger, method_name: str, event_dict: EventDict
-    ) -> EventDict:
+    def __call__(self, logger: WrappedLogger, method_name: str, event_dict: EventDict) -> EventDict:
         """
         Process a log event and queue it for sending to Axiom.
 
@@ -127,9 +124,9 @@ class AxiomProcessor:
             # Add to buffer (non-blocking)
             try:
                 self.buffer.put_nowait(axiom_event)
-            except Exception:
-                # Buffer full - drop log silently (don't block app)
-                pass
+            except Exception as e:
+                # Buffer full - drop log to avoid blocking app
+                logger.debug("Axiom buffer full, dropping log", error=str(e))
 
         except Exception as e:
             # Never let logging errors crash the app
