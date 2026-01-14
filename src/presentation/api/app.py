@@ -93,6 +93,15 @@ def create_app() -> FastAPI:
     # Setup logging with service identifier and Axiom
     setup_logging(service_name="api", axiom_enabled=True)
 
+    # Log Axiom configuration status
+    if settings.axiom_api_token and not settings.is_development:
+        logger.info(
+            "Axiom logging enabled",
+            dataset=settings.axiom_dataset,
+            org_id=settings.axiom_org_id,
+            url=settings.axiom_url,
+        )
+
     # Initialize Sentry for error tracking (production only)
     init_sentry()
 
