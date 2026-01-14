@@ -43,9 +43,10 @@ def init_axiom() -> None:
     try:
         from axiom_py import Client
 
+        # Client uses positional arguments: Client(token, org_id)
         _axiom_client = Client(
-            token=settings.axiom_api_token,
-            org_id=settings.axiom_org_id,
+            settings.axiom_api_token,
+            settings.axiom_org_id,
         )
 
         _axiom_enabled = True

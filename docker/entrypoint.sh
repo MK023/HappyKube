@@ -27,7 +27,7 @@ fi
 # Production-specific requirements
 if [ "$APP_ENV" = "production" ]; then
     REQUIRED_VARS+=("ENCRYPTION_KEY")
-    OPTIONAL_VARS+=("SENTRY_DSN")
+    OPTIONAL_VARS+=("SENTRY_DSN" "AXIOM_API_TOKEN" "AXIOM_ORG_ID")
 fi
 
 # Check required variables
