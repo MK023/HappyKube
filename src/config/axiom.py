@@ -46,7 +46,6 @@ def init_axiom() -> None:
         _axiom_client = Client(
             token=settings.axiom_api_token,
             org_id=settings.axiom_org_id,
-            url=settings.axiom_url,
         )
 
         _axiom_enabled = True
