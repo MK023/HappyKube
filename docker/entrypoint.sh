@@ -105,7 +105,8 @@ echo "🔄 Running database migrations..."
 cd /app
 
 # Run Alembic migrations as appuser (not root)
-su - appuser -c "cd /app && PATH=/home/appuser/.local/bin:\$PATH python -m alembic upgrade head"
+# Use 'su appuser' without '-' to preserve environment variables
+su appuser -c "cd /app && PATH=/home/appuser/.local/bin:\$PATH python -m alembic upgrade head"
 
 if [ $? -eq 0 ]; then
     echo "✅ Database migrations completed successfully"
@@ -119,7 +120,8 @@ echo "🔑 Bootstrapping API keys..."
 
 # Bootstrap API key if INTERNAL_API_KEY is set and database is empty
 if [ -n "$INTERNAL_API_KEY" ]; then
-    su - appuser -c "cd /app && PATH=/home/appuser/.local/bin:\$PATH python -c \"
+    # Use 'su appuser' without '-' to preserve environment variables
+    su appuser -c "cd /app && PATH=/home/appuser/.local/bin:\$PATH python -c \"
 import sys
 sys.path.insert(0, '/app/src')
 from infrastructure.database import get_engine

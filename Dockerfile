@@ -39,11 +39,11 @@ COPY --from=builder --chown=appuser:appuser /wheels /wheels
 # Switch to non-root user before pip install
 USER appuser
 
+# Add user site-packages to PATH for executables (before pip install to avoid warnings)
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
 # Install Python wheels as non-root user (installs to ~/.local)
 RUN pip install --no-cache-dir --user /wheels/*
-
-# Add user site-packages to PATH for executables
-ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 # Copy application code
 COPY --chown=appuser:appuser src/ /app/src/
