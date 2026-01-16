@@ -43,12 +43,12 @@ def init_axiom() -> None:
     try:
         from axiom_py import Client
 
-        # Client uses positional arguments: Client(token, org_id, url)
+        # Client accepts: Client(token, org_id, url_base)
         # Pass axiom_url to use correct region (EU vs US)
         _axiom_client = Client(
             settings.axiom_api_token,
             settings.axiom_org_id,
-            url=settings.axiom_url,
+            url_base=settings.axiom_url,
         )
 
         _axiom_enabled = True
