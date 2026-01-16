@@ -2,20 +2,32 @@
 # Optimized for Render.com deployment with Groq API
 
 # ================================
-# Stage 1: Build Dependencies
+# Stage 1: Builder
 # ================================
 FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy pyproject.toml and src directory for building
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy only pyproject.toml first for better layer caching
 COPY pyproject.toml .
+
+# Install dependencies (cached if pyproject.toml doesn't change)
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Copy source code
 COPY src/ ./src/
-RUN pip wheel --no-cache-dir --wheel-dir /wheels .
+
+# Install project with all dependencies
+RUN pip install --no-cache-dir .
 
 # ================================
 # Stage 2: Runtime
@@ -27,41 +39,28 @@ WORKDIR /app
 # Create non-root user with home directory
 RUN groupadd -r appuser && useradd -g appuser -u 1000 -m -s /bin/bash appuser
 
-# Install runtime dependencies
+# Install only runtime dependencies (no build-essential!)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     supervisor \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python wheels and set ownership
-COPY --from=builder --chown=appuser:appuser /wheels /wheels
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
 
-# Switch to non-root user before pip install
-USER appuser
-
-# Add user site-packages to PATH for executables (before pip install to avoid warnings)
-ENV PATH="/home/appuser/.local/bin:${PATH}"
-
-# Install Python wheels as non-root user (installs to ~/.local)
-RUN pip install --no-cache-dir --user /wheels/*
+# Set PATH to use virtual environment
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy application code
 COPY --chown=appuser:appuser src/ /app/src/
-
-# Copy wsgi.py to root
 COPY --chown=appuser:appuser wsgi.py /app/wsgi.py
 
 # Copy alembic config and migrations
 COPY --chown=appuser:appuser alembic.ini /app/alembic.ini
 COPY --chown=appuser:appuser alembic/ /app/alembic/
 
-# Switch back to root for supervisor setup
-USER root
-
-# Clean up wheels directory
-RUN rm -rf /wheels
-
-# Copy supervisor config
+# Copy supervisor config (needs root ownership)
 COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy entrypoint script
