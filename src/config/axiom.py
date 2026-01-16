@@ -97,7 +97,7 @@ class AxiomProcessor:
         # Register cleanup on exit
         atexit.register(self._cleanup)
 
-        logger.debug("AxiomProcessor initialized", batch_size=batch_size)
+        logger.info("AxiomProcessor initialized", batch_size=batch_size, flush_interval=flush_interval)
 
     def __call__(self, logger: WrappedLogger, method_name: str, event_dict: EventDict) -> EventDict:
         """
@@ -128,11 +128,11 @@ class AxiomProcessor:
                 self.buffer.put_nowait(axiom_event)
             except Exception as e:
                 # Buffer full - drop log to avoid blocking app
-                logger.debug("Axiom buffer full, dropping log", error=str(e))
+                logger.warning("Axiom buffer full, dropping log", error=str(e), buffer_size=self.buffer.qsize())
 
         except Exception as e:
             # Never let logging errors crash the app
-            logger.debug("Failed to queue log for Axiom", error=str(e))
+            logger.warning("Failed to queue log for Axiom", error=str(e))
 
         return event_dict
 
@@ -160,7 +160,7 @@ class AxiomProcessor:
                 time.sleep(0.1)  # Small delay to prevent busy loop
 
             except Exception as e:
-                logger.debug("Error in Axiom flush worker", error=str(e))
+                logger.error("Error in Axiom flush worker", error=str(e))
                 time.sleep(1)  # Back off on error
 
     def _send_batch(self, events: list[dict[str, Any]]) -> None:
@@ -179,15 +179,15 @@ class AxiomProcessor:
                 events=events,
             )
 
-            logger.debug("Sent batch to Axiom", count=len(events))
+            logger.info("Sent batch to Axiom", count=len(events), dataset=self.settings.axiom_dataset)
 
         except Exception as e:
             # Log error but don't crash (graceful degradation)
-            logger.debug("Failed to send logs to Axiom", error=str(e), count=len(events))
+            logger.error("Failed to send logs to Axiom", error=str(e), count=len(events), dataset=self.settings.axiom_dataset)
 
     def _cleanup(self) -> None:
         """Cleanup on shutdown - flush remaining logs."""
-        logger.debug("Flushing remaining logs to Axiom")
+        logger.info("Flushing remaining logs to Axiom on shutdown")
 
         # Signal worker to stop
         self._stop_event.set()
@@ -203,7 +203,7 @@ class AxiomProcessor:
         if remaining:
             self._send_batch(remaining)
 
-        logger.debug("Axiom cleanup completed", flushed=len(remaining))
+        logger.info("Axiom cleanup completed", flushed_count=len(remaining))
 
 
 # Global processor instance
