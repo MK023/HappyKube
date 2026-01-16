@@ -1,245 +1,425 @@
-# Axiom Integration Setup Guide
+# Axiom Setup & Dashboard Guide
 
-## Overview
-HappyKube integrates with Axiom for centralized logging across all services (API, Bot, Database queries).
+Guida completa per configurare Axiom logging e creare dashboard personalizzate.
 
-## Prerequisites
-- Axiom account (https://axiom.co)
-- Doppler account for secrets management
-- Render account for deployment
+---
 
-## Step 1: Create Axiom Dataset
+## 📋 Prerequisiti
 
-1. Log into Axiom dashboard
-2. Create a new dataset called `happykube`
-3. Optionally create another dataset `happykube-ci` for CI/CD logs
+1. Account Axiom: https://app.axiom.co/
+2. API Token generato
+3. Organization ID
 
-## Step 2: Get Axiom Credentials
+---
 
-1. Go to Settings → API Tokens
-2. Create a new API token with `ingest` permission
-3. Note your Organization ID (in Settings → Profile)
-4. Save these credentials:
-   - `AXIOM_API_TOKEN`
-   - `AXIOM_ORG_ID` (optional)
-   - `AXIOM_DATASET` (default: "happykube")
+## 🔧 Configurazione Environment Variables
 
-## Step 3: Configure in Doppler
+### Su Render Dashboard
+
+1. Vai su https://dashboard.render.com
+2. Apri service **happykube**
+3. **Environment** → **Environment Variables**
+4. Aggiungi/verifica:
 
 ```bash
-# Add Axiom credentials to Doppler
-doppler secrets set AXIOM_API_TOKEN="xaat-xxx-xxx"
-doppler secrets set AXIOM_DATASET="happykube"
-doppler secrets set AXIOM_ORG_ID="your-org-id"  # optional
+# Axiom Configuration
+AXIOM_API_TOKEN=xaat-your-token-here
+AXIOM_ORG_ID=your-org-id-here
+AXIOM_DATASET=happykube
 
-# AXIOM_URL Configuration:
-# Default (Recommended): Works globally, automatically routes to best region
-doppler secrets set AXIOM_URL="https://api.axiom.co"
-
-# Edge deployments (Advanced): Only use if you have specific GDPR/data residency requirements
-# AND your Axiom organization is configured for edge deployments.
-# Note: Edge deployments may have limited features and require org configuration.
-# EU: doppler secrets set AXIOM_URL="https://eu-central-1.aws.edge.axiom.co"
-# US: doppler secrets set AXIOM_URL="https://us-east-1.aws.edge.axiom.co"
+# IMPORTANTE: Deve essere production!
+APP_ENV=production
 ```
 
-## Step 4: Configure in Render
-
-### Option A: Using Doppler (Recommended)
-
-1. Go to your Render service dashboard
-2. Add Doppler integration if not already configured
-3. Axiom credentials will sync automatically from Doppler
-
-### Option B: Manual Configuration
-
-1. Go to your Render service → Environment
-2. Add environment variables:
-   ```
-   AXIOM_API_TOKEN=xaat-xxx-xxx
-   AXIOM_DATASET=happykube
-   AXIOM_ORG_ID=your-org-id
-   AXIOM_URL=https://api.axiom.co
-   ```
-3. Redeploy the service
-
-## Step 5: Configure Log Forwarding from Render (Optional)
-
-For complete coverage, configure Render to forward all logs to Axiom:
-
-1. Go to Render service → Logging
-2. Enable "Log Streams" if available
-3. Add Axiom as a destination:
-   - Endpoint: `https://api.axiom.co/v1/datasets/{dataset}/ingest`
-   - Headers: `Authorization: Bearer {AXIOM_API_TOKEN}`
-   - Format: JSON
-
-## Step 6: Verify Integration
-
-### Local Testing
+### Su Doppler (se usi)
 
 ```bash
-# Set environment variables
-export AXIOM_API_TOKEN="xaat-xxx-xxx"
-export AXIOM_DATASET="happykube"
+doppler secrets set AXIOM_API_TOKEN="xaat-..." -p happykube -c prd
+doppler secrets set AXIOM_ORG_ID="..." -p happykube -c prd
+doppler secrets set AXIOM_DATASET="happykube" -p happykube -c prd
+doppler secrets set APP_ENV="production" -p happykube -c prd
+```
+
+---
+
+## ✅ Verifica Configurazione
+
+### Metodo 1: Check Logs di Startup
+
+Dopo deploy, cerca nei logs:
+
+```
+✅ "Axiom initialized" dataset=happykube environment=production
+✅ "Axiom logging processor enabled"
+```
+
+❌ **Se vedi:**
+```
+"Axiom not configured (AXIOM_API_TOKEN missing)"
+```
+→ AXIOM_API_TOKEN non è settato correttamente
+
+❌ **Se vedi:**
+```
+"Axiom disabled in development environment"
+```
+→ APP_ENV è "development" invece di "production"
+
+### Metodo 2: Test Manuale
+
+```bash
+# In locale con env vars di produzione
+export AXIOM_API_TOKEN="xaat-..."
+export AXIOM_ORG_ID="..."
 export APP_ENV="production"
 
-# Run the API
-python -m uvicorn presentation.api.app:app --host 0.0.0.0 --port 5000
+python3 << 'EOF'
+import sys
+sys.path.insert(0, 'src')
 
-# Or run the bot
-python -m presentation.bot.telegram_bot
+from config import init_axiom, setup_logging, get_logger
+
+# Initialize
+init_axiom()
+setup_logging(service_name="test", axiom_enabled=True)
+
+# Test logging
+logger = get_logger(__name__)
+logger.info("Test log to Axiom", test=True, timestamp="now")
+logger.error("Test error log", error_code=500)
+
+print("✅ Logs sent to Axiom! Check dashboard in 5-10 seconds.")
+EOF
 ```
 
-Check Axiom dashboard for logs with `service=api` or `service=bot`.
+### Metodo 3: Query Axiom API
 
-### Production Testing
+```bash
+# Check dataset exists
+curl -H "Authorization: Bearer $AXIOM_API_TOKEN" \
+  "https://api.axiom.co/v1/datasets/happykube"
 
-After deploying to Render:
-1. Trigger some API requests
-2. Send messages to the Telegram bot
-3. Check Axiom dashboard for logs
-4. Look for:
-   - `service=api` - API request logs
-   - `service=bot` - Bot interaction logs
-   - `level=warning` - Slow database queries
-   - `level=error` - Application errors
-
-## Step 7: GitHub Actions (CI/CD Logs)
-
-To send CI/CD logs to Axiom:
-
-1. Add `AXIOM_TOKEN` to GitHub repository secrets
-2. Logs from test and lint jobs will be sent to `happykube-ci` dataset
-3. Note: This is optional and can be enabled when Axiom GitHub Action is stable
-
-## Log Fields
-
-All logs sent to Axiom include:
-
-- `_time`: Timestamp (ISO 8601)
-- `level`: Log level (debug, info, warning, error)
-- `message`: Log message
-- `service`: Service identifier (api, bot)
-- Additional structured fields depending on context
-
-### API Logs
-- `method`: HTTP method
-- `path`: Request path
-- `status_code`: Response status
-- `duration_ms`: Request duration
-
-### Bot Logs
-- `user_id`: Telegram user ID (hashed)
-- `chat_id`: Chat ID (hashed)
-- `command`: Command name
-- `error_type`: Error type if applicable
-
-### Database Logs
-- `query_preview`: First 100-200 chars of query
-- `duration_ms`: Query execution time
-- `has_params`: Whether query had parameters
-
-## Security Best Practices
-
-✅ **DO:**
-- Store Axiom token in Doppler/Render secrets
-- Use production environment only
-- Sanitize sensitive data before logging
-- Review logs regularly for PII
-
-❌ **DON'T:**
-- Commit Axiom token to git
-- Log passwords, API keys, or tokens
-- Log full database queries with parameters
-- Enable in development (logs to console)
-
-## Edge Deployment Warning
-
-If you see this warning in Axiom dashboard:
-```
-Endpoints are not available in your organization's default region.
-EU Central 1 (AWS) includes a smaller set of ingest options, and some
-operations may be processed outside the EU.
+# Query recent logs
+curl -H "Authorization: Bearer $AXIOM_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -X POST \
+  "https://api.axiom.co/v1/datasets/happykube/query" \
+  -d '{
+    "startTime": "'$(date -u -v-1H +%Y-%m-%dT%H:%M:%SZ)'",
+    "endTime": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+    "aggregations": [{"op": "count"}]
+  }'
 ```
 
-**What it means:**
-- Your Axiom organization's default region doesn't match the edge deployment URL
-- Some Axiom features may not be available with edge deployments
-- Data ingestion will work, but some operations might route to other regions
+---
 
-**Recommended action:**
-- **For most users**: Use the default global endpoint `https://api.axiom.co` - it automatically routes to the best region and supports all features
-- **For GDPR compliance**: Contact Axiom support to configure your organization for EU edge deployments
-- **Current setup**: The default `https://api.axiom.co` is already configured and will work globally
+## 📊 Creare Dashboard su Axiom
 
-## Troubleshooting
+### Dashboard 1: Overview Sistema
 
-### Logs not appearing in Axiom
+**Cosa monitorare:**
+- Request rate (API)
+- Error rate
+- Response time (p50, p95, p99)
+- Active users
+- Bot messages processed
 
-1. Check environment variables are set correctly
-2. Verify `APP_ENV=production` (Axiom disabled in development)
-3. Check Render logs for "Axiom initialized" message
-4. Verify API token has `ingest` permission
-5. Check dataset name matches
+**Step by step:**
 
-### Axiom errors in logs
+1. **Vai su Axiom Dashboard**
+   - https://app.axiom.co/
+   - Click **Dashboards** → **New Dashboard**
+   - Nome: "HappyKube - System Overview"
 
-```
-Failed to send logs to Axiom: ...
-```
+2. **Chart 1: Total Requests (Time Series)**
+   ```apl
+   ['happykube']
+   | where ['service'] == 'api'
+   | where ['level'] == 'info'
+   | where contains(['message'], 'Request')
+   | summarize count() by bin(_time, 5m)
+   ```
 
-This is non-fatal. The app continues working, logs go to stdout.
-Check:
-- API token validity
-- Network connectivity
-- Axiom service status
+3. **Chart 2: Error Rate (Time Series)**
+   ```apl
+   ['happykube']
+   | where ['level'] == 'error'
+   | summarize errors=count() by bin(_time, 5m)
+   ```
 
-### High Axiom costs
+4. **Chart 3: Response Time (Percentiles)**
+   ```apl
+   ['happykube']
+   | where ['service'] == 'api'
+   | where isnotnull(['duration_ms'])
+   | summarize
+       p50=percentile(['duration_ms'], 50),
+       p95=percentile(['duration_ms'], 95),
+       p99=percentile(['duration_ms'], 99)
+     by bin(_time, 5m)
+   ```
 
-- Reduce log level to `INFO` or `WARNING`
-- Increase batch size in `axiom.py` (default: 50)
-- Disable debug logs
-- Filter out noisy libraries
+5. **Chart 4: Top Errors (Table)**
+   ```apl
+   ['happykube']
+   | where ['level'] == 'error'
+   | summarize count() by ['error']
+   | sort by count_
+   | limit 10
+   ```
 
-## Monitoring Queries
+6. **Chart 5: Active Services (Stat)**
+   ```apl
+   ['happykube']
+   | where _time > ago(5m)
+   | summarize dcount(['service'])
+   ```
 
-Useful Axiom queries:
+### Dashboard 2: Bot Analytics
+
+**Queries utili:**
+
+1. **Messages Per Hour**
+   ```apl
+   ['happykube']
+   | where ['service'] == 'bot'
+   | where contains(['message'], 'emotion')
+   | summarize count() by bin(_time, 1h)
+   ```
+
+2. **Top Emotions Detected**
+   ```apl
+   ['happykube']
+   | where ['service'] == 'bot'
+   | where isnotnull(['emotion'])
+   | summarize count() by ['emotion']
+   | sort by count_
+   ```
+
+3. **Bot Response Time**
+   ```apl
+   ['happykube']
+   | where ['service'] == 'bot'
+   | where isnotnull(['duration_ms'])
+   | summarize
+       avg_ms=avg(['duration_ms']),
+       max_ms=max(['duration_ms'])
+     by bin(_time, 10m)
+   ```
+
+4. **Error Messages**
+   ```apl
+   ['happykube']
+   | where ['service'] == 'bot'
+   | where ['level'] == 'error'
+   | project _time, ['message'], ['error']
+   | sort by _time desc
+   | limit 50
+   ```
+
+### Dashboard 3: Database Monitoring
+
+1. **Slow Queries (> 1 second)**
+   ```apl
+   ['happykube']
+   | where contains(['message'], 'Slow query')
+   | project _time, ['duration_ms'], ['query_preview']
+   | sort by ['duration_ms'] desc
+   ```
+
+2. **Database Connections**
+   ```apl
+   ['happykube']
+   | where contains(['message'], 'Database connection')
+   | summarize count() by bin(_time, 5m), ['message']
+   ```
+
+3. **Query Performance Over Time**
+   ```apl
+   ['happykube']
+   | where contains(['message'], 'Query completed')
+   | summarize
+       avg_ms=avg(['duration_ms']),
+       p95_ms=percentile(['duration_ms'], 95)
+     by bin(_time, 10m)
+   ```
+
+---
+
+## 🔔 Alerts Setup
+
+### Alert 1: High Error Rate
 
 ```apl
-# API error rate
-['service'] == "api" and ['level'] == "error"
-| summarize count() by bin(_time, 5m)
-
-# Slow database queries
-['duration_ms'] > 1000
-| project _time, query_preview, duration_ms
-| order by duration_ms desc
-
-# Bot interactions by user
-['service'] == "bot"
-| summarize count() by user_id, bin(_time, 1h)
-
-# API response times by endpoint
-['service'] == "api"
-| summarize avg(duration_ms), max(duration_ms) by path
-| order by avg_duration_ms desc
+['happykube']
+| where ['level'] == 'error'
+| summarize error_count=count() by bin(_time, 5m)
+| where error_count > 10
 ```
 
-## Cost Optimization
+**Configurazione:**
+- Threshold: > 10 errors in 5 minutes
+- Notification: Email/Slack
 
-Axiom pricing is based on:
-- Ingestion volume (GB/month)
-- Query compute (seconds)
-- Retention period
+### Alert 2: Slow Response Time
 
-To optimize:
-1. Use appropriate log levels (INFO in prod, not DEBUG)
-2. Batch logs (already configured: 50 logs/batch)
-3. Set retention to 30 days for production
-4. Use sampling for high-volume endpoints if needed
+```apl
+['happykube']
+| where ['service'] == 'api'
+| where ['duration_ms'] > 5000
+| summarize slow_requests=count() by bin(_time, 5m)
+| where slow_requests > 5
+```
 
-## Support
+**Configurazione:**
+- Threshold: > 5 requests taking > 5s in 5 minutes
+- Notification: Email/Slack
 
-- Axiom Docs: https://axiom.co/docs
-- HappyKube Issues: https://github.com/MK023/HappyKube/issues
+### Alert 3: Service Down
+
+```apl
+['happykube']
+| summarize last_log=max(_time)
+| where last_log < ago(10m)
+```
+
+**Configurazione:**
+- Threshold: No logs in 10 minutes
+- Notification: Email/SMS/PagerDuty
+
+---
+
+## 🎨 Dashboard Layout Consigliato
+
+```
+┌─────────────────────────────────────────────────────┐
+│             HappyKube - System Overview             │
+├──────────────────┬──────────────────┬───────────────┤
+│  Total Requests  │   Error Rate     │ Active Users  │
+│   (Time Series)  │  (Time Series)   │    (Stat)     │
+├──────────────────┴──────────────────┴───────────────┤
+│            Response Time (Percentiles)              │
+│              p50, p95, p99 (Line)                   │
+├──────────────────┬──────────────────────────────────┤
+│   Top Errors     │     Recent Error Logs            │
+│    (Table)       │        (List)                    │
+└──────────────────┴──────────────────────────────────┘
+```
+
+---
+
+## 📝 Custom Queries Utili
+
+### Debug: Trova Request Specifico
+
+```apl
+['happykube']
+| where ['request_id'] == 'abc-123'
+| project _time, ['service'], ['level'], ['message']
+| sort by _time asc
+```
+
+### Performance: Query più lente oggi
+
+```apl
+['happykube']
+| where _time > startofday(now())
+| where isnotnull(['duration_ms'])
+| sort by ['duration_ms'] desc
+| limit 20
+```
+
+### Security: API Key Usage
+
+```apl
+['happykube']
+| where contains(['message'], 'API key')
+| summarize requests=count() by ['api_key_name']
+```
+
+### Users: Sentiment Analysis
+
+```apl
+['happykube']
+| where ['service'] == 'bot'
+| where isnotnull(['sentiment'])
+| summarize count() by ['sentiment'], bin(_time, 1h)
+```
+
+---
+
+## 🔍 Troubleshooting
+
+### Problema: Nessun log visibile
+
+**Causa 1: APP_ENV è development**
+```bash
+# Verifica su Render
+echo $APP_ENV
+# Deve essere: production
+```
+
+**Causa 2: Token invalido**
+```bash
+# Test token
+curl -H "Authorization: Bearer $AXIOM_API_TOKEN" \
+  https://api.axiom.co/v1/user
+```
+
+**Causa 3: Dataset non esiste**
+```bash
+# Crea dataset
+curl -X POST \
+  -H "Authorization: Bearer $AXIOM_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  https://api.axiom.co/v1/datasets \
+  -d '{"name": "happykube", "description": "HappyKube logs"}'
+```
+
+### Problema: Logs in ritardo
+
+**Normale:** I logs vengono inviati in batch ogni 5 secondi.
+
+**Se ritardo > 1 minuto:**
+- Check network connectivity
+- Check Axiom status: https://status.axiom.co/
+
+### Problema: Logs duplicati
+
+**Causa:** Multiple instances dello stesso service.
+
+**Soluzione:** Aggiungere `instance_id` ai logs:
+```python
+import uuid
+instance_id = str(uuid.uuid4())[:8]
+structlog.contextvars.bind_contextvars(instance=instance_id)
+```
+
+---
+
+## 📖 Risorse
+
+- **Axiom Docs:** https://axiom.co/docs
+- **APL Query Language:** https://axiom.co/docs/apl
+- **Dashboard Examples:** https://axiom.co/docs/dashboards
+- **Alerts Guide:** https://axiom.co/docs/monitor-data/monitors
+
+---
+
+## 🎯 Quick Start Checklist
+
+- [ ] AXIOM_API_TOKEN settato su Render
+- [ ] AXIOM_ORG_ID settato su Render
+- [ ] APP_ENV=production (NON development!)
+- [ ] Deploy effettuato
+- [ ] Verificato logs di startup (vedi "Axiom initialized")
+- [ ] Atteso 1-2 minuti per primi logs
+- [ ] Aperto Axiom dashboard: https://app.axiom.co/
+- [ ] Navigato su "happykube" dataset
+- [ ] Visto i logs in arrivo
+- [ ] Creato prima dashboard
+- [ ] Settato primo alert
+
+---
+
+**Ultima modifica:** 16 Gennaio 2026
