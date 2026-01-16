@@ -97,7 +97,9 @@ class AxiomProcessor:
         # Register cleanup on exit
         atexit.register(self._cleanup)
 
-        logger.info("AxiomProcessor initialized", batch_size=batch_size, flush_interval=flush_interval)
+        logger.info(
+            "AxiomProcessor initialized", batch_size=batch_size, flush_interval=flush_interval
+        )
 
     def __call__(self, logger: WrappedLogger, method_name: str, event_dict: EventDict) -> EventDict:
         """
@@ -128,7 +130,9 @@ class AxiomProcessor:
                 self.buffer.put_nowait(axiom_event)
             except Exception as e:
                 # Buffer full - drop log to avoid blocking app
-                logger.warning("Axiom buffer full, dropping log", error=str(e), buffer_size=self.buffer.qsize())
+                logger.warning(
+                    "Axiom buffer full, dropping log", error=str(e), buffer_size=self.buffer.qsize()
+                )
 
         except Exception as e:
             # Never let logging errors crash the app
@@ -179,11 +183,18 @@ class AxiomProcessor:
                 events=events,
             )
 
-            logger.info("Sent batch to Axiom", count=len(events), dataset=self.settings.axiom_dataset)
+            logger.info(
+                "Sent batch to Axiom", count=len(events), dataset=self.settings.axiom_dataset
+            )
 
         except Exception as e:
             # Log error but don't crash (graceful degradation)
-            logger.error("Failed to send logs to Axiom", error=str(e), count=len(events), dataset=self.settings.axiom_dataset)
+            logger.error(
+                "Failed to send logs to Axiom",
+                error=str(e),
+                count=len(events),
+                dataset=self.settings.axiom_dataset,
+            )
 
     def _cleanup(self) -> None:
         """Cleanup on shutdown - flush remaining logs."""
