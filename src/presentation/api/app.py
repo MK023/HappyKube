@@ -88,10 +88,11 @@ def create_app() -> FastAPI:
         Configured FastAPI app
     """
     # Initialize Axiom for centralized logging (production only)
-    init_axiom()
+    # TEMPORARILY DISABLED: Waiting for axiom-py SDK to support EU edge deployments (Q1 2026)
+    # init_axiom()
 
-    # Setup logging with service identifier and Axiom
-    setup_logging(service_name="api", axiom_enabled=True)
+    # Setup logging with service identifier (Axiom disabled until SDK supports edge deployments)
+    setup_logging(service_name="api", axiom_enabled=False)
 
     # Log Axiom configuration status
     if settings.axiom_api_token and not settings.is_development:

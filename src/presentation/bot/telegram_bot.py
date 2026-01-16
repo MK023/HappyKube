@@ -136,10 +136,11 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 def create_bot() -> None:
     """Create and run Telegram bot with single-instance protection."""
     # Initialize Axiom for centralized logging (production only)
-    init_axiom()
+    # TEMPORARILY DISABLED: Waiting for axiom-py SDK to support EU edge deployments (Q1 2026)
+    # init_axiom()
 
-    # Setup logging with service identifier and Axiom
-    setup_logging(service_name="bot", axiom_enabled=True)
+    # Setup logging with service identifier (Axiom disabled until SDK supports edge deployments)
+    setup_logging(service_name="bot", axiom_enabled=False)
 
     # Log Axiom configuration status
     if settings.axiom_api_token and not settings.is_development:
