@@ -1,0 +1,40 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//HappyKube//Migration Reminders//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+
+BEGIN:VTODO
+UID:happykube-neondb-migration@bellingeri.com
+DTSTAMP:20260116T120000Z
+DTSTART:20260123T090000Z
+DUE:20260124T180000Z
+SUMMARY:Migrazione Database HappyKube da Render a NeonDB
+DESCRIPTION:MIGRAZIONE DATABASE RENDER → NEONDB\n\n⚠️ DEADLINE: 23-24 Gennaio 2026 (Render chiude DB gratuito)\n\n📋 CHECKLIST PRE-MIGRAZIONE:\n- [ ] Backup completo database Render\n- [ ] Verificare NeonDB è pronto (già fatto)\n- [ ] Testare connessione NeonDB pooler\n\n🔧 STEPS MIGRAZIONE:\n1. Backup: pg_dump dal DB Render\n2. Doppler: Cambia DATABASE_URL con NeonDB pooler URL\n3. Render: Redeploy automatico\n4. Verifica: Test API e bot funzionano\n5. Importa dati: pg_restore su NeonDB (se necessario)\n\n📄 DOCUMENTAZIONE:\n- File: docs/NEONDB_MIGRATION.md\n- NeonDB URL già in Doppler (commentato)\n- Pooler URL: postgresql://...-pooler.eu-west-2.aws.neon.tech/...\n\n✅ GIÀ FATTO:\n- Codice compatibile con NeonDB pooler\n- Migrazioni Alembic pronte\n- Statement timeout gestito correttamente
+PRIORITY:1
+STATUS:NEEDS-ACTION
+END:VTODO
+
+BEGIN:VTODO
+UID:happykube-axiom-edge-update@bellingeri.com
+DTSTAMP:20260116T120000Z
+DTSTART:20260301T090000Z
+DUE:20260331T180000Z
+SUMMARY:Aggiornare Axiom URL per Edge Deployment EU
+DESCRIPTION:AXIOM EDGE DEPLOYMENT - URL UPDATE\n\n⏰ QUANDO: Q1 2026 (Marzo circa)\n\n📍 SITUAZIONE ATTUALE:\n- Usando: https://api.axiom.co (endpoint centrale)\n- Dati vanno comunque su EU Central 1\n- Funziona ma passa per US\n\n🎯 OBIETTIVO:\n- Cambiare a: https://eu-central-1.aws.edge.axiom.co\n- Dati direttamente su edge EU (performance migliori)\n\n✅ COME VERIFICARE SE PRONTO:\n1. Controllare: https://axiom.co/docs/reference/edge-deployments\n2. Testare endpoint edge (se 404 = non ancora pronto)\n3. Cercare annunci Axiom su supporto SDK\n\n🔧 STEPS UPDATE:\n1. Doppler: AXIOM_URL = "https://eu-central-1.aws.edge.axiom.co"\n2. Render: Aspetta redeploy automatico\n3. Logs: Verifica "Sent batch to Axiom" senza errori\n4. Dashboard: Verifica dati arrivano\n\n📄 DOCUMENTAZIONE:\n- File: docs/AXIOM_SETUP.md (sezione Edge Deployment)\n- Codice già pronto (url_base parameter)\n\n⚠️ NON FARE PRIMA: axiom-py non supporta ancora edge endpoints!
+PRIORITY:3
+STATUS:NEEDS-ACTION
+END:VTODO
+
+BEGIN:VEVENT
+UID:happykube-redis-status-check@bellingeri.com
+DTSTAMP:20260116T120000Z
+DTSTART:20260201T100000Z
+DTEND:20260201T101500Z
+SUMMARY:Check Status Redis su Render
+DESCRIPTION:REDIS RENDER - STATUS CHECK\n\n✅ SITUAZIONE:\n- Redis sta su Render\n- NON hai ricevuto popup scadenza\n- Dovrebbe rimanere OK\n\n📋 COSA FARE:\n- Controlla email da Render per notifiche\n- Verifica dashboard Render per alert\n- Se tutto OK: nessuna azione necessaria\n\n🔗 Link: https://dashboard.render.com
+PRIORITY:2
+STATUS:CONFIRMED
+END:VEVENT
+
+END:VCALENDAR
