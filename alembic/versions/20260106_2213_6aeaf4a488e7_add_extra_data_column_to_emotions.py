@@ -21,10 +21,18 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     # Add extra_data column to emotions table (JSONB for PostgreSQL)
-    op.add_column('emotions', sa.Column('extra_data', sa.JSON(), nullable=True))
+    # Using PostgreSQL's IF NOT EXISTS for idempotent migration
+    op.execute("""
+        ALTER TABLE emotions
+        ADD COLUMN IF NOT EXISTS extra_data JSONB;
+    """)
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # Remove extra_data column from emotions table
-    op.drop_column('emotions', 'extra_data')
+    # Using PostgreSQL's IF EXISTS for idempotent migration
+    op.execute("""
+        ALTER TABLE emotions
+        DROP COLUMN IF EXISTS extra_data;
+    """)
