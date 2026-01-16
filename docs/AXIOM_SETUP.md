@@ -38,7 +38,40 @@ doppler secrets set AXIOM_API_TOKEN="xaat-..." -p happykube -c prd
 doppler secrets set AXIOM_ORG_ID="..." -p happykube -c prd
 doppler secrets set AXIOM_DATASET="happykube" -p happykube -c prd
 doppler secrets set APP_ENV="production" -p happykube -c prd
+
+# Edge Deployment URL (vedi sezione sotto)
+doppler secrets set AXIOM_URL="https://api.axiom.co" -p happykube -c prd
 ```
+
+### ⚠️ Nota su Edge Deployment (EU Central 1)
+
+**Situazione attuale (Gennaio 2026):**
+
+L'organizzazione HappyKube usa l'edge deployment **EU Central 1 (AWS)** per lo storage dei dati.
+
+Tuttavia, il SDK `axiom-py` **non supporta ancora completamente** i nuovi edge deployment endpoint. Per questo motivo, attualmente usiamo:
+
+```
+AXIOM_URL=https://api.axiom.co
+```
+
+Questo endpoint centrale instraderà automaticamente i dati all'edge deployment EU in base alla configurazione dell'organizzazione.
+
+**Quando aggiornare (Q1 2026):**
+
+Quando Axiom completa il supporto edge deployment negli SDK (previsto Q1 2026), cambia l'URL per migliorare le performance:
+
+```bash
+# Future configuration (quando axiom-py supporta edge deployments)
+doppler secrets set AXIOM_URL="https://eu-central-1.aws.edge.axiom.co"
+```
+
+Questo invierà i dati **direttamente** all'edge EU senza passare dall'endpoint US centrale.
+
+**Come verificare se è il momento:**
+- Controlla la roadmap: https://axiom.co/docs/reference/edge-deployments
+- Testa l'endpoint edge direttamente - se ottieni 404, usa ancora `api.axiom.co`
+- Monitora gli annunci di Axiom per il completamento del supporto SDK
 
 ---
 
