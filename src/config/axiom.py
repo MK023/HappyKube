@@ -178,7 +178,7 @@ class AxiomProcessor:
             return
 
         try:
-            _axiom_client.ingest(
+            _axiom_client.ingest_events(
                 dataset=self.settings.axiom_dataset,
                 events=events,
             )
