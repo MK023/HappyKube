@@ -108,25 +108,26 @@ psql "$NEON_DB_URL" -c "SELECT
 
 ## 🔄 Step 3: Switch Database su Render
 
-### Metodo A: Tramite Doppler (raccomandato)
+### ⚠️ IMPORTANTE: Deploy del render.yaml aggiornato
 
-```bash
-# Production environment
-doppler secrets set DATABASE_URL="postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require" -p happykube -c prd
+Prima di configurare DATABASE_URL, assicurati di aver fatto il deploy del `render.yaml` aggiornato che:
+- Rimuove `healthCheckPath: /ping` (risparmia ore di utilizzo!)
+- Configura DATABASE_URL come variabile manuale
 
-# Trigger sync Doppler → Render
-# (dipende dalla tua configurazione Doppler-Render)
-```
-
-### Metodo B: Tramite Render Dashboard
+### Metodo: Tramite Render Dashboard (raccomandato)
 
 1. Vai su https://dashboard.render.com
 2. Apri service **happykube**
 3. **Environment** → **Environment Variables**
-4. Trova `DATABASE_URL`
-5. Click **Edit**
-6. Sostituisci con la NeonDB connection string
+4. Trova `DATABASE_URL` (o creala se non esiste)
+5. Click **Edit** (o **Add Environment Variable**)
+6. Incolla la NeonDB connection string:
+   ```
+   postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   ```
 7. **Save** (trigger auto-redeploy)
+
+**📝 Nota:** Dopo il deploy, Render userà l'endpoint `/` come health check invece di `/ping`, riducendo drasticamente il consumo di ore.
 
 ### Verifica Deploy
 
@@ -174,19 +175,32 @@ psql "$NEON_DB_URL" -c "SELECT * FROM emotions ORDER BY created_at DESC LIMIT 5;
 ## 📊 Architettura Finale
 
 ```
-┌─────────────────────────────┐
-│   Render Web Service        │
-│   (API + Bot + Supervisor)  │
-│   Region: Frankfurt         │
-└────────┬──────────┬─────────┘
-         │          │
-         ▼          ▼
-   ┌──────────┐  ┌────────────┐
-   │  NeonDB  │  │   Render   │
-   │  (NEW)   │  │   Redis    │
-   │ EU-West-2│  │ Frankfurt  │
-   └──────────┘  └────────────┘
+                    ┌─────────────┐
+                    │   Doppler   │
+                    │   (Secrets) │
+                    └──────┬──────┘
+                           │
+                           ▼
+┌──────────────────────────────────────┐
+│      Render Web Service              │
+│   (API + Bot + Supervisor)           │
+│      Region: Frankfurt               │
+└───────┬──────────┬──────────┬────────┘
+        │          │          │
+        ▼          ▼          ▼
+   ┌────────┐ ┌────────┐ ┌──────────┐
+   │ NeonDB │ │ Redis  │ │  Groq    │
+   │ (NEW)  │ │ Cloud  │ │   API    │
+   │EU-West2│ │EU-North│ │          │
+   └────────┘ └────────┘ └──────────┘
 ```
+
+**Componenti:**
+- **Render:** Hosting API + Bot (Frankfurt)
+- **Doppler:** Gestione secrets e config
+- **NeonDB:** PostgreSQL serverless (London)
+- **Redis Cloud:** Cache distribuita (EU-North-1)
+- **Groq API:** LLM per analisi emozioni
 
 ---
 
