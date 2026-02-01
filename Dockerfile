@@ -47,14 +47,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Create PostgreSQL client config for appuser (libpq needs cert files even with server SSL)
-RUN mkdir -p /home/appuser/.postgresql && \
-    touch /home/appuser/.postgresql/postgresql.crt && \
-    touch /home/appuser/.postgresql/postgresql.key && \
-    chown -R appuser:appuser /home/appuser/.postgresql && \
-    chmod 700 /home/appuser/.postgresql && \
-    chmod 600 /home/appuser/.postgresql/postgresql.crt && \
-    chmod 600 /home/appuser/.postgresql/postgresql.key
+# Disable PostgreSQL client certificate requirement (NeonDB uses server SSL only)
+ENV PGSSLCERT="" \
+    PGSSLKEY="" \
+    PGSSLROOTCERT=/etc/ssl/certs/ca-certificates.crt
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
