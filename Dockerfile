@@ -46,6 +46,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
+# Create dummy SSL certificate for PostgreSQL (libpq searches for it even with channel_binding=disable)
+RUN mkdir -p /root/.postgresql && touch /root/.postgresql/postgresql.crt && chmod 600 /root/.postgresql/postgresql.crt
+
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 
