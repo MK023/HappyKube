@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         default="development", description="Application environment"
     )
     app_name: str = Field(default="HappyKube", description="Application name")
-    app_version: str = Field(default="2.0.1", description="Application version")
+    app_version: str = Field(default="3.0.0", description="Application version")
     debug: bool = Field(default=False, description="Debug mode")
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         default="INFO", description="Logging level"
@@ -74,6 +74,9 @@ class Settings(BaseSettings):
 
     # Telegram Bot
     telegram_bot_token: str = Field(default="", description="Telegram bot token")
+    telegram_webhook_secret: str = Field(
+        default="", description="Secret token for webhook validation (HappyKube 3.0)"
+    )
     telegram_api_timeout: int = Field(default=30, ge=10, le=60, description="Telegram API timeout")
 
     # ML API - Groq (Llama 3.3 70B)

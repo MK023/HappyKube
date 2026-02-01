@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "happykube"
-version = "2.0.0"
-description = "AI-powered emotional intelligence Telegram bot with enterprise architecture"
+version = "3.0.0"
+description = "AI-powered emotional intelligence Telegram bot with webhook architecture and enterprise security"
 authors = [{name = "Marco Bellingeri", email = "marco@example.com"}]
 readme = "README.md"
 requires-python = ">=3.12"

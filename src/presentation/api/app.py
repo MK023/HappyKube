@@ -158,12 +158,16 @@ def create_app() -> FastAPI:
         logger.info("Audit logging enabled")
 
     # Include routers (lazy import to avoid circular dependencies)
-    from .routes import emotion, health, reports
+    from .routes import emotion, health, reports, telegram_webhook
 
     app.include_router(health.router)
     app.include_router(emotion.router)
     app.include_router(reports.router)
     logger.info("Monthly reports API enabled", endpoint="/reports")
+
+    # Telegram Webhook (HappyKube 3.0)
+    app.include_router(telegram_webhook.router)
+    logger.info("Telegram webhook enabled", endpoint="/telegram/webhook")
 
     # Add Prometheus metrics endpoint (if enabled)
     if settings.prometheus_enabled:
