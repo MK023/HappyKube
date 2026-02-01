@@ -36,8 +36,8 @@ git push origin main
 **Nota:** HappyKube usa Doppler per gestire le variabili d'ambiente. Aggiorna DATABASE_URL su Doppler:
 
 ```bash
-# Aggiorna DATABASE_URL con NeonDB
-doppler secrets set DATABASE_URL="postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require" -p happykube -c dev
+# Aggiorna DATABASE_URL con NeonDB (SENZA channel_binding per Docker)
+doppler secrets set DATABASE_URL="postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require" -p happykube -c dev
 
 # Verifica
 doppler secrets get DATABASE_URL -p happykube -c dev

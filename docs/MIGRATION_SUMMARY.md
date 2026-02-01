@@ -19,7 +19,7 @@ Migrare HappyKube da servizi Render (a pagamento) a servizi esterni gratuiti:
 
 **URL Corretto:**
 ```
-postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require
 ```
 
 **Caratteristiche:**
@@ -294,7 +294,7 @@ Tutto su Doppler, mai su GitHub!
 **Soluzione:**
 1. Verifica DATABASE_URL su Render Dashboard
 2. Deve contenere `-pooler.eu-west-2.aws.neon.tech`
-3. Deve finire con `?sslmode=require&channel_binding=require`
+3. Deve finire con `?sslmode=require`
 
 ---
 
