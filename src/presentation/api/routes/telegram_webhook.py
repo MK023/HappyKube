@@ -12,6 +12,7 @@ SECURITY FEATURES:
 from fastapi import APIRouter, Header, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from telegram import Bot, Update
 
 from config import get_logger, get_settings
 from presentation.bot.handlers import CommandHandlers, MessageHandlers
@@ -130,9 +131,6 @@ async def _process_message(message: dict) -> None:
     Args:
         message: Telegram Message object
     """
-    from telegram import Bot, Update
-    from telegram.ext import ContextTypes
-
     try:
         # Create Telegram Update and Message objects
         bot = Bot(token=settings.telegram_bot_token)
@@ -172,8 +170,6 @@ async def _process_message(message: dict) -> None:
 
 async def _handle_command(update: Update, command: str) -> None:
     """Route command to appropriate handler."""
-    from telegram.ext import ContextTypes
-
     # Create empty context (not used in webhook mode)
     class EmptyContext:
         pass
@@ -196,8 +192,6 @@ async def _handle_command(update: Update, command: str) -> None:
 
 async def _handle_text(update: Update) -> None:
     """Route text message to handler."""
-    from telegram.ext import ContextTypes
-
     class EmptyContext:
         pass
 
