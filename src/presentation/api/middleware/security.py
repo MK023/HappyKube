@@ -36,6 +36,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         "/docs",
         "/redoc",
         "/openapi.json",
+        "/telegram/webhook",  # Telegram webhook (uses secret token, not API key)
     }
 
     def __init__(self, app):
