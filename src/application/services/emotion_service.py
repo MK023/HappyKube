@@ -24,8 +24,9 @@ from ..interfaces.user_repository import IUserRepository
 logger = get_logger(__name__)
 
 # Cache TTL configuration (in seconds)
-CACHE_TTL_EMOTION = 7200  # 2 hours - same text will have same emotion
-CACHE_TTL_MONTHLY = 1800  # 30 minutes - stats update frequently
+# Optimized for Redis Cloud 30MB free tier - longer TTL to maximize cache hit rate
+CACHE_TTL_EMOTION = 86400  # 24 hours - same text analysis cached for 1 day
+CACHE_TTL_MONTHLY = 3600  # 1 hour - stats can be cached longer
 
 
 class EmotionService:
