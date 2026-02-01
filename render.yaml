@@ -30,13 +30,8 @@ services:
       - key: API_TIMEOUT
         value: 120
 
-      # Database (NeonDB - set via Doppler)
-      - key: DATABASE_URL
-        sync: false
-
-      # Redis (Redis Cloud - set via Doppler)
-      - key: REDIS_URL
-        sync: false
+      # Database (NeonDB) and Redis (Redis Cloud) are managed by Doppler
+      # No need to declare them here - Doppler will sync them automatically
 
       # Security (SET IN RENDER DASHBOARD - SECRET!)
       - key: ENCRYPTION_KEY
