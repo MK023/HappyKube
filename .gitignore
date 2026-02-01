@@ -57,3 +57,6 @@ htmlcov/
 doppler.yaml
 .doppler.yaml
 .env.doppler
+
+# Fly.io tokens
+.flyio-token

@@ -1,5 +1,5 @@
 # Production Dockerfile - API + Bot unified service
-# Optimized for Render.com deployment with Groq API
+# Optimized for Fly.io deployment with Groq API
 
 # ================================
 # Stage 1: Builder
@@ -41,10 +41,11 @@ RUN groupadd -r appuser && useradd -g appuser -u 1000 -m -s /bin/bash appuser
 
 # Install only runtime dependencies (no build-essential!)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    supervisor \
-    libpq5 \
     ca-certificates \
+    curl \
+    libpq5 \
+    supervisor \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Disable PostgreSQL client certificate requirement (NeonDB uses server SSL only)
@@ -69,12 +70,11 @@ COPY --chown=appuser:appuser alembic/ /app/alembic/
 # Copy supervisor config (needs root ownership)
 COPY --chown=root:root docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy entrypoint script
+# Copy entrypoint script and create logs directory
 COPY --chown=root:root docker/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
-# Create logs directory
-RUN mkdir -p /var/log/supervisor && chown -R appuser:appuser /var/log/supervisor
+RUN chmod +x /app/entrypoint.sh && \
+    mkdir -p /var/log/supervisor && \
+    chown -R appuser:appuser /var/log/supervisor
 
 # Set Python path to include src
 ENV PYTHONPATH=/app/src:/app
@@ -84,7 +84,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:5000/ping || exit 1
+    CMD curl -f http://localhost:5000/healthz || exit 1
 
 # Set entrypoint to run migrations before starting services
 ENTRYPOINT ["/app/entrypoint.sh"]
