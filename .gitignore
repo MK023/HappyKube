@@ -1,62 +1,154 @@
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+wheels/
+*.whl
 
+# Virtual environments
 *.env
 !.env.example
+.env.*
+!.env.example
 *.venv
+.venv/
 env/
 venv/
 ENV/
 env.bak/
+venv.bak/
+
+# Databases
 *.sqlite3
+*.db
+*.sql
+*.dump
+*.backup
 
-.vscode/
-
-src/config.py
-.env
-.env.*
-!.env.example
-config.ini
-config.ini.*
+# Logs
 *.log
 *.out
 *.pid
+logs/
+*.log.*
 
-.ipynb_checkpoints
-
-.cache/
-transformers_cache/
-datasets_cache/
-hf_cache/
-
-.DS_Store
-Thumbs.db
+# IDEs and Editors
+.vscode/
 .idea/
 *.iml
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# Old happykube-v2 folder (cleanup)
-happykube-v2/
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 
-# Kubernetes secrets
-deployment/overlays/*/secrets.yaml
-deployment/secrets/
+# Secrets and credentials (CRITICAL)
+*.key
+*.pem
+*.cert
+*.crt
+*.p12
+*.pfx
+*_rsa
+*_rsa.pub
+*.pgp
+*.gpg
+secrets/
+secrets.json
+credentials.json
+service-account.json
+*-key.json
+*.env.local
+*.env.production
+*.env.staging
+config.ini
+config.ini.*
+src/config.py
 
-# Test and build artifacts
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.coverage
-htmlcov/
-.mypy_cache/
-.ruff_cache/
-
-# Doppler secrets management
+# API Keys and tokens
+*api_key*
+*apikey*
+*secret_key*
+*access_token*
+*auth_token*
+*.token
+.flyio-token
 doppler.yaml
 .doppler.yaml
 .env.doppler
 
-# Fly.io tokens
-.flyio-token
+# Backups
+*.bak
+*.backup
+*.old
+*.orig
+*~
+\#*\#
+
+# ML/AI caches
+.cache/
+transformers_cache/
+datasets_cache/
+hf_cache/
+.huggingface/
+models/
+checkpoints/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.prof
+
+# Linting and type checking
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.pyre/
+.dmypy.json
+dmypy.json
+
+# Kubernetes
+deployment/overlays/*/secrets.yaml
+deployment/secrets/
+*.kubeconfig
+
+# Archives (cleanup)
+happykube-v2/
+*.tar.gz
+*.zip
+*.rar
+
+# Temporary files
+tmp/
+temp/
+*.tmp
