@@ -1,9 +1,9 @@
 """Emotion type enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class EmotionType(str, Enum):
+class EmotionType(StrEnum):
     """Supported emotion types."""
 
     # Italian emotion model labels

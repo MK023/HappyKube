@@ -1,9 +1,9 @@
 """ML model type enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class ModelType(str, Enum):
+class ModelType(StrEnum):
     """Available ML model types."""
 
     ITALIAN_EMOTION = "italian_emotion"

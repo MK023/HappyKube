@@ -1,9 +1,9 @@
 """Sentiment type enumeration."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class SentimentType(str, Enum):
+class SentimentType(StrEnum):
     """Supported sentiment types."""
 
     POSITIVE = "positive"
