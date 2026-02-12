@@ -9,7 +9,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from config import get_logger, get_settings, init_axiom, init_sentry, setup_logging
+from config import get_logger, get_settings, init_sentry, setup_logging
 
 logger = get_logger(__name__)
 settings = get_settings()

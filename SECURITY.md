@@ -1,9 +1,10 @@
-# Security Review - HappyKube v2.0
+
+# Security Review - HappyKube v3.0
 
 ## ✅ Security Hardening Summary
 
-Data: 31 Dicembre 2025
-Versione: 2.0.0
+Data: 12 Febbraio 2026
+Versione: 3.0.0
 Stato: **Production-Ready**
 
 ---
@@ -284,8 +285,8 @@ security:
 
 ---
 
-**Last Review**: 31 Dicembre 2025
-**Next Review**: 31 Marzo 2026
+**Last Review**: 12 Febbraio 2026
+**Next Review**: 12 Maggio 2026
 **Reviewed By**: Claude Sonnet 4.5 (Automated Security Analysis)
 # 🔒 Security Setup - CRITICAL
 
@@ -297,10 +298,10 @@ L'API è attualmente **PUBBLICA** e deve essere protetta con API Key.
 
 ### 1. Genera API Key
 
-La tua API key sicura è già generata:
+Generate your secure API key:
 
-```
-HK_L_Ln0elQ0R1CN_z83Xpd2HpbhbWTgt53zWMKEhZmgxY
+```bash
+python3 -c "import secrets; print('HK_' + secrets.token_urlsafe(32))"
 ```
 
 **⚠️ CONSERVALA IN MODO SICURO - è come una password!**
@@ -309,11 +310,11 @@ HK_L_Ln0elQ0R1CN_z83Xpd2HpbhbWTgt53zWMKEhZmgxY
 
 #### A. Aggiungi API Key al servizio Web (API)
 
-1. Vai su https://dashboard.render.com/web/srv-d59fttbuibrs73b9ndc0
+1. Vai su https://dashboard.render.com/web/YOUR-SERVICE-ID
 2. Clicca "Environment"
 3. Aggiungi variabile:
    - **Key**: `API_KEYS`
-   - **Value**: `HK_L_Ln0elQ0R1CN_z83Xpd2HpbhbWTgt53zWMKEhZmgxY`
+   - **Value**: `<your-generated-api-key-here>`
 4. Clicca "Save Changes"
 
 #### B. Il bot Telegram usa l'API internamente (stesso container)
@@ -326,14 +327,14 @@ Dopo il deploy, testa:
 
 ```bash
 # ❌ Deve fallire (senza API key)
-curl https://happykube-d884.onrender.com/api/v1/emotion/analyze
+curl https://your-app.onrender.com/api/v1/emotion/analyze
 
 # ✅ Deve funzionare (con API key)
-curl -H "X-API-Key: HK_L_Ln0elQ0R1CN_z83Xpd2HpbhbWTgt53zWMKEhZmgxY" \
-     https://happykube-d884.onrender.com/api/v1/emotion/analyze
+curl -H "X-API-Key: YOUR_API_KEY_HERE" \
+     https://your-app.onrender.com/api/v1/emotion/analyze
 
 # ✅ Health check sempre pubblico
-curl https://happykube-d884.onrender.com/ping
+curl https://your-app.onrender.com/ping
 ```
 
 ## 🛡️ Protezioni Implementate
@@ -369,11 +370,11 @@ Se in futuro vuoi chiamare l'API da un client esterno:
 ```python
 import httpx
 
-API_KEY = "HK_L_Ln0elQ0R1CN_z83Xpd2HpbhbWTgt53zWMKEhZmgxY"
+API_KEY = "YOUR_API_KEY_HERE"  # Replace with your actual API key
 
 async with httpx.AsyncClient() as client:
     response = await client.post(
-        "https://happykube-d884.onrender.com/api/v1/emotion/analyze",
+        "https://your-app.onrender.com/api/v1/emotion/analyze",
         headers={"X-API-Key": API_KEY},
         json={"text": "Mi sento felice oggi!"}
     )

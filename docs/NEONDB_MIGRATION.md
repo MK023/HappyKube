@@ -17,7 +17,7 @@
 
 ### Connection String (Pooler)
 ```
-postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require
+postgresql://neondb_owner:YOUR_PASSWORD@ep-your-endpoint.aws.neon.tech/neondb?sslmode=require
 ```
 
 **⚠️ IMPORTANTE:** Salvare questa connection string in Doppler (encrypted), mai committarla su Git!
@@ -78,7 +78,7 @@ psql "$RENDER_DB_URL" -c "\COPY users TO 'users_export.csv' CSV HEADER"
 ### Se hai fatto export completo (pg_dump)
 
 ```bash
-export NEON_DB_URL="postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require"
+export NEON_DB_URL="postgresql://neondb_owner:YOUR_PASSWORD@ep-your-endpoint.aws.neon.tech/neondb?sslmode=require"
 
 # Import su NeonDB
 psql "$NEON_DB_URL" < render_backup_20260116.sql
@@ -123,7 +123,7 @@ Prima di configurare DATABASE_URL, assicurati di aver fatto il deploy del `rende
 5. Click **Edit** (o **Add Environment Variable**)
 6. Incolla la NeonDB connection string:
    ```
-   postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require
+   postgresql://neondb_owner:YOUR_PASSWORD@ep-your-endpoint.aws.neon.tech/neondb?sslmode=require
    ```
 7. **Save** (trigger auto-redeploy)
 

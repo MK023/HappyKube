@@ -12,7 +12,7 @@ primary_region = "fra"  # Frankfurt - closest to NeonDB (London)
 [env]
   APP_ENV = "production"
   APP_NAME = "HappyKube"
-  APP_VERSION = "2.0.0"
+  APP_VERSION = "3.0.0"
   DEBUG = "false"
   LOG_LEVEL = "INFO"
 

@@ -84,7 +84,11 @@ async def telegram_webhook(
         logger.warning(
             "Invalid webhook secret token",
             remote_addr=request.client.host if request.client else "unknown",
-            provided_token=x_telegram_bot_api_secret_token[:10] + "..." if x_telegram_bot_api_secret_token else None,
+            provided_token=(
+                x_telegram_bot_api_secret_token[:10] + "..."
+                if x_telegram_bot_api_secret_token
+                else None
+            ),
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -99,7 +103,7 @@ async def telegram_webhook(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid JSON payload",
-        )
+        ) from e
 
     # Validate Telegram Update structure
     if not isinstance(update_data, dict) or "update_id" not in update_data:
@@ -170,6 +174,7 @@ async def _process_message(message: dict) -> None:
 
 async def _handle_command(update: Update, command: str) -> None:
     """Route command to appropriate handler."""
+
     # Create empty context (not used in webhook mode)
     class EmptyContext:
         pass
@@ -192,6 +197,7 @@ async def _handle_command(update: Update, command: str) -> None:
 
 async def _handle_text(update: Update) -> None:
     """Route text message to handler."""
+
     class EmptyContext:
         pass
 

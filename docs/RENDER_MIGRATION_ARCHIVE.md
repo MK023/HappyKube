@@ -19,7 +19,7 @@ Migrare HappyKube da servizi Render (a pagamento) a servizi esterni gratuiti:
 
 **URL Corretto:**
 ```
-postgresql://neondb_owner:npg_VtgGS1rI8PmW@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require
+postgresql://neondb_owner:YOUR_PASSWORD@ep-your-endpoint.aws.neon.tech/neondb?sslmode=require
 ```
 
 **Caratteristiche:**
@@ -44,7 +44,7 @@ redis-18844.crce175.eu-north-1-1.ec2.cloud.redislabs.com:18844
 
 **URL Completo:**
 ```
-redis://neon:vufTyj-2dopju-xegqan@redis-18844.crce175.eu-north-1-1.ec2.cloud.redislabs.com:18844
+redis://username:YOUR_PASSWORD@redis-xxxxx.cloud.redislabs.com:18844
 ```
 
 **Caratteristiche:**
@@ -204,7 +204,7 @@ Dopo aver usato il bot, controlla che Redis Cloud abbia i dati:
 
 ```bash
 # Connetti a Redis Cloud e controlla chiavi
-redis-cli -u "redis://neon:vufTyj-2dopju-xegqan@redis-18844.crce175.eu-north-1-1.ec2.cloud.redislabs.com:18844" DBSIZE
+redis-cli -u "redis://username:YOUR_PASSWORD@redis-xxxxx.cloud.redislabs.com:18844" DBSIZE
 
 # Dovrebbe mostrare > 0 chiavi dopo l'uso del bot
 ```

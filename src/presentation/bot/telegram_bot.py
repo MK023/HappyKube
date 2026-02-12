@@ -9,7 +9,7 @@ from pathlib import Path
 from telegram.error import Conflict, NetworkError, TimedOut
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-from config import get_logger, get_settings, init_axiom, init_sentry, setup_logging
+from config import get_logger, get_settings, init_sentry, setup_logging
 from presentation.bot.handlers import CommandHandlers, MessageHandlers
 
 logger = get_logger(__name__)

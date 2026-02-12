@@ -1,16 +1,18 @@
-# HappyKube v2.0 🤖😊
+# HappyKube v3.0 🤖😊
 
-AI-powered emotion analysis Telegram bot with clean architecture.
+AI-powered emotion analysis Telegram bot with webhook architecture and enterprise security.
 
 ## 🌟 Features
 
-- 🇮🇹 Italian emotion detection (anger, joy, sadness, fear)
+- 🤖 **AI-Powered Analysis**: Groq LLaMA 3.3 70B for multilingual emotion detection
+- 🇮🇹 Italian emotion detection (7 emotions)
 - 🇬🇧 English emotion detection (7 emotions)
-- 📊 Sentiment analysis (positive, negative, neutral)
-- 🔐 AES-256 encryption for PII
-- 🚀 Production-ready Flask API
-- ⚡ Redis caching
-- 📊 PostgreSQL database with migrations
+- 📊 Advanced sentiment analysis with confidence scores
+- 🔐 Enterprise security: AES-256 encryption, API key auth, rate limiting
+- 🚀 Production-ready FastAPI with webhook architecture
+- ⚡ Redis caching for optimal performance
+- 📊 PostgreSQL database with Alembic migrations
+- 🔄 Telegram webhook mode (no polling)
 
 ## 📁 Project Structure
 
@@ -25,69 +27,83 @@ happykube/
 │   └── migrations/          # Alembic migrations
 ├── docker/                  # Dockerfiles
 ├── tests/                   # Test suite
-└── render.yaml              # Render.com config
+└── fly.toml                 # Fly.io deployment config
 ```
 
-## 🚀 Deploy to Render
+## 🚀 Deploy to Fly.io
 
 ### 1. Prerequisites
 - GitHub repository
-- [Render.com](https://render.com) account
+- [Fly.io](https://fly.io) account
 - Telegram Bot Token from [@BotFather](https://t.me/botfather)
+- Groq API key from [Groq Console](https://console.groq.com)
 
 ### 2. Generate Secrets
 
 ```bash
-# Encryption key
+# Encryption key (Fernet)
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
-# JWT secret (any random string)
+# JWT secret
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 
-# API key (any random string)
-python -c "import secrets; print(secrets.token_urlsafe(16))"
+# API key
+python -c "import secrets; print('HK_' + secrets.token_urlsafe(32))"
+
+# Internal API key (for Telegram webhook)
+python -c "import secrets; print('HK_' + secrets.token_urlsafe(32))"
 ```
 
 ### 3. Deploy
 
-1. **Push to GitHub**
+1. **Install Fly CLI**
    ```bash
-   git add .
-   git commit -m "Ready for Render"
-   git push origin main
+   curl -L https://fly.io/install.sh | sh
+   fly auth login
    ```
 
-2. **Connect to Render**
-   - Go to [Render Dashboard](https://dashboard.render.com)
-   - Click "New" → "Blueprint"
-   - Connect your GitHub repo
-   - Render will auto-detect `render.yaml`
-
-3. **Set Secret Environment Variables**
-
-   In Render dashboard, set these for BOTH services (api + bot):
-
-   ```
-   ENCRYPTION_KEY=<generated-fernet-key>
-   JWT_SECRET_KEY=<generated-jwt-secret>
-   API_KEYS=<generated-api-key>
-   TELEGRAM_BOT_TOKEN=<from-botfather>
+2. **Create App**
+   ```bash
+   fly launch --no-deploy
+   # Follow prompts, select Frankfurt region (closest to NeonDB)
    ```
 
-4. **Deploy!**
-   - Click "Apply" in Render
-   - Wait ~10-15 minutes for build (models download)
-   - Check logs for errors
+3. **Set Secrets**
+   ```bash
+   fly secrets set \
+     ENCRYPTION_KEY="<generated-fernet-key>" \
+     JWT_SECRET_KEY="<generated-jwt-secret>" \
+     API_KEYS="<generated-api-key>" \
+     INTERNAL_API_KEY="<generated-internal-key>" \
+     TELEGRAM_BOT_TOKEN="<from-botfather>" \
+     GROQ_API_KEY="<from-groq-console>" \
+     DATABASE_URL="<neondb-connection-string>" \
+     REDIS_URL="<redis-cloud-connection-string>"
+   ```
 
-### 4. Setup UptimeRobot
+4. **Deploy**
+   ```bash
+   fly deploy
+   ```
 
-Keep API alive on free tier:
+5. **Setup Telegram Webhook**
+   ```bash
+   curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://your-app.fly.dev/telegram/webhook"}'
+   ```
 
-1. Go to [UptimeRobot](https://uptimerobot.com)
-2. Add new monitor:
-   - Type: HTTP(s)
-   - URL: `https://your-app.onrender.com/ping`
-   - Interval: 5 minutes
+### 4. External Services
+
+#### NeonDB (PostgreSQL)
+1. Create account at [Neon](https://neon.tech)
+2. Create project in EU-West-2 (London)
+3. Get connection string with `-pooler` endpoint
+
+#### Redis Cloud
+1. Create account at [Redis Cloud](https://redis.com/try-free/)
+2. Create database in EU-North-1 (Stockholm)
+3. Get connection string
 
 ## 🔧 Local Development
 
@@ -111,26 +127,29 @@ docker-compose logs -f bot
 
 ## 📡 API Endpoints
 
-- `GET /ping` - UptimeRobot health check
+- `GET /ping` - Basic health check
 - `GET /healthz` - Liveness probe
 - `GET /readyz` - Readiness probe (DB + Redis)
-- `POST /api/v1/emotion` - Analyze emotion
-- `GET /api/v1/report` - Get user report
+- `POST /api/v1/emotion/analyze` - Analyze emotion (requires API key)
+- `GET /api/v1/reports/monthly/{telegram_id}/{month}` - Get monthly report
+- `POST /telegram/webhook` - Telegram webhook endpoint (internal)
+- `GET /metrics` - Prometheus metrics
 
 ### Example Request
 
 ```bash
-curl -X POST https://your-app.onrender.com/api/v1/emotion \
+curl -X POST https://your-app.fly.dev/api/v1/emotion/analyze \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
-  -d '{"user_id": "123", "text": "Oggi mi sento felice!"}'
+  -d '{"text": "Oggi mi sento felice!"}'
 ```
 
 ## 🤖 Telegram Bot Commands
 
 - `/start` - Start conversation
 - `/help` - Show help
-- `/ask` - Analyze emotion
+- `/exit` - Exit current operation
+- Just send a message - Get instant emotion analysis
 
 ## 📊 Database Migrations
 
@@ -156,12 +175,16 @@ pytest --cov=src --cov-report=html
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `REDIS_URL` | Redis connection string | Yes |
+| `DATABASE_URL` | PostgreSQL connection string (NeonDB) | Yes |
+| `REDIS_URL` | Redis connection string (Redis Cloud) | Yes |
 | `ENCRYPTION_KEY` | Fernet key for PII encryption | Yes |
 | `JWT_SECRET_KEY` | JWT signing key | Yes |
-| `API_KEYS` | Comma-separated API keys | Yes |
-| `TELEGRAM_BOT_TOKEN` | Telegram bot token | Yes (bot only) |
+| `API_KEYS` | Comma-separated API keys (HK_ prefix) | Yes |
+| `INTERNAL_API_KEY` | Internal API key for Telegram webhook | Yes |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token | Yes |
+| `GROQ_API_KEY` | Groq API key for LLM analysis | Yes |
+| `SENTRY_DSN` | Sentry error tracking DSN | No |
+| `AXIOM_API_TOKEN` | Axiom logging token | No |
 
 ## 🛠️ Development Tools
 
@@ -181,10 +204,13 @@ bandit -r src/
 
 ## 📝 Notes
 
-- **Free tier limitations**: API sleeps after 15 min inactivity (use UptimeRobot)
-- **Build time**: First deploy takes ~10-15 min (ML models download)
-- **Memory**: Free tier has 512MB RAM, sufficient for this app
-- **Database**: Free PostgreSQL has 1GB limit
+- **Architecture**: Webhook-based (no polling) for better performance
+- **Security**: API key authentication, rate limiting, audit logging
+- **AI Model**: Groq LLaMA 3.3 70B (fast, accurate, free tier available)
+- **Database**: NeonDB PostgreSQL serverless (0.5GB free tier)
+- **Cache**: Redis Cloud (30MB free tier, sufficient for 2-hour TTL)
+- **Memory**: 512MB RAM on Fly.io free tier
+- **Region**: Frankfurt (Fly.io), London (NeonDB), Stockholm (Redis)
 
 ## 📄 License
 
