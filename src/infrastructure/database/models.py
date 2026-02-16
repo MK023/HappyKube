@@ -9,8 +9,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from .encryption import get_encryption
-
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
@@ -19,62 +17,6 @@ class Base(DeclarativeBase):
     type_annotation_map = {
         dict[str, Any]: JSONB,
     }
-
-
-class EncryptedString:
-    """
-    Custom type for encrypted string fields.
-
-    Automatically encrypts on write, decrypts on read.
-    Stores as BYTEA in PostgreSQL.
-    """
-
-    def __init__(self, max_length: int = 500) -> None:
-        """
-        Initialize encrypted string type.
-
-        Args:
-            max_length: Maximum plaintext length before encryption
-        """
-        self.max_length = max_length
-
-    def process_bind_param(self, value: str | None, dialect: Any) -> bytes | None:
-        """
-        Encrypt value before storing in database.
-
-        Args:
-            value: Plaintext string
-            dialect: SQL dialect (unused)
-
-        Returns:
-            Encrypted bytes or None
-        """
-        if value is None:
-            return None
-
-        # Validate length before encryption
-        if len(value) > self.max_length:
-            raise ValueError(f"Text exceeds maximum length of {self.max_length} characters")
-
-        encryption = get_encryption()
-        return encryption.encrypt(value)
-
-    def process_result_value(self, value: bytes | None, dialect: Any) -> str | None:
-        """
-        Decrypt value when reading from database.
-
-        Args:
-            value: Encrypted bytes
-            dialect: SQL dialect (unused)
-
-        Returns:
-            Decrypted plaintext or None
-        """
-        if value is None:
-            return None
-
-        encryption = get_encryption()
-        return encryption.decrypt(value)
 
 
 class UserModel(Base):

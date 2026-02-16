@@ -47,7 +47,7 @@ primary_region = "fra"  # Frankfurt - closest to NeonDB (London)
     timeout = "5s"
     path = "/healthz"
 
-# VM resources (512MB needed for API + Bot)
+# VM resources (512MB - API with webhook)
 [[vm]]
   memory = '512mb'
   cpu_kind = 'shared'
@@ -65,5 +65,3 @@ primary_region = "fra"  # Frankfurt - closest to NeonDB (London)
 #
 # Optional secrets:
 # - SENTRY_DSN (error tracking)
-# - AXIOM_API_TOKEN (logging, EU support Q1 2026)
-# - AXIOM_ORG_ID (logging)

@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     api_timeout: int = Field(default=120, ge=30, le=300, description="Request timeout in seconds")
 
     # Database (supports both DATABASE_URL and individual fields)
-    database_url: str | None = Field(default=None, description="Full database URL (Render)")
+    database_url: str | None = Field(default=None, description="Full database URL")
     db_host: str | None = Field(default=None, description="PostgreSQL host")
     db_port: int = Field(default=5432, ge=1, le=65535, description="PostgreSQL port")
     db_name: str | None = Field(default=None, description="Database name")
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     db_echo: bool = Field(default=False, description="Echo SQL queries")
 
     # Redis (supports both REDIS_URL and individual fields)
-    redis_url: str | None = Field(default=None, description="Full Redis URL (Render)")
+    redis_url: str | None = Field(default=None, description="Full Redis URL")
     redis_host: str = Field(default="localhost", description="Redis host")
     redis_port: int = Field(default=6379, ge=1, le=65535, description="Redis port")
     redis_db: int = Field(default=0, ge=0, le=15, description="Redis database number")
@@ -108,15 +108,6 @@ class Settings(BaseSettings):
         default=0.1, ge=0.0, le=1.0, description="Sentry traces sample rate"
     )
 
-    # Axiom (optional)
-    axiom_api_token: str | None = Field(default=None, description="Axiom API token")
-    axiom_dataset: str = Field(default="happykube", description="Axiom dataset name")
-    axiom_org_id: str | None = Field(default=None, description="Axiom organization ID")
-    axiom_url: str = Field(
-        default="https://api.axiom.co",
-        description="Axiom API URL (use edge deployment for better performance)",
-    )
-
     @field_validator("api_keys", mode="before")
     @classmethod
     def parse_api_keys(cls, v: str | list[str] | None) -> list[str] | None:
@@ -140,7 +131,7 @@ class Settings(BaseSettings):
         return v
 
     def get_database_url(self) -> str:
-        """Get PostgreSQL connection URL (Render or manual config)."""
+        """Get PostgreSQL connection URL."""
         if self.database_url:
             return self.database_url
         return (
@@ -149,7 +140,7 @@ class Settings(BaseSettings):
         )
 
     def get_redis_url(self) -> str:
-        """Get Redis connection URL (Render or manual config)."""
+        """Get Redis connection URL."""
         if self.redis_url:
             return self.redis_url
         scheme = "rediss" if self.redis_ssl else "redis"

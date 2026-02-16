@@ -114,7 +114,7 @@ async def healthz_redis(response: Response):
 @router.head("/ping")
 async def ping(response: Response):
     """
-    Lightweight ping endpoint for Render health checks.
+    Lightweight ping endpoint for Fly.io health checks.
 
     Supports both GET and HEAD methods.
     Returns 200 if the service is running (minimal resource usage).
@@ -177,8 +177,6 @@ async def readyz(response: Response):
 
     Checks database, Redis, and Groq API connectivity.
     """
-    import httpx
-
     try:
         # Check database
         db_healthy = db_health_check()
@@ -187,15 +185,18 @@ async def readyz(response: Response):
         cache = get_cache()
         redis_healthy = cache.health_check()
 
-        # Check Groq API (quick health check)
+        # Check Groq API via existing analyzer client (reuses connection pool)
         groq_healthy = False
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                groq_response = await client.get(
-                    "https://api.groq.com/openai/v1/models",
-                    headers={"Authorization": f"Bearer {settings.groq_api_key}"},
-                )
-                groq_healthy = groq_response.status_code == 200
+            from infrastructure.ml.model_factory import get_model_factory
+
+            factory = get_model_factory()
+            analyzer = factory.get_groq_analyzer()
+            groq_response = await analyzer._client.get(
+                "https://api.groq.com/openai/v1/models",
+                headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+            )
+            groq_healthy = groq_response.status_code == 200
         except Exception as e:
             logger.warning("Groq API health check failed", error=str(e))
             groq_healthy = False

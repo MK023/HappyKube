@@ -27,7 +27,7 @@ fi
 # Production-specific requirements
 if [ "$APP_ENV" = "production" ]; then
     REQUIRED_VARS+=("ENCRYPTION_KEY")
-    OPTIONAL_VARS+=("SENTRY_DSN" "AXIOM_API_TOKEN" "AXIOM_ORG_ID")
+    OPTIONAL_VARS+=("SENTRY_DSN")
 fi
 
 # Check required variables
@@ -158,6 +158,6 @@ fi
 echo ""
 echo "🚀 Starting application services..."
 echo "   📡 API will be available on port ${API_PORT:-5000}"
-echo "   🤖 Telegram bot will start shortly"
+echo "   🤖 Telegram bot via webhook at /telegram/webhook"
 echo ""
 exec "$@"

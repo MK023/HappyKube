@@ -1,0 +1,370 @@
+<mxfile host="app.diagrams.net" modified="2026-02-16T10:00:00.000Z" agent="HappyKube Architecture" version="24.0.0" type="device">
+  <diagram id="happykube-arch" name="Architettura HappyKube">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- TITOLO -->
+        <mxCell id="title" value="&lt;b&gt;HappyKube v3.0 - Architettura&lt;/b&gt;&lt;br&gt;Bot Telegram AI per Analisi Emotiva" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="530" y="20" width="400" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ============================== -->
+        <!-- UTENTI E INTERFACCE ESTERNE -->
+        <!-- ============================== -->
+        <mxCell id="user" value="&lt;b&gt;Utente Telegram&lt;/b&gt;&lt;br&gt;Invia messaggi di testo" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="150" width="120" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="api-client" value="&lt;b&gt;Client API&lt;/b&gt;&lt;br&gt;REST HTTP" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="450" width="120" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- TELEGRAM API -->
+        <mxCell id="telegram-api" value="&lt;b&gt;Telegram API&lt;/b&gt;&lt;br&gt;Webhook POST" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="290" y="160" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ============================== -->
+        <!-- FLY.IO CONTAINER -->
+        <!-- ============================== -->
+        <mxCell id="flyio-container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;strokeWidth=2;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="490" y="90" width="680" height="600" as="geometry" />
+        </mxCell>
+        <mxCell id="flyio-label" value="&lt;b&gt;Fly.io - Frankfurt (fra)&lt;/b&gt;&lt;br&gt;Docker Container | 512MB RAM | 1 vCPU" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="500" y="95" width="300" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- SUPERVISORD -->
+        <mxCell id="supervisord" value="&lt;b&gt;Supervisord&lt;/b&gt;&lt;br&gt;Process Manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="980" y="95" width="130" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================= -->
+        <!-- PRESENTATION LAYER -->
+        <!-- ======================================= -->
+        <mxCell id="presentation-layer" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="510" y="140" width="640" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="presentation-label" value="&lt;b&gt;PRESENTATION LAYER&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="515" y="142" width="150" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- FastAPI -->
+        <mxCell id="fastapi" value="&lt;b&gt;FastAPI&lt;/b&gt;&lt;br&gt;ASGI + Uvicorn&lt;br&gt;Port 5000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="530" y="170" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Middleware Stack -->
+        <mxCell id="middleware" value="&lt;b&gt;Middleware&lt;/b&gt;&lt;br&gt;SecurityHeaders&lt;br&gt;APIKeyAuth (bcrypt)&lt;br&gt;RequestSizeLimit&lt;br&gt;AuditLog&lt;br&gt;RateLimit (slowapi)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="670" y="165" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Routes -->
+        <mxCell id="webhook-route" value="&lt;b&gt;/telegram/webhook&lt;/b&gt;&lt;br&gt;Bot Handlers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="830" y="160" width="140" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="emotion-route" value="&lt;b&gt;/api/v1/emotion&lt;/b&gt;&lt;br&gt;POST analisi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="830" y="205" width="140" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="reports-route" value="&lt;b&gt;/reports&lt;/b&gt; | &lt;b&gt;/healthz&lt;/b&gt;&lt;br&gt;/metrics | /readyz" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="830" y="245" width="140" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Bot Handlers -->
+        <mxCell id="bot-handlers" value="&lt;b&gt;Bot Handlers&lt;/b&gt;&lt;br&gt;/start /help /ask&lt;br&gt;/monthly /exit&lt;br&gt;TextMessage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="990" y="160" width="130" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================= -->
+        <!-- APPLICATION LAYER -->
+        <!-- ======================================= -->
+        <mxCell id="application-layer" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="510" y="310" width="640" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="application-label" value="&lt;b&gt;APPLICATION LAYER&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="515" y="312" width="150" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="emotion-service" value="&lt;b&gt;EmotionService&lt;/b&gt;&lt;br&gt;analyze_emotion()&lt;br&gt;get_monthly_statistics()&lt;br&gt;generate_report()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="570" y="335" width="180" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dtos" value="&lt;b&gt;DTOs&lt;/b&gt;&lt;br&gt;Pydantic Models&lt;br&gt;Request/Response" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="780" y="335" width="130" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="interfaces" value="&lt;b&gt;Interfaces&lt;/b&gt;&lt;br&gt;IEmotionRepository&lt;br&gt;IUserRepository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="940" y="335" width="150" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================= -->
+        <!-- DOMAIN LAYER -->
+        <!-- ======================================= -->
+        <mxCell id="domain-layer" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="510" y="430" width="640" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="domain-label" value="&lt;b&gt;DOMAIN LAYER&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="515" y="432" width="120" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="entities" value="&lt;b&gt;Entities&lt;/b&gt;&lt;br&gt;EmotionRecord&lt;br&gt;User" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="455" width="120" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="value-objects" value="&lt;b&gt;Value Objects&lt;/b&gt;&lt;br&gt;EmotionScore | UserId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="455" width="150" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="enums" value="&lt;b&gt;Enums (StrEnum)&lt;/b&gt;&lt;br&gt;EmotionType | SentimentType&lt;br&gt;ModelType" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="850" y="455" width="170" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ======================================= -->
+        <!-- INFRASTRUCTURE LAYER -->
+        <!-- ======================================= -->
+        <mxCell id="infra-layer" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="510" y="530" width="640" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="infra-label" value="&lt;b&gt;INFRASTRUCTURE LAYER&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="515" y="532" width="180" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="repositories" value="&lt;b&gt;Repositories&lt;/b&gt;&lt;br&gt;EmotionRepository&lt;br&gt;UserRepository&lt;br&gt;APIKeyRepository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="530" y="560" width="140" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="groq-client" value="&lt;b&gt;GroqAnalyzer&lt;/b&gt;&lt;br&gt;httpx HTTP/2&lt;br&gt;Connection Pool" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="690" y="560" width="130" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db-connection" value="&lt;b&gt;Database&lt;/b&gt;&lt;br&gt;SQLAlchemy 2.0&lt;br&gt;Alembic Migrations&lt;br&gt;Fernet Encryption" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="555" width="140" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cache-client" value="&lt;b&gt;Redis Cache&lt;/b&gt;&lt;br&gt;TTL 3600s&lt;br&gt;Pool max 10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="560" width="120" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ============================== -->
+        <!-- SERVIZI ESTERNI -->
+        <!-- ============================== -->
+
+        <!-- Groq API -->
+        <mxCell id="groq-api" value="&lt;b&gt;Groq API&lt;/b&gt;&lt;br&gt;Llama 3.3 70B&lt;br&gt;Free Tier" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="690" y="740" width="130" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- NeonDB -->
+        <mxCell id="neondb" value="&lt;b&gt;NeonDB&lt;/b&gt;&lt;br&gt;PostgreSQL Serverless&lt;br&gt;EU-West-2 (London)&lt;br&gt;SSL Required" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="860" y="735" width="150" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Redis Cloud -->
+        <mxCell id="redis-cloud" value="&lt;b&gt;Redis Cloud&lt;/b&gt;&lt;br&gt;EU-North-1&lt;br&gt;(Stockholm)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="740" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Sentry -->
+        <mxCell id="sentry" value="&lt;b&gt;Sentry&lt;/b&gt;&lt;br&gt;Error Tracking" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="520" y="740" width="120" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ============================== -->
+        <!-- FRECCE / CONNESSIONI -->
+        <!-- ============================== -->
+
+        <!-- Utente -> Telegram API -->
+        <mxCell id="edge-user-tg" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" source="user" target="telegram-api" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-user-tg-label" value="Messaggio" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-user-tg">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Telegram API -> Webhook Route -->
+        <mxCell id="edge-tg-webhook" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=2;" edge="1" source="telegram-api" target="webhook-route" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-tg-webhook-label" value="POST Webhook" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-tg-webhook">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- API Client -> FastAPI -->
+        <mxCell id="edge-client-api" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" source="api-client" target="fastapi" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-client-api-label" value="REST + X-API-Key" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-client-api">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- FastAPI -> Middleware -->
+        <mxCell id="edge-api-mw" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=1;" edge="1" source="fastapi" target="middleware" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Webhook -> Bot Handlers -->
+        <mxCell id="edge-wh-bh" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=1;" edge="1" source="webhook-route" target="bot-handlers" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Presentation -> EmotionService -->
+        <mxCell id="edge-pres-svc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#d6b656;strokeWidth=2;" edge="1" source="emotion-route" target="emotion-service" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Bot Handlers -> EmotionService -->
+        <mxCell id="edge-bot-svc" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#d6b656;strokeWidth=2;" edge="1" source="bot-handlers" target="emotion-service" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EmotionService -> Groq Analyzer -->
+        <mxCell id="edge-svc-groq" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=1;" edge="1" source="emotion-service" target="groq-client" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EmotionService -> Repositories -->
+        <mxCell id="edge-svc-repo" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=1;" edge="1" source="emotion-service" target="repositories" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Groq Client -> Groq API -->
+        <mxCell id="edge-groq-ext" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#996185;strokeWidth=2;dashed=1;" edge="1" source="groq-client" target="groq-api" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-groq-ext-label" value="HTTP/2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-groq-ext">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- DB Connection -> NeonDB -->
+        <mxCell id="edge-db-neon" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#996185;strokeWidth=2;dashed=1;" edge="1" source="db-connection" target="neondb" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-db-neon-label" value="SSL" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-db-neon">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Cache -> Redis Cloud -->
+        <mxCell id="edge-cache-redis" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#996185;strokeWidth=2;dashed=1;" edge="1" source="cache-client" target="redis-cloud" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-cache-redis-label" value="TLS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-cache-redis">
+          <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Repositories -> DB Connection -->
+        <mxCell id="edge-repo-db" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=1;" edge="1" source="repositories" target="db-connection" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EmotionService -> Cache -->
+        <mxCell id="edge-svc-cache" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=1;" edge="1" source="emotion-service" target="cache-client" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Config -> Sentry -->
+        <mxCell id="edge-sentry" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#996185;strokeWidth=1;dashed=1;" edge="1" source="fastapi" target="sentry" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="590" y="720" />
+              <mxPoint x="580" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============================== -->
+        <!-- LEGENDA -->
+        <!-- ============================== -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="620" width="350" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="&lt;b&gt;Legenda&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="90" y="625" width="80" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-green" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="100" y="660" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-green-text" value="Presentation (API + Bot Handlers)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="655" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-yellow" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="100" y="685" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-yellow-text" value="Application (Services + DTOs + Interfaces)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="680" width="240" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-red" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="100" y="710" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-red-text" value="Domain (Entities + Value Objects + Enums)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="705" width="240" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-blue" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="735" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-blue-text" value="Infrastructure (DB + Cache + ML + Auth)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="730" width="240" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-purple" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;" vertex="1" parent="1">
+          <mxGeometry x="100" y="760" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-purple-text" value="Servizi Esterni (Groq, NeonDB, Redis, Sentry)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="755" width="260" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend-dashed" value="" style="endArrow=classic;html=1;strokeColor=#996185;dashed=1;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="797" as="sourcePoint" />
+            <mxPoint x="120" y="797" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-dashed-text" value="Connessione esterna (SSL/TLS)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="785" width="190" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- ============================== -->
+        <!-- DB SCHEMA (in basso) -->
+        <!-- ============================== -->
+        <mxCell id="db-schema-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="850" width="1100" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="db-schema-title" value="&lt;b&gt;Schema Database (PostgreSQL - NeonDB)&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="90" y="855" width="280" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="table-users" value="&lt;b&gt;users&lt;/b&gt;&lt;br&gt;id (UUID PK)&lt;br&gt;telegram_id_hash (SHA-256)&lt;br&gt;created_at | last_seen_at&lt;br&gt;is_active" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="885" width="190" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="table-emotions" value="&lt;b&gt;emotions&lt;/b&gt;&lt;br&gt;id (UUID PK) | user_id (FK)&lt;br&gt;text_encrypted (AES-256)&lt;br&gt;emotion | score | sentiment&lt;br&gt;model_type | extra_data (JSONB)&lt;br&gt;created_at" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="320" y="880" width="220" height="85" as="geometry" />
+        </mxCell>
+
+        <mxCell id="table-api-keys" value="&lt;b&gt;api_keys&lt;/b&gt;&lt;br&gt;id (UUID PK)&lt;br&gt;key_hash (bcrypt)&lt;br&gt;name | is_active&lt;br&gt;rate_limit_per_minute&lt;br&gt;expires_at | last_used_at" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="570" y="880" width="190" height="85" as="geometry" />
+        </mxCell>
+
+        <mxCell id="table-audit" value="&lt;b&gt;audit_log&lt;/b&gt;&lt;br&gt;id (UUID PK)&lt;br&gt;user_id (FK nullable)&lt;br&gt;action | endpoint&lt;br&gt;ip_address | user_agent&lt;br&gt;created_at" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="790" y="880" width="170" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- FK arrows -->
+        <mxCell id="fk-emotion-user" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#b85450;strokeWidth=1;" edge="1" source="table-emotions" target="table-users" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk-audit-user" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#b85450;strokeWidth=1;dashed=1;" edge="1" source="table-audit" target="table-users" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

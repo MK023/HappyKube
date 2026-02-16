@@ -10,12 +10,11 @@ from structlog.types import Processor
 from .settings import get_settings
 
 
-def setup_logging(service_name: str | None = None, axiom_enabled: bool = False) -> None:
+def setup_logging(service_name: str | None = None) -> None:
     """Configure structured logging with structlog.
 
     Args:
         service_name: Optional service identifier (e.g., 'bot', 'api') to distinguish logs
-        axiom_enabled: Enable sending logs to Axiom (production only)
     """
     settings = get_settings()
 
@@ -41,21 +40,6 @@ def setup_logging(service_name: str | None = None, axiom_enabled: bool = False) 
             structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
         ]
-
-    # Add Axiom processor if enabled (production only)
-    if axiom_enabled and not settings.is_development:
-        try:
-            from .axiom import get_axiom_processor
-
-            # Insert before JSON renderer to capture structured data
-            processors.insert(-1, get_axiom_processor())
-            logger = structlog.get_logger(__name__)
-            logger.info("Axiom logging processor enabled")
-        except Exception as e:
-            # Log error but don't crash - graceful degradation
-            logging.getLogger(__name__).warning(
-                f"Failed to enable Axiom processor (non-fatal): {e}"
-            )
 
     # Configure structlog
     structlog.configure(

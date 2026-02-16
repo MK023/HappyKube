@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, dev/newfeature]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:  # Allow manual trigger
@@ -54,9 +54,6 @@ jobs:
           file: ./coverage.xml
           fail_ci_if_error: false
 
-      # TODO: Add Axiom GitHub Action when available
-      # For now, logs are sent via Render integration
-
   lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest
@@ -81,11 +78,7 @@ jobs:
       - name: Run black (formatter check)
         run: black --check src/ tests/
 
-      # Mypy temporarily disabled - requires extensive type annotations
-      # TODO: Re-enable after adding proper type hints across codebase
+      # Mypy temporarily disabled
       # - name: Run mypy (type checker)
       #   run: cd src && mypy . --ignore-missing-imports
-
-      # TODO: Add Axiom GitHub Action when available
-      # For now, logs are sent via Render integration
 

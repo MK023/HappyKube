@@ -184,7 +184,6 @@ pytest --cov=src --cov-report=html
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token | Yes |
 | `GROQ_API_KEY` | Groq API key for LLM analysis | Yes |
 | `SENTRY_DSN` | Sentry error tracking DSN | No |
-| `AXIOM_API_TOKEN` | Axiom logging token | No |
 
 ## 🛠️ Development Tools
 

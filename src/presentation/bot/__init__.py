@@ -1,5 +1,3 @@
-"""Bot presentation layer."""
+"""Bot presentation layer (webhook mode)."""
 
-from .telegram_bot import create_bot
-
-__all__ = ["create_bot"]
+__all__: list[str] = []
