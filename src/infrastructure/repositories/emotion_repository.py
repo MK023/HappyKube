@@ -52,7 +52,7 @@ class EmotionRepository(IEmotionRepository):
             model_type=emotion.model_type.value,
             sentiment=emotion.sentiment.value if emotion.sentiment else None,
             created_at=emotion.created_at,
-            metadata=emotion.metadata,
+            extra_data=emotion.metadata,
         )
 
         self.session.add(db_emotion)
@@ -170,5 +170,5 @@ class EmotionRepository(IEmotionRepository):
             score=EmotionScore.from_float(db_emotion.score),
             model_type=ModelType(db_emotion.model_type),
             created_at=db_emotion.created_at,
-            metadata=db_emotion.metadata or {},
+            metadata=db_emotion.extra_data or {},
         )

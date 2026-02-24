@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 # Global cache for analyzers
-_analyzer_cache = {}
+_analyzer_cache: dict[str, object] = {}
 
 
 @asynccontextmanager
@@ -117,7 +117,7 @@ def create_app() -> FastAPI:
     # Configure rate limiting
     limiter = Limiter(key_func=get_remote_address)
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
     # Add security middlewares (CRITICAL - must be first)
     from .middleware.security import (

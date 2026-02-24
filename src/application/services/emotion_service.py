@@ -174,15 +174,15 @@ class EmotionService:
         # Convert to DTOs
         emotion_dtos = [
             EmotionRecordDTO(
-                id=str(e.id),
-                emotion=e.emotion.value,
-                sentiment=e.sentiment.value if e.sentiment else None,
-                score=e.score.to_float(),
-                confidence=str(e.score),
-                model_type=e.model_type.value,
-                created_at=e.created_at,
+                id=str(record.id),
+                emotion=record.emotion.value,
+                sentiment=record.sentiment.value if record.sentiment else None,
+                score=record.score.to_float(),
+                confidence=str(record.score),
+                model_type=record.model_type.value,
+                created_at=record.created_at,
             )
-            for e in emotions
+            for record in emotions
         ]
 
         return EmotionReportResponse(
@@ -240,21 +240,21 @@ class EmotionService:
         total = len(emotions)
 
         # Calculate active days (unique dates)
-        active_days = len({e.created_at.date() for e in emotions})
+        active_days = len({record.created_at.date() for record in emotions})
 
         # Count emotions and scores
         emotion_counts: dict[str, list[float]] = {}  # emotion -> list of scores
         sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
 
-        for e in emotions:
+        for record in emotions:
             # Emotion aggregation
-            if e.emotion.value not in emotion_counts:
-                emotion_counts[e.emotion.value] = []
-            emotion_counts[e.emotion.value].append(e.score.to_float())
+            if record.emotion.value not in emotion_counts:
+                emotion_counts[record.emotion.value] = []
+            emotion_counts[record.emotion.value].append(record.score.to_float())
 
             # Sentiment aggregation
-            if e.sentiment:
-                sentiment_counts[e.sentiment.value] += 1
+            if record.sentiment:
+                sentiment_counts[record.sentiment.value] += 1
 
         # Build emotion statistics
         emotion_stats: dict[str, EmotionStatistic] = {}

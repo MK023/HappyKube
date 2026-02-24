@@ -65,7 +65,7 @@ class RedisCache:
                 return None
 
             # Deserialize JSON
-            deserialized = json.loads(value)
+            deserialized = json.loads(value)  # type: ignore[arg-type]
             logger.debug("Cache hit", key=key)
             return deserialized
 
@@ -105,7 +105,7 @@ class RedisCache:
             logger.debug("Cache set", key=key, ttl=ttl_seconds)
             return True
 
-        except (RedisError, TypeError, json.JSONEncodeError) as e:
+        except (RedisError, TypeError, ValueError) as e:
             logger.error("Redis set error", key=key, error=str(e))
             return False
 
@@ -164,7 +164,7 @@ class RedisCache:
             if ttl is not None and new_value == amount:
                 self._client.expire(key, ttl)
 
-            return int(new_value)
+            return int(new_value)  # type: ignore[arg-type]
 
         except RedisError as e:
             logger.error("Redis increment error", key=key, error=str(e))
@@ -181,8 +181,8 @@ class RedisCache:
             TTL in seconds, -1 if no expiry, None if key doesn't exist
         """
         try:
-            ttl = self._client.ttl(key)
-            return int(ttl) if ttl >= -1 else None
+            ttl_value: int = self._client.ttl(key)  # type: ignore[assignment]
+            return ttl_value if ttl_value >= -1 else None
         except RedisError as e:
             logger.error("Redis TTL error", key=key, error=str(e))
             return None
@@ -198,11 +198,11 @@ class RedisCache:
             Number of keys deleted
         """
         try:
-            keys = self._client.keys(pattern)
+            keys: list[bytes] = self._client.keys(pattern)  # type: ignore[assignment]
             if keys:
-                deleted = self._client.delete(*keys)
+                deleted: int = self._client.delete(*keys)  # type: ignore[assignment]
                 logger.info("Flushed cache pattern", pattern=pattern, deleted=deleted)
-                return int(deleted)
+                return deleted
             return 0
 
         except RedisError as e:
@@ -217,7 +217,7 @@ class RedisCache:
             True if Redis is healthy, False otherwise
         """
         try:
-            return self._client.ping()
+            return bool(self._client.ping())
         except RedisError as e:
             logger.error("Redis health check failed", error=str(e))
             return False

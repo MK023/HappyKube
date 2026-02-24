@@ -47,7 +47,7 @@ def init_sentry() -> None:
             attach_stacktrace=True,
             max_breadcrumbs=50,
             # Filter events
-            before_send=_before_send,
+            before_send=_before_send,  # type: ignore[arg-type]
         )
 
         logger.info(

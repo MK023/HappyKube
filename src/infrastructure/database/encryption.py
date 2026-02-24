@@ -27,6 +27,8 @@ class FieldEncryption:
             ValueError: If encryption key is invalid
         """
         key = encryption_key or settings.encryption_key
+        if not key:
+            raise ValueError("Encryption key is required but not configured")
 
         try:
             self._fernet = Fernet(key.encode())

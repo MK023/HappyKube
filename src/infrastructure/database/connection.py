@@ -39,7 +39,7 @@ def get_engine() -> Engine:
 
         # Build connect_args based on database type
         db_url = settings.get_database_url()
-        connect_args = {"connect_timeout": 10}
+        connect_args: dict[str, int | str] = {"connect_timeout": 10}
 
         # NeonDB pooler doesn't support statement_timeout in options
         # Check if using NeonDB pooler (contains '-pooler' in hostname)

@@ -168,7 +168,7 @@ async def _process_message(message: dict) -> None:
         elif text:
             await _handle_text(update)
         else:
-            logger.debug("Non-text message received", message_type=update.message.content_type)
+            logger.debug("Non-text message received")
 
     except Exception as e:
         logger.error("Error processing message", error=str(e), exc_info=True)
@@ -194,7 +194,7 @@ async def _handle_command(update: Update, command: str) -> None:
 
     handler = command_map.get(command)
     if handler:
-        await handler(update, context)
+        await handler(update, context)  # type: ignore[arg-type]
     else:
         logger.debug("Unknown command", command=command)
 
@@ -202,4 +202,4 @@ async def _handle_command(update: Update, command: str) -> None:
 async def _handle_text(update: Update) -> None:
     """Route text message to handler."""
     context = _WebhookContext()
-    await message_handlers.handle_text(update, context)
+    await message_handlers.handle_text(update, context)  # type: ignore[arg-type]
