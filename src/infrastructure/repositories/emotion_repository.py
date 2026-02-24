@@ -136,7 +136,7 @@ class EmotionRepository(IEmotionRepository):
                 and_(
                     EmotionModel.user_id == user_id,
                     EmotionModel.created_at >= start_date,
-                    EmotionModel.created_at <= end_date,
+                    EmotionModel.created_at < end_date,
                 )
             )
             .order_by(EmotionModel.created_at.desc())
@@ -155,8 +155,16 @@ class EmotionRepository(IEmotionRepository):
         Returns:
             EmotionRecord domain entity
         """
-        # Decrypt text
-        decrypted_text = self.encryption.decrypt(db_emotion.text_encrypted)
+        # Decrypt text (graceful degradation on corrupted data)
+        try:
+            decrypted_text = self.encryption.decrypt(db_emotion.text_encrypted)
+        except (ValueError, TypeError) as e:
+            logger.warning(
+                "Failed to decrypt emotion text",
+                emotion_id=str(db_emotion.id),
+                error=str(e),
+            )
+            decrypted_text = "[decryption_error]"
 
         # Convert to domain entity
         return EmotionRecord(

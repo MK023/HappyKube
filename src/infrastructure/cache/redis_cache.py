@@ -46,7 +46,10 @@ class RedisCache:
                 health_check_interval=30,  # Check connections every 30s
             )
 
-        logger.info("Redis cache initialized with connection pool", url=settings.get_redis_url())
+        # Log without exposing password
+        redis_url = settings.get_redis_url()
+        safe_url = redis_url.split("@")[-1] if "@" in redis_url else redis_url
+        logger.info("Redis cache initialized with connection pool", host=safe_url)
 
     def get(self, key: str) -> Any | None:
         """

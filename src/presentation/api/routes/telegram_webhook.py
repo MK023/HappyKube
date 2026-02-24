@@ -40,6 +40,17 @@ messages = {
 command_handlers = CommandHandlers(messages)
 message_handlers = MessageHandlers(messages)
 
+# Shared Bot instance (reused across requests to avoid resource leak)
+_bot: Bot | None = None
+
+
+def _get_bot() -> Bot:
+    """Get or create shared Bot instance."""
+    global _bot
+    if _bot is None:
+        _bot = Bot(token=settings.telegram_bot_token)
+    return _bot
+
 
 @router.post(
     "/webhook",
@@ -120,11 +131,10 @@ async def telegram_webhook(
     update_id = update_data.get("update_id")
     logger.info("Received Telegram webhook update", update_id=update_id)
 
-    # Process message update
+    # Process update
     if "message" in update_data:
-        await _process_message(update_data["message"])
+        await _process_update(update_data)
     elif "edited_message" in update_data:
-        # Optionally handle edited messages
         logger.debug("Ignoring edited message", update_id=update_id)
     else:
         logger.debug("Unsupported update type", update_id=update_id, keys=list(update_data.keys()))
@@ -132,22 +142,21 @@ async def telegram_webhook(
     return {"status": "ok"}
 
 
-async def _process_message(message: dict) -> None:
+async def _process_update(update_data: dict) -> None:
     """
-    Process incoming Telegram message (command or text).
+    Process incoming Telegram update (command or text).
 
     Args:
-        message: Telegram Message object
+        update_data: Full Telegram Update dict (preserves real update_id)
     """
     try:
-        # Create Telegram Update and Message objects
-        bot = Bot(token=settings.telegram_bot_token)
+        bot = _get_bot()
 
-        # Build Update object from webhook data
-        update = Update.de_json({"update_id": 0, "message": message}, bot)
+        # Build Update object with real update_id
+        update = Update.de_json(update_data, bot)
 
         if not update or not update.message:
-            logger.error("Failed to parse Telegram message", message=message)
+            logger.error("Failed to parse Telegram message")
             return
 
         # Extract message info
@@ -158,12 +167,12 @@ async def _process_message(message: dict) -> None:
             "Processing message",
             user_id=user.id if user else None,
             username=user.username if user else None,
-            text_preview=text[:50] if text else None,
         )
 
         # Check if message is a command
         if text and text.startswith("/"):
-            command = text.split()[0].lower()
+            # Strip @botname suffix for group chat compatibility
+            command = text.split()[0].lower().split("@")[0]
             await _handle_command(update, command)
         elif text:
             await _handle_text(update)
@@ -182,15 +191,16 @@ class _WebhookContext:
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
 
-
-def _create_context() -> _WebhookContext:
-    """Create webhook context with bot instance."""
-    return _WebhookContext(bot=Bot(token=settings.telegram_bot_token))
+    def __getattr__(self, name: str) -> None:
+        raise NotImplementedError(
+            f"_WebhookContext does not support '{name}'. "
+            "Only 'bot' is available in webhook mode."
+        )
 
 
 async def _handle_command(update: Update, command: str) -> None:
     """Route command to appropriate handler."""
-    context = _create_context()
+    context = _WebhookContext(bot=_get_bot())
 
     command_map = {
         "/start": command_handlers.start,
@@ -209,5 +219,5 @@ async def _handle_command(update: Update, command: str) -> None:
 
 async def _handle_text(update: Update) -> None:
     """Route text message to handler."""
-    context = _create_context()
+    context = _WebhookContext(bot=_get_bot())
     await message_handlers.handle_text(update, context)  # type: ignore[arg-type]

@@ -2,10 +2,12 @@
 
 import asyncio
 import hashlib
+from collections import defaultdict
 from datetime import UTC, datetime
 
 from config import get_logger
-from domain import EmotionRecord
+from domain import EmotionRecord, EmotionType
+from domain.enums.emotion_emojis import EMOTION_EMOJIS
 from domain.utils import get_italian_month_name
 from infrastructure.cache import RedisCache
 from infrastructure.ml import ModelFactory
@@ -25,9 +27,11 @@ from ..interfaces.user_repository import IUserRepository
 logger = get_logger(__name__)
 
 # Cache TTL configuration (in seconds)
-# Optimized for Redis Cloud 30MB free tier - longer TTL to maximize cache hit rate
 CACHE_TTL_EMOTION = 86400  # 24 hours - same text analysis cached for 1 day
 CACHE_TTL_MONTHLY = 3600  # 1 hour - stats can be cached longer
+
+# Input limits
+MAX_TEXT_LENGTH = 500
 
 
 class EmotionService:
@@ -68,11 +72,22 @@ class EmotionService:
 
         Returns:
             EmotionAnalysisResponse DTO
+
+        Raises:
+            ValueError: If text or telegram_id is empty
         """
+        # Input validation
+        if not telegram_id or not telegram_id.strip():
+            raise ValueError("telegram_id cannot be empty")
+        if not text or not text.strip():
+            raise ValueError("Text cannot be empty")
+
+        # Truncate text to limit
+        text = text[:MAX_TEXT_LENGTH]
+
         # Check cache first (same text = same result)
-        # Use SHA256 hash (shortened to 16 chars for memory efficiency)
-        text_hash = hashlib.sha256(text.encode()).hexdigest()[:16]
-        cache_key = f"emo:{telegram_id[:8]}:{text_hash}"  # Shorter keys = less Redis memory
+        text_hash = hashlib.sha256(text.encode()).hexdigest()[:32]
+        cache_key = f"emo:{telegram_id}:{text_hash}"
         cached = self.cache.get(cache_key)
         if cached:
             logger.info("Returning cached emotion analysis", telegram_id=telegram_id)
@@ -122,8 +137,9 @@ class EmotionService:
             model_type=analyzer.model_type.value,
         )
 
-        # Cache for 2 hours (longer TTL for stable emotion analysis)
-        self.cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_EMOTION)
+        # Don't cache UNKNOWN results - retry on next request
+        if emotion != EmotionType.UNKNOWN:
+            self.cache.set(cache_key, response.model_dump(), ttl=CACHE_TTL_EMOTION)
 
         return response
 
@@ -141,31 +157,30 @@ class EmotionService:
 
         Returns:
             EmotionReportResponse DTO
+
+        Raises:
+            ValueError: If month format is invalid
         """
         # Find user
         user = self.user_repo.find_or_create_by_telegram_id(telegram_id)
 
         # Parse month filter if provided
         if month:
-            try:
-                # Parse YYYY-MM
-                year, mon = map(int, month.split("-"))
-                start_date = datetime(year, mon, 1, tzinfo=UTC)
+            # Parse YYYY-MM (raise ValueError on invalid format)
+            year, mon = map(int, month.split("-"))
+            if not (1 <= mon <= 12):
+                raise ValueError("Invalid month format. Use YYYY-MM (e.g., 2026-01)")
+            start_date = datetime(year, mon, 1, tzinfo=UTC)
 
-                # Calculate end of month
-                end_date = (
-                    datetime(year + 1, 1, 1, tzinfo=UTC)
-                    if mon == 12
-                    else datetime(year, mon + 1, 1, tzinfo=UTC)
-                )
+            # Calculate end of month
+            end_date = (
+                datetime(year + 1, 1, 1, tzinfo=UTC)
+                if mon == 12
+                else datetime(year, mon + 1, 1, tzinfo=UTC)
+            )
 
-                emotions = self.emotion_repo.find_by_user_and_period(user.id, start_date, end_date)
-                period_label = month
-            except ValueError:
-                logger.warning("Invalid month format", month=month)
-                # Fall back to all emotions
-                emotions = self.emotion_repo.find_by_user(user.id, limit=1000)
-                period_label = None
+            emotions = self.emotion_repo.find_by_user_and_period(user.id, start_date, end_date)
+            period_label = month
         else:
             # Get all emotions (limited to last 1000)
             emotions = self.emotion_repo.find_by_user(user.id, limit=1000)
@@ -244,7 +259,7 @@ class EmotionService:
 
         # Count emotions and scores
         emotion_counts: dict[str, list[float]] = {}  # emotion -> list of scores
-        sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
+        sentiment_counts: dict[str, int] = defaultdict(int)
 
         for record in emotions:
             # Emotion aggregation
@@ -256,9 +271,11 @@ class EmotionService:
             if record.sentiment:
                 sentiment_counts[record.sentiment.value] += 1
 
-        # Build emotion statistics
+        # Build emotion statistics (exclude "unknown" from display)
         emotion_stats: dict[str, EmotionStatistic] = {}
         for emotion, scores in emotion_counts.items():
+            if emotion == "unknown":
+                continue
             count = len(scores)
             percentage = round(count / total * 100, 1)
             avg_score = round(sum(scores) / count, 2)
@@ -267,27 +284,33 @@ class EmotionService:
                 count=count, percentage=percentage, avg_score=avg_score
             )
 
-        # Build sentiment statistics
-        sentiment_total = sum(sentiment_counts.values())
+        # Build sentiment statistics (exclude "unknown" from percentages)
+        known_sentiment = (
+            sentiment_counts["positive"]
+            + sentiment_counts["negative"]
+            + sentiment_counts["neutral"]
+        )
         pos_pct = (
-            round(sentiment_counts["positive"] / sentiment_total * 100, 1)
-            if sentiment_total > 0
+            round(sentiment_counts["positive"] / known_sentiment * 100, 1)
+            if known_sentiment > 0
             else 0.0
         )
         neg_pct = (
-            round(sentiment_counts["negative"] / sentiment_total * 100, 1)
-            if sentiment_total > 0
+            round(sentiment_counts["negative"] / known_sentiment * 100, 1)
+            if known_sentiment > 0
             else 0.0
         )
         neu_pct = (
-            round(sentiment_counts["neutral"] / sentiment_total * 100, 1)
-            if sentiment_total > 0
+            round(sentiment_counts["neutral"] / known_sentiment * 100, 1)
+            if known_sentiment > 0
             else 0.0
         )
         sentiment_stats = SentimentStatistic(positive=pos_pct, negative=neg_pct, neutral=neu_pct)
 
-        # Find dominant emotion
-        dominant_emotion = max(emotion_stats.items(), key=lambda x: x[1].count)[0]
+        # Find dominant emotion (from non-unknown stats)
+        dominant_emotion = (
+            max(emotion_stats.items(), key=lambda x: x[1].count)[0] if emotion_stats else "neutral"
+        )
 
         # Generate insights
         insights = self._generate_insights(
@@ -358,26 +381,25 @@ class EmotionService:
             insights.append(
                 MonthlyInsight(
                     type="balanced_month",
-                    message=f"⚖️ {get_italian_month_name(month)} è stato un mese equilibrato",
+                    message=f"⚖️ {month_name} è stato un mese equilibrato",
                     icon="⚖️",
                 )
             )
 
         # Insight 2: Dominant emotion
-        from domain.enums.emotion_emojis import EMOTION_EMOJIS
-
-        dominant = max(emotion_stats.items(), key=lambda x: x[1].percentage)
-        icon = EMOTION_EMOJIS.get(dominant[0], "💭")
-        insights.append(
-            MonthlyInsight(
-                type="dominant_emotion",
-                message=f"{icon} Emozione più frequente: {dominant[0]} ({dominant[1].percentage}%)",
-                icon=icon,
+        if emotion_stats:
+            dominant = max(emotion_stats.items(), key=lambda x: x[1].percentage)
+            icon = EMOTION_EMOJIS.get(dominant[0], "💭")
+            insights.append(
+                MonthlyInsight(
+                    type="dominant_emotion",
+                    message=f"{icon} Emozione più frequente: {dominant[0]} ({dominant[1].percentage}%)",
+                    icon=icon,
+                )
             )
-        )
 
         # Insight 3: Consistency
-        consistency_pct = round(active_days / total_days_in_month * 100, 1)
+        consistency_pct = min(round(active_days / total_days_in_month * 100, 1), 100.0)
         if consistency_pct >= 80:
             msg = (
                 f"🔥 Fantastico! Hai registrato emozioni per "

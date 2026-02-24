@@ -152,6 +152,9 @@ def get_db_session() -> Generator[Session, None, None]:
         logger.error("Database session error, rolling back", error=str(e))
         session.rollback()
         raise
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
         logger.debug("Database session closed")

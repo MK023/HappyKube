@@ -1,5 +1,7 @@
 """Groq-based emotion and sentiment analyzer using Llama."""
 
+import re
+
 import httpx
 from httpx import HTTPStatusError, RequestError
 
@@ -13,6 +15,7 @@ settings = get_settings()
 # Constants
 GROQ_DEFAULT_CONFIDENCE = 0.85  # High confidence for Llama 3.3 70B model
 GROQ_API_TIMEOUT = 10.0  # API timeout in seconds
+MAX_TEXT_LENGTH = 500  # Max text length for analysis
 
 
 class GroqAnalyzer:
@@ -33,7 +36,7 @@ class GroqAnalyzer:
 
         # Create shared HTTP client with connection pooling and HTTP/2
         self._client = httpx.AsyncClient(
-            timeout=httpx.Timeout(15.0, connect=5.0),
+            timeout=httpx.Timeout(GROQ_API_TIMEOUT, connect=5.0),
             limits=httpx.Limits(
                 max_connections=5, max_keepalive_connections=3, keepalive_expiry=30.0
             ),
@@ -58,11 +61,8 @@ class GroqAnalyzer:
             Tuple of (EmotionType, EmotionScore)
         """
         try:
-            prompt = f"""Analyze the emotion in this text. Respond with ONLY one word from: anger, joy, fear, sadness, love, surprise, neutral
-
-Text: {text}
-
-Emotion:"""
+            # Truncate text to prevent excessive token usage
+            truncated = text[:MAX_TEXT_LENGTH]
 
             response = await self._client.post(
                 self.api_url,
@@ -72,7 +72,15 @@ Emotion:"""
                 },
                 json={
                     "model": self.model,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "Analyze the emotion in the user's text. "
+                            "Respond with ONLY one word from: "
+                            "anger, joy, fear, sadness, love, surprise, neutral",
+                        },
+                        {"role": "user", "content": truncated},
+                    ],
                     "max_tokens": 10,
                     "temperature": 0,
                 },
@@ -80,29 +88,27 @@ Emotion:"""
             response.raise_for_status()
             result = response.json()
 
-            # Extract emotion label from response
-            label = result["choices"][0]["message"]["content"].strip().lower()
+            # Extract emotion label - take first word, strip punctuation
+            raw = result["choices"][0]["message"]["content"].strip().lower()
+            label = re.sub(r"[^a-z]", "", raw.split()[0]) if raw.split() else ""
 
             emotion = EmotionType.from_label(label)
             score = EmotionScore.from_float(GROQ_DEFAULT_CONFIDENCE)
 
-            logger.debug(
-                "Groq emotion analysis", text=text[:50], emotion=emotion.value, score=str(score)
-            )
+            logger.debug("Groq emotion analysis", emotion=emotion.value, score=str(score))
             return emotion, score
 
         except HTTPStatusError as e:
             logger.error(
                 "Groq emotion API error",
                 status_code=e.response.status_code,
-                text=text[:50],
             )
             return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
         except RequestError as e:
-            logger.error("Groq emotion connection error", error=str(e), text=text[:50])
+            logger.error("Groq emotion connection error", error=str(e))
             return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
         except (KeyError, IndexError, ValueError) as e:
-            logger.error("Groq emotion response parsing error", error=str(e), text=text[:50])
+            logger.error("Groq emotion response parsing error", error=str(e))
             return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
 
     async def analyze_sentiment(self, text: str) -> tuple[SentimentType, EmotionScore]:
@@ -116,11 +122,7 @@ Emotion:"""
             Tuple of (SentimentType, EmotionScore)
         """
         try:
-            prompt = f"""Analyze the sentiment in this text. Respond with ONLY one word: positive, negative, or neutral
-
-Text: {text}
-
-Sentiment:"""
+            truncated = text[:MAX_TEXT_LENGTH]
 
             response = await self._client.post(
                 self.api_url,
@@ -130,7 +132,14 @@ Sentiment:"""
                 },
                 json={
                     "model": self.model,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "Analyze the sentiment in the user's text. "
+                            "Respond with ONLY one word: positive, negative, or neutral",
+                        },
+                        {"role": "user", "content": truncated},
+                    ],
                     "max_tokens": 10,
                     "temperature": 0,
                 },
@@ -138,15 +147,15 @@ Sentiment:"""
             response.raise_for_status()
             result = response.json()
 
-            # Extract sentiment label from response
-            label = result["choices"][0]["message"]["content"].strip().lower()
+            # Extract sentiment label - take first word, strip punctuation
+            raw = result["choices"][0]["message"]["content"].strip().lower()
+            label = re.sub(r"[^a-z]", "", raw.split()[0]) if raw.split() else ""
 
             sentiment = SentimentType.from_label(label)
             score = EmotionScore.from_float(GROQ_DEFAULT_CONFIDENCE)
 
             logger.debug(
                 "Groq sentiment analysis",
-                text=text[:50],
                 sentiment=sentiment.value,
                 score=str(score),
             )
@@ -156,12 +165,11 @@ Sentiment:"""
             logger.error(
                 "Groq sentiment API error",
                 status_code=e.response.status_code,
-                text=text[:50],
             )
             return SentimentType.UNKNOWN, EmotionScore.from_float(0.0)
         except RequestError as e:
-            logger.error("Groq sentiment connection error", error=str(e), text=text[:50])
+            logger.error("Groq sentiment connection error", error=str(e))
             return SentimentType.UNKNOWN, EmotionScore.from_float(0.0)
         except (KeyError, IndexError, ValueError) as e:
-            logger.error("Groq sentiment response parsing error", error=str(e), text=text[:50])
+            logger.error("Groq sentiment response parsing error", error=str(e))
             return SentimentType.UNKNOWN, EmotionScore.from_float(0.0)

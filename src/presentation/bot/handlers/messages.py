@@ -1,6 +1,6 @@
 """Telegram bot message handlers."""
 
-from telegram import Update
+from telegram import Bot, Update
 from telegram.ext import ContextTypes
 
 from application.services import EmotionService
@@ -11,6 +11,8 @@ from infrastructure.ml import get_model_factory
 from infrastructure.repositories import EmotionRepository, UserRepository
 
 logger = get_logger(__name__)
+
+MAX_TEXT_LENGTH = 500
 
 
 class MessageHandlers:
@@ -46,9 +48,19 @@ class MessageHandlers:
 
         user_id = str(user.id)
         text = update.message.text.strip()
+        chat_id = update.message.chat_id
 
         if not text:
             await update.message.reply_text(self.messages.get("empty", "Messaggio vuoto."))
+            return
+
+        # Enforce text length limit
+        if len(text) > MAX_TEXT_LENGTH:
+            await self._send_message(
+                context,
+                chat_id,
+                f"Il messaggio è troppo lungo (max {MAX_TEXT_LENGTH} caratteri). Accorcialo!",
+            )
             return
 
         try:
@@ -63,7 +75,7 @@ class MessageHandlers:
                     cache=get_cache(),
                 )
 
-                # Analyze emotion (already async, handler is async)
+                # Analyze emotion
                 result = await service.analyze_emotion(telegram_id=user_id, text=text)
 
             logger.info(
@@ -72,8 +84,6 @@ class MessageHandlers:
                 emotion=result.emotion,
                 score=result.score,
             )
-
-            chat_id = update.message.chat_id
 
             # Delete user message for privacy (only after successful analysis)
             try:
@@ -93,26 +103,41 @@ class MessageHandlers:
                 f"🤖 *Modello:* {result.model_type}"
             )
 
-            if result.sentiment:
+            if result.sentiment and result.sentiment not in ("unknown", ""):
                 sentiment_emoji = {"positive": "👍", "negative": "👎", "neutral": "🤷"}.get(
-                    result.sentiment, "❓"
+                    result.sentiment, "🤷"
                 )
                 response += f"\n{sentiment_emoji} *Sentiment:* {result.sentiment}"
 
             # Send to chat directly (message may have been deleted)
-            await context.bot.send_message(chat_id=chat_id, text=response, parse_mode="Markdown")
+            await self._send_message(context, chat_id, response, parse_mode="Markdown")
 
         except (ConnectionError, OSError) as e:
             logger.error(
                 "Service connectivity error during analysis", error=str(e), user_id=user_id
             )
-            await update.message.reply_text(
-                self.messages.get("error", "Errore durante l'analisi. Riprova tra poco.")
+            await self._send_message(
+                context,
+                chat_id,
+                self.messages.get("error", "Errore durante l'analisi. Riprova tra poco."),
             )
         except Exception as e:
             logger.error(
                 "Unexpected error analyzing emotion", error=str(e), user_id=user_id, exc_info=True
             )
-            await update.message.reply_text(
-                self.messages.get("error", "Errore durante l'analisi. Riprova tra poco.")
+            await self._send_message(
+                context,
+                chat_id,
+                self.messages.get("error", "Errore durante l'analisi. Riprova tra poco."),
             )
+
+    @staticmethod
+    async def _send_message(
+        context: ContextTypes.DEFAULT_TYPE,
+        chat_id: int,
+        text: str,
+        parse_mode: str | None = None,
+    ) -> None:
+        """Send message via bot, handling both real context and webhook context."""
+        bot: Bot = context.bot  # type: ignore[assignment]
+        await bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode)

@@ -9,4 +9,5 @@ EMOTION_EMOJIS: dict[str, str] = {
     "surprise": "😲",
     "neutral": "😐",
     "disgust": "🤢",
+    "unknown": "🤔",
 }
