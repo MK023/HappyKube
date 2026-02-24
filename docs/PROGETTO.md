@@ -15,9 +15,9 @@ Il sistema supporta italiano e inglese e rileva 7 emozioni: rabbia, gioia, trist
 | **Linguaggio** | Python 3.12 | Ecosistema AI/ML maturo, typing moderno con StrEnum, async nativo |
 | **Web Framework** | FastAPI + Uvicorn | Framework ASGI async ad alte prestazioni, documentazione OpenAPI automatica, validazione Pydantic integrata |
 | **AI / LLM** | Groq API (Llama 3.3 70B) | Inferenza ultra-veloce gratuita, modello 70B per alta qualità di analisi, nessun costo operativo |
-| **Database** | PostgreSQL (NeonDB Serverless) | Serverless = nessun costo a riposo, JSONB per metadati flessibili, SSL nativo, region EU (London) |
+| **Database** | PostgreSQL (Fly.io Internal) | Managed PostgreSQL nella stessa region dell'app, zero latenza di rete, JSONB per metadati flessibili, backup automatici |
 | **Cache** | Redis (Redis Cloud) | Riduce chiamate API ripetute, TTL 1h per risultati stabili, connection pooling, region EU (Stockholm) |
-| **Bot** | python-telegram-bot 21.7 | Libreria ufficiale, supporto webhook nativo, gestione errori robusta |
+| **Bot** | python-telegram-bot 22.x | Libreria ufficiale, supporto webhook nativo, gestione errori robusta |
 | **ORM** | SQLAlchemy 2.0 | mapped_column moderno, type-safe, DeclarativeBase, supporto async |
 | **Migrazioni** | Alembic | Standard per SQLAlchemy, migrazioni versionabili e reversibili |
 | **Deployment** | Fly.io (Frankfurt) | Free tier generoso, auto-stop/start, vicino ai servizi EU, deploy via Dockerfile |
@@ -179,8 +179,10 @@ JSON Response
 ### Crittografia dei Dati
 
 - **A riposo**: il testo dell'utente viene crittografato con Fernet (AES-128-CBC + HMAC-SHA256) prima di essere salvato nel database
-- **In transito**: tutte le connessioni usano SSL/TLS (NeonDB richiede `sslmode=require`, Redis usa `rediss://`)
+- **In transito**: tutte le connessioni usano SSL/TLS (Redis usa `rediss://`, PostgreSQL interno via Fly.io private network)
 - **ID utente**: l'ID Telegram viene hashato con SHA-256 e solo l'hash viene salvato (privacy by design)
+- **LLM Prompt Injection**: separazione system/user message nel prompt Groq (il testo utente non viene mai interpolato nel prompt di sistema)
+- **Cache Poisoning**: risultati UNKNOWN non vengono mai cachati (evita blocco 24h su errori Groq)
 
 ---
 
@@ -192,22 +194,22 @@ JSON Response
 - **Llama 3.3 70B**: modello open-source di alta qualità, multilinguaggio
 - **Nessun vendor lock-in**: il GroqAnalyzer è isolato nell'infrastructure layer
 
-### NeonDB invece di PostgreSQL self-hosted
-- **Serverless**: scala a zero, nessun costo quando inattivo
-- **Compatibile PostgreSQL**: nessuna modifica al codice
-- **Region EU**: London (eu-west-2) per conformità GDPR
-- **Branching**: possibilità di creare branch del database per test
+### Fly.io PostgreSQL invece di NeonDB
+- **Zero latenza**: database e app nello stesso datacenter (Frankfurt)
+- **Compatibile Docker**: nessun problema di networking con container
+- **Managed**: backup automatici, monitoring integrato
+- **Fly.io internal DNS**: connessione via `happykube-db.flycast` senza SSL overhead
 
 ### Redis Cloud invece di Redis self-hosted
 - **Free tier**: 30MB sufficienti per cache emotiva
 - **Region EU**: Stockholm (eu-north-1)
-- **Managed**: backup, monitoring, SSL inclusi
+- **Managed**: backup, monitoring, TLS inclusi
 
 ### Fly.io invece di AWS/GCP
 - **Free tier generoso**: 3 shared-cpu-1x VMs gratuite
 - **Auto-stop/start**: nessun costo quando il bot non è in uso
 - **Deploy semplice**: `fly deploy` da Dockerfile
-- **Region Frankfurt**: bassa latenza verso NeonDB e Redis Cloud
+- **Region Frankfurt**: stessa region del PostgreSQL e vicino a Redis Cloud
 
 ### Webhook invece di Polling
 - **Efficienza**: nessuna richiesta polling continua, risorse usate solo quando necessario
@@ -257,8 +259,8 @@ JSON Response
 
 ### Prerequisiti
 - Account Fly.io
-- NeonDB database (PostgreSQL serverless)
-- Redis Cloud instance
+- Fly.io PostgreSQL (internal, Frankfurt)
+- Redis Cloud instance (Stockholm)
 - Groq API key (gratuita)
 - Token bot Telegram (da @BotFather)
 
@@ -266,12 +268,13 @@ JSON Response
 
 | Variabile | Descrizione | Obbligatoria |
 |---|---|---|
-| `DATABASE_URL` | URL PostgreSQL con `?sslmode=require` | Si |
-| `REDIS_URL` | URL Redis con `rediss://` per SSL | Si |
+| `DATABASE_URL` | URL PostgreSQL (impostato automaticamente da `fly postgres attach`) | Si |
+| `REDIS_URL` | URL Redis con `rediss://` per TLS | Si |
 | `ENCRYPTION_KEY` | Chiave Fernet 32 caratteri | Si (produzione) |
 | `API_KEYS` | Chiavi API (formato HK_...) | Si |
 | `INTERNAL_API_KEY` | Chiave interna per webhook | Si |
 | `TELEGRAM_BOT_TOKEN` | Token da @BotFather | Si |
+| `TELEGRAM_WEBHOOK_SECRET` | Secret token per validazione webhook | Si |
 | `GROQ_API_KEY` | Chiave API Groq | Si |
 | `SENTRY_DSN` | DSN Sentry per error tracking | No |
 
@@ -336,7 +339,7 @@ HappyKube/
 
 - **Connection pooling**: httpx (Groq), SQLAlchemy (DB pool_size=3), Redis (max_connections=10)
 - **HTTP/2**: multiplexing per chiamate Groq, riduce latenza di connessione
-- **Cache Redis**: risultati cachati per 1 ora, evita chiamate API ripetute per lo stesso testo
+- **Cache Redis**: risultati cachati (24h per analisi, 1h per statistiche), evita chiamate API ripetute per lo stesso testo
 - **Analisi parallela**: emozione e sentimento analizzati in parallelo con `asyncio.gather()`
 - **Lazy loading**: modelli ML caricati solo al primo utilizzo
 - **Auto-stop Fly.io**: container spento quando inattivo (free tier optimization)
@@ -345,8 +348,8 @@ HappyKube/
 ### Limiti Noti
 
 - **Groq free tier**: 14.400 richieste/giorno (10/min media)
-- **Fly.io free tier**: 512MB RAM, 1 shared vCPU
-- **NeonDB free tier**: 0.5 GB storage, auto-suspend dopo 5 minuti inattività
+- **Fly.io free tier**: 512MB RAM, 1 shared vCPU, auto-stop quando idle
+- **Fly.io PostgreSQL**: managed, stessa region dell'app
 - **Redis Cloud free tier**: 30MB storage
 
 ---

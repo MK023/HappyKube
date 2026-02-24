@@ -20,74 +20,71 @@ flyctl version
 ```
 
 ### 2. Servizi Esterni Configurati
-- ✅ **NeonDB** - PostgreSQL serverless (EU-West-2 London)
+- ✅ **Fly.io PostgreSQL** - Database managed (Frankfurt)
 - ✅ **Redis Cloud** - Cache (EU-North-1 Stockholm)
-- ✅ **Doppler** - Secrets management
-- ✅ **Groq API** - Emotion analysis
+- ✅ **Groq API** - Emotion analysis (Llama 3.3 70B)
 - ✅ **Telegram Bot** - Interfaccia utente
+- ✅ **Sentry** - Error tracking
 
 ---
 
 ## 🏗️ Architettura
 
 ```
-┌─────────────┐
-│   Doppler   │  ← Secrets centrali
-│   (Secrets) │
-└──────┬──────┘
-       │ sync
-       ▼
 ┌──────────────────────┐
-│   Fly.io VM (fra)    │  ← 1 VM da 256MB
-│   API + Bot          │
+│   Fly.io VM (fra)    │  ← 1 VM da 512MB
+│   API + Bot Webhook  │
 │   (Supervisor)       │
 └───────┬──────────────┘
         │
-        ├─→ NeonDB (external)
-        ├─→ Redis Cloud (external)
+        ├─→ Fly.io PostgreSQL (internal, fra)
+        ├─→ Redis Cloud (external, Stockholm)
         └─→ Groq API (external)
 ```
 
 **Free Tier Usage:**
-- 1 VM su 3 disponibili (256MB RAM, 1 vCPU)
-- Database e Redis esterni (zero consumo Fly.io)
+- 1 VM (512MB RAM, 1 shared vCPU)
+- PostgreSQL interno Fly.io (stesso datacenter)
+- Redis Cloud esterno (30MB free tier)
 - Auto-stop quando idle (risparmio risorse)
 
 ---
 
-## 🔐 Step 1: Sincronizza Secrets da Doppler
+## 🔐 Step 1: Configura Secrets
 
-### Opzione A: Script Automatico
+### Database
 ```bash
-# Esegui lo script di sync
-chmod +x /tmp/sync-doppler-to-fly.sh
-/tmp/sync-doppler-to-fly.sh
+# Crea PostgreSQL su Fly.io (se non esiste)
+fly postgres create --name happykube-db --region fra
+
+# Collega al app (imposta DATABASE_URL automaticamente)
+fly postgres attach happykube-db --app happykube
 ```
 
-### Opzione B: Manuale
+### Secrets manuali
 ```bash
-# Database e Cache
+# Cache
 fly secrets set \
-  DATABASE_URL="$(doppler secrets get DATABASE_URL -p happykube -c dev --plain)" \
-  REDIS_URL="$(doppler secrets get REDIS_URL -p happykube -c dev --plain)" \
+  REDIS_URL="rediss://default:password@host:port" \
   --app happykube
 
 # Security
 fly secrets set \
-  ENCRYPTION_KEY="$(doppler secrets get ENCRYPTION_KEY -p happykube -c dev --plain)" \
-  API_KEYS="$(doppler secrets get API_KEYS -p happykube -c dev --plain)" \
-  INTERNAL_API_KEY="$(doppler secrets get INTERNAL_API_KEY -p happykube -c dev --plain)" \
+  ENCRYPTION_KEY="<fernet-key>" \
+  API_KEYS="<api-key>" \
+  INTERNAL_API_KEY="<internal-key>" \
+  TELEGRAM_WEBHOOK_SECRET="<webhook-secret>" \
   --app happykube
 
 # Bot e AI
 fly secrets set \
-  TELEGRAM_BOT_TOKEN="$(doppler secrets get TELEGRAM_BOT_TOKEN -p happykube -c dev --plain)" \
-  GROQ_API_KEY="$(doppler secrets get GROQ_API_KEY -p happykube -c dev --plain)" \
+  TELEGRAM_BOT_TOKEN="<from-botfather>" \
+  GROQ_API_KEY="<from-groq-console>" \
   --app happykube
 
 # Optional: Monitoring
 fly secrets set \
-  SENTRY_DSN="$(doppler secrets get SENTRY_DSN -p happykube -c dev --plain)" \
+  SENTRY_DSN="<sentry-dsn>" \
   --app happykube
 ```
 
@@ -103,11 +100,12 @@ fly deploy --app happykube --ha=false
 ```
 
 ### Cosa Succede Durante il Deploy
-1. **Build Docker** - Compila l'immagine (multi-stage)
+1. **Build Docker** - Compila l'immagine (multi-stage, ~87MB)
 2. **Push Registry** - Carica su Fly.io registry
-3. **Run Migrations** - Applica migrazioni Alembic su NeonDB
-4. **Start Services** - Avvia API (uvicorn) e Bot (Telegram)
-5. **Health Checks** - Verifica `/healthz`
+3. **Run Migrations** - Applica migrazioni Alembic su PostgreSQL
+4. **Bootstrap API Keys** - Crea chiavi API se necessario
+5. **Start Services** - Avvia API (uvicorn via Supervisor)
+6. **Health Checks** - Verifica `/healthz`
 
 ---
 
@@ -167,8 +165,8 @@ fly secrets list --app happykube
 
 ### Verifica Database
 ```bash
-# Connetti a NeonDB e verifica dati
-psql "postgresql://neondb_owner:...@ep-misty-star-abzkkcf9-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require"
+# Connetti via Fly.io proxy
+fly postgres connect --app happykube-db
 
 # Query verifica
 SELECT COUNT(*) FROM emotions;
@@ -178,11 +176,11 @@ SELECT * FROM emotions ORDER BY created_at DESC LIMIT 5;
 ### Verifica Redis
 ```bash
 # Connetti a Redis Cloud
-redis-cli -u "redis://neon:...@redis-18844.crce175.eu-north-1-1.ec2.cloud.redislabs.com:18844"
+redis-cli -u "rediss://default:...@host:port"
 
 # Verifica chiavi
 DBSIZE
-KEYS emotion:*
+KEYS emo:*
 ```
 
 ---
@@ -248,15 +246,19 @@ psql "$DATABASE_URL"
 ```
 
 ### Problema: Bot non risponde
-**Causa:** TELEGRAM_BOT_TOKEN errato o bot process crashed
+**Causa:** TELEGRAM_BOT_TOKEN errato o webhook non configurato
 **Soluzione:**
 ```bash
-# Verifica logs bot
-fly logs --app happykube | grep "bot"
+# Verifica logs
+fly logs --app happykube | grep "webhook"
 
-# Controlla supervisor
-fly ssh console --app happykube
-supervisorctl restart bot
+# Verifica webhook Telegram
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+
+# Ri-configura webhook
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://happykube.fly.dev/telegram/webhook", "secret_token": "<SECRET>"}'
 ```
 
 ---
@@ -279,8 +281,8 @@ fly deploy --app happykube
 # Singolo secret
 fly secrets set GROQ_API_KEY="nuovo_valore" --app happykube
 
-# Sync da Doppler
-/tmp/sync-doppler-to-fly.sh
+# Verifica secrets configurati
+fly secrets list --app happykube
 ```
 
 ### Rollback
@@ -297,31 +299,29 @@ fly releases rollback <version> --app happykube
 ## 💰 Costi
 
 ### Free Tier (attuale)
-- **VM:** 1/3 usate (256MB × 1)
-- **Storage:** 3GB disponibili (usando ~500MB)
-- **Bandwidth:** 160GB/mese (usando ~5GB)
+- **VM:** 1 app (512MB RAM)
+- **PostgreSQL:** Fly.io internal (stesso datacenter)
+- **Redis:** Redis Cloud 30MB free tier
+- **Bandwidth:** 160GB/mese
 - **Costo:** $0/mese ✅
 
-### Limiti Free Tier
-- 3 VM con 256MB ciascuna
-- 3GB persistent volumes
-- 160GB outbound bandwidth/mese
-
-**Nota:** Database (NeonDB) e Redis (Redis Cloud) sono esterni, non consumano risorse Fly.io.
+### Limiti
+- Fly.io free tier: 3 shared VMs, 3GB volumes
+- Redis Cloud free tier: 30MB
+- Groq free tier: 14.400 req/giorno
 
 ---
 
 ## 📚 Risorse
 
 - [Fly.io Docs](https://fly.io/docs/)
-- [Fly.io Django/FastAPI Guide](https://fly.io/docs/python/)
+- [Fly.io PostgreSQL](https://fly.io/docs/postgres/)
 - [Fly.io Secrets Management](https://fly.io/docs/reference/secrets/)
-- [NeonDB Documentation](https://neon.tech/docs)
 - [Redis Cloud Docs](https://redis.com/cloud/)
-- [Doppler CLI](https://docs.doppler.com/docs/cli)
+- [Groq Console](https://console.groq.com/)
 
 ---
 
-**Ultima modifica:** 1 Febbraio 2026
+**Ultima modifica:** 24 Febbraio 2026
 **Autore:** Claude Code
-**Status:** ✅ Ready for production
+**Status:** ✅ Production (deployed)

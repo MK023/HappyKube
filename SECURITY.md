@@ -3,7 +3,7 @@
 
 ## ✅ Security Hardening Summary
 
-Data: 12 Febbraio 2026
+Data: 24 Febbraio 2026
 Versione: 3.0.0
 Stato: **Production-Ready**
 
@@ -16,10 +16,11 @@ Stato: **Production-Ready**
 - ✅ API Key authentication con bcrypt (database-backed)
 - ✅ Rate limiting per endpoint (100-30 req/min)
 - ✅ Constant-time comparison (`secrets.compare_digest()`)
+- ✅ Telegram webhook secret token validation
 - ✅ Audit logging di tutti gli accessi (JWT extraction)
 - ✅ Public paths whitelist (`/healthz`, `/metrics`)
 
-**File:** `src/presentation/api/middleware/security.py:18-138`
+**File:** `src/presentation/api/middleware/security.py`
 
 ---
 
@@ -30,30 +31,34 @@ Stato: **Production-Ready**
 - ✅ **User IDs**: SHA-256 hashing per privacy
 - ✅ **JWT Tokens**: HS256 algorithm con secret key
 - ✅ **TLS**: Strict-Transport-Security header (HSTS)
+- ✅ **Redis Password**: Mascherata nei log di startup
 
 **File:**
-- `src/infrastructure/repositories/api_key_repository.py:32-64`
+- `src/infrastructure/repositories/api_key_repository.py`
 - `src/infrastructure/database/encryption.py`
-- `src/domain/value_objects/user_id.py:38-48`
+- `src/domain/value_objects/user_id.py`
+- `src/infrastructure/cache/redis_cache.py`
 
 ---
 
 ### ✅ A03:2021 - Injection
 **Protezioni implementate:**
 - ✅ **SQL Injection**: SQLAlchemy ORM con parametrized queries
-- ✅ **NoSQL Injection**: N/A (PostgreSQL only)
+- ✅ **LLM Prompt Injection**: Separazione system/user message nel prompt Groq
 - ✅ **Command Injection**: No shell commands con user input
-- ✅ **LDAP Injection**: N/A
 - ✅ **Input Validation**: Pydantic con min_length, max_length, regex
+- ✅ **Service-layer Validation**: Controlli su telegram_id e testo vuoti
 
-**Esempi parametrized queries:**
+**Prompt injection prevention:**
 ```python
-# ✅ SAFE - SQLAlchemy parametrized
-stmt = select(EmotionModel).where(EmotionModel.id == emotion_id)
-stmt = select(User).where(User.user_id == user_id_hash)
+# ✅ SAFE - User text in separate message role
+"messages": [
+    {"role": "system", "content": "Analyze the emotion..."},
+    {"role": "user", "content": user_text},  # Isolated
+]
 ```
 
-**File:** `src/infrastructure/repositories/*.py`
+**File:** `src/infrastructure/ml/groq_analyzer.py`, `src/infrastructure/repositories/*.py`
 
 ---
 
@@ -61,11 +66,13 @@ stmt = select(User).where(User.user_id == user_id_hash)
 **Protezioni implementate:**
 - ✅ Rate limiting per user/IP
 - ✅ Request size limit (1MB max)
+- ✅ Text length limit (500 chars max)
 - ✅ API key expiration support
-- ✅ Graceful degradation (cache fallback)
-- ✅ Resource limits (512MB free tier optimization)
+- ✅ Cache poisoning prevention (UNKNOWN results never cached)
+- ✅ Decrypt failure resilience (bulk ops survive individual failures)
+- ✅ Graceful degradation (cache fallback, Redis errors don't crash)
 
-**File:** `src/presentation/api/middleware/security.py:188-231`
+**File:** `src/application/services/emotion_service.py`, `src/presentation/api/middleware/security.py`
 
 ---
 
@@ -78,18 +85,18 @@ stmt = select(User).where(User.user_id == user_id_hash)
 - ✅ **CORS**: Configurabile via environment (`CORS_ORIGINS`)
 - ✅ **Secrets**: Environment variables (no hardcoded secrets)
 
-**File:** `src/presentation/api/middleware/security.py:181-183`
+**File:** `src/presentation/api/middleware/security.py`
 
 ---
 
 ### ✅ A06:2021 - Vulnerable Components
 **Protezioni implementate:**
 - ✅ **Dependency Scanning**: GitHub Actions (safety check)
-- ✅ **Security Linting**: Bandit (security scanner)
-- ✅ **No Legacy Code**: Rimosso tutto HuggingFace/MilaNLProc (deprecated models)
+- ✅ **Security Linting**: Bandit (security scanner) + Ruff con regole S-prefix
+- ✅ **SHA-pinned CI Actions**: Tutte le GitHub Actions pinned by SHA
 - ✅ **Pinned Versions**: `pyproject.toml` con version constraints
 
-**CI/CD:** `.github/workflows/ci.yml:96-113`
+**CI/CD:** `.github/workflows/ci.yml`
 
 ---
 
@@ -101,7 +108,7 @@ stmt = select(User).where(User.user_id == user_id_hash)
 - ✅ **Last Used Tracking**: `last_used_at` per audit
 - ✅ **Key Deactivation**: Soft delete (is_active flag)
 
-**File:** `src/infrastructure/repositories/api_key_repository.py:65-89`
+**File:** `src/infrastructure/repositories/api_key_repository.py`
 
 ---
 
@@ -109,18 +116,19 @@ stmt = select(User).where(User.user_id == user_id_hash)
 **Protezioni implementate:**
 - ✅ **Database Migrations**: Alembic con versioning
 - ✅ **Integrity Checks**: PostgreSQL constraints (FK, NOT NULL)
-- ✅ **CI/CD Pipeline**: GitHub Actions con test obbligatori
-- ✅ **Docker Build**: Multi-stage con hash verification
+- ✅ **CI/CD Pipeline**: GitHub Actions con 5 job (lint, typecheck, security, test, docker-build)
+- ✅ **Docker Build**: Multi-stage con non-root user (appuser)
 - ✅ **Automated Tests**: 40/40 tests passing (100%)
 
-**CI/CD:** `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`
+**CI/CD:** `.github/workflows/ci.yml`
 
 ---
 
 ### ✅ A09:2021 - Security Logging & Monitoring
 **Protezioni implementate:**
 - ✅ **Audit Logging**: Tutti gli accessi API (`audit_log` table)
-- ✅ **Structured Logging**: JSON format con correlazione
+- ✅ **Structured Logging**: JSON format con correlazione (structlog)
+- ✅ **PII-free Logs**: Testo utente escluso dai log (anche a livello debug)
 - ✅ **Sentry Integration**: Error tracking in produzione
 - ✅ **Prometheus Metrics**: Performance monitoring
 - ✅ **Health Checks**: `/healthz`, `/readyz`, `/ping`
@@ -135,14 +143,40 @@ stmt = select(User).where(User.user_id == user_id_hash)
 ### ✅ A10:2021 - Server-Side Request Forgery (SSRF)
 **Protezioni implementate:**
 - ✅ **No User-Controlled URLs**: Groq API URL è hardcoded
-- ✅ **Timeout Limits**: httpx con timeout 5s per health checks
+- ✅ **Timeout Limits**: httpx con timeout 10s (connect 5s)
 - ✅ **No URL Redirects**: Nessun follow_redirects non controllato
 
-**File:** `src/presentation/api/routes/health.py:123-128`
+**File:** `src/infrastructure/ml/groq_analyzer.py`, `src/presentation/api/routes/health.py`
 
 ---
 
-## 2. Security Headers
+## 2. Core Pipeline Hardening
+
+### Protezioni aggiunte (24 Febbraio 2026)
+
+| Area | Protezione | File |
+|------|-----------|------|
+| **Groq Analyzer** | System/user message separation (anti prompt injection) | `groq_analyzer.py` |
+| **Groq Analyzer** | Robust label extraction con regex (`re.sub`) | `groq_analyzer.py` |
+| **Groq Analyzer** | Text truncation (500 chars max) prima dell'invio | `groq_analyzer.py` |
+| **Groq Analyzer** | PII rimosso dai log (testo utente mai loggato) | `groq_analyzer.py` |
+| **EmotionService** | Input validation (telegram_id e text vuoti) | `emotion_service.py` |
+| **EmotionService** | Cache key sicura (full ID + 32-char hash, no troncamento) | `emotion_service.py` |
+| **EmotionService** | UNKNOWN results never cached (anti cache poisoning) | `emotion_service.py` |
+| **EmotionService** | defaultdict per sentiment aggregation (no KeyError) | `emotion_service.py` |
+| **EmotionRepo** | Date boundary fix (`<` instead of `<=`, off-by-one) | `emotion_repository.py` |
+| **EmotionRepo** | Decrypt failure resilience (bulk ops non crashano) | `emotion_repository.py` |
+| **DB Connection** | Rollback su tutte le eccezioni (non solo SQLAlchemy) | `connection.py` |
+| **Messages** | chat_id catturato prima di operazioni async | `messages.py` |
+| **Messages** | Error handlers usano send_message (non reply_text su msg cancellato) | `messages.py` |
+| **Webhook** | Bot singleton (previene resource leak) | `telegram_webhook.py` |
+| **Webhook** | Real update_id preservato (deduplicazione Telegram) | `telegram_webhook.py` |
+| **Webhook** | @botname stripping per compatibilita' gruppi | `telegram_webhook.py` |
+| **Redis** | Password mascherata nei log di startup | `redis_cache.py` |
+
+---
+
+## 3. Security Headers
 
 **Tutti i response includono:**
 
@@ -155,91 +189,103 @@ Referrer-Policy: strict-origin-when-cross-origin
 Content-Security-Policy: default-src 'none'; script-src 'self'; ...
 ```
 
-**File:** `src/presentation/api/middleware/security.py:162-179`
+**File:** `src/presentation/api/middleware/security.py`
 
 ---
 
-## 3. Input Validation
+## 4. Input Validation
 
-### Pydantic DTOs con Validation
+### Multi-layer Validation
+
+```
+Presentation Layer: Pydantic DTOs (type, length, format)
+Application Layer: Service validation (empty checks, business rules)
+Infrastructure Layer: SQLAlchemy parametrized queries
+```
+
+### Pydantic DTOs
 
 ```python
-# ✅ Validated
 class EmotionAnalysisRequest(BaseModel):
     user_id: str = Field(..., min_length=1, max_length=64)
     text: str = Field(..., min_length=1, max_length=500)
-
-class MonthlyStatisticsResponse(BaseModel):
-    total_messages: int = Field(..., ge=0)
-    active_days: int = Field(..., ge=0, le=31)
-    # ...
 ```
 
-**Tutti i DTOs validati:** `src/application/dto/emotion_dto.py`
+### Service Validation
+
+```python
+# EmotionService.analyze_emotion()
+if not telegram_id or not telegram_id.strip():
+    raise ValueError("telegram_id cannot be empty")
+if not text or not text.strip():
+    raise ValueError("Text cannot be empty")
+text = text[:MAX_TEXT_LENGTH]  # 500 chars
+```
 
 ---
 
-## 4. Rate Limiting
+## 5. Rate Limiting
 
 | Endpoint | Limite | Scope |
 |----------|--------|-------|
 | POST `/api/v1/emotion` | 100/min | Per IP |
 | GET `/api/v1/report` | 50/min | Per IP |
 | GET `/reports/monthly/{telegram_id}/{month}` | 30/min | Per IP |
-
-**File:** `src/presentation/api/routes/emotion.py`, `src/presentation/api/routes/reports.py`
+| POST `/telegram/webhook` | 10/sec | Per IP |
 
 ---
 
-## 5. Encryption at Rest
+## 6. Encryption at Rest
 
 | Dato | Metodo | Algoritmo |
 |------|--------|-----------|
 | User messages (text) | Fernet | AES-128 CBC + HMAC |
 | API Keys | Bcrypt | Bcrypt (cost 12) |
 | User IDs | SHA-256 | SHA-256 hash |
+| Cache keys | SHA-256 | SHA-256 hash del testo |
 | JWT Secrets | Environment | N/A (external secret management) |
 
 ---
 
-## 6. Known Security Limitations
+## 7. Known Security Limitations
 
 ### ⚠️ Considerazioni Future
 
 1. **No MFA (Multi-Factor Authentication)**: Sistema API key-based (considerare TOTP per admin)
 2. **No IP Whitelisting**: Rate limiting per IP, ma nessuna whitelist
 3. **No WAF**: Considerare Cloudflare WAF per produzione
-4. **No DDoS Protection**: Considerare rate limiting distribuito (Redis)
+4. **Sync I/O in Async**: Redis/DB calls bloccano l'event loop (mitigato da pool piccoli)
 
 ---
 
-## 7. Compliance
+## 8. Compliance
 
 ### ✅ GDPR Compliance
 - ✅ User ID hashing (SHA-256) - No PII in database
 - ✅ Text encryption (Fernet) - Right to be forgotten support
+- ✅ PII-free logs - Testo utente mai loggato
+- ✅ Message deletion - Messaggi Telegram cancellati dopo analisi
 - ✅ Audit logging - Access tracking
 - ✅ Sentry privacy mode - No PII in error reports
 
-**File:** `src/config/sentry.py:30-48`
-
 ---
 
-## 8. Security Testing
+## 9. Security Testing
 
 ### Automated Security Checks (CI/CD)
 
 ```yaml
-# .github/workflows/ci.yml
-security:
-  - Bandit (security linter) - AST-based vulnerability detection
-  - Safety (dependency check) - Known CVE scanning
-  - Pytest (40 tests) - Functional security tests
+# .github/workflows/ci.yml - 5 job paralleli
+lint:       Ruff (con regole Bandit S-prefix) + Black
+typecheck:  mypy strict mode
+security:   Bandit AST analysis + Safety CVE scan
+test:       pytest 40 tests + coverage
+docker:     Build verification
 ```
 
 ---
 
-## 9. Incident Response
+## 10. Incident Response
 
 ### In caso di security breach:
 
@@ -257,13 +303,13 @@ security:
    - Dashboard: https://sentry.io/organizations/happykube/
 
 4. **Rotate Secrets**:
-   - `JWT_SECRET_KEY` - Invalida tutti i token
-   - `ENCRYPTION_KEY` - Richiede re-encryption di tutti i messaggi
-   - `GROQ_API_KEY` - Rigenera da Groq dashboard
+   ```bash
+   fly secrets set JWT_SECRET_KEY="<new>" ENCRYPTION_KEY="<new>" GROQ_API_KEY="<new>"
+   ```
 
 ---
 
-## 10. Security Checklist per Deploy
+## 11. Security Checklist per Deploy
 
 - [x] Environment variables configurate (no secrets in code)
 - [x] DEBUG=false in produzione
@@ -271,146 +317,14 @@ security:
 - [x] API keys generati e salvati in database
 - [x] Database migrations applicate
 - [x] Sentry configurato con DSN
-- [x] HTTPS enforced (Render auto-provision)
+- [x] HTTPS enforced (Fly.io TLS auto-provision)
+- [x] Telegram webhook secret token configurato
 - [x] Health checks configurati (`/healthz`, `/readyz`)
-- [x] Prometheus metrics enabled (opzionale)
-- [x] Backup automatici database (Render managed)
+- [x] Prometheus metrics enabled
+- [x] Core pipeline hardened (prompt injection, cache poisoning, input validation)
 
 ---
 
-## 11. Contact per Security Issues
-
-**Email**: [Inserire email per security disclosures]
-**GitHub Security Advisories**: https://github.com/YOUR_ORG/HappyKube/security/advisories
-
----
-
-**Last Review**: 12 Febbraio 2026
-**Next Review**: 12 Maggio 2026
-**Reviewed By**: Claude Sonnet 4.5 (Automated Security Analysis)
-# 🔒 Security Setup - CRITICAL
-
-## ⚠️ IMPORTANTE: Configurare SUBITO dopo il deploy
-
-L'API è attualmente **PUBBLICA** e deve essere protetta con API Key.
-
-## 🚀 Setup Rapido (5 minuti)
-
-### 1. Genera API Key
-
-Generate your secure API key:
-
-```bash
-python3 -c "import secrets; print('HK_' + secrets.token_urlsafe(32))"
-```
-
-**⚠️ CONSERVALA IN MODO SICURO - è come una password!**
-
-### 2. Configura su Render
-
-#### A. Aggiungi API Key al servizio Web (API)
-
-1. Vai su https://dashboard.render.com/web/YOUR-SERVICE-ID
-2. Clicca "Environment"
-3. Aggiungi variabile:
-   - **Key**: `API_KEYS`
-   - **Value**: `<your-generated-api-key-here>`
-4. Clicca "Save Changes"
-
-#### B. Il bot Telegram usa l'API internamente (stesso container)
-
-Il bot e l'API girano nello stesso container Docker, quindi **NON serve configurare nulla** per il bot - condividono le stesse variabili d'ambiente.
-
-### 3. Verifica Sicurezza
-
-Dopo il deploy, testa:
-
-```bash
-# ❌ Deve fallire (senza API key)
-curl https://your-app.onrender.com/api/v1/emotion/analyze
-
-# ✅ Deve funzionare (con API key)
-curl -H "X-API-Key: YOUR_API_KEY_HERE" \
-     https://your-app.onrender.com/api/v1/emotion/analyze
-
-# ✅ Health check sempre pubblico
-curl https://your-app.onrender.com/ping
-```
-
-## 🛡️ Protezioni Implementate
-
-### 1. **API Key Authentication** ⭐ PRINCIPALE
-- Header `X-API-Key` richiesto per tutti gli endpoint
-- Constant-time comparison (anti timing-attack)
-- Solo `/healthz`, `/ping`, `/readyz`, `/metrics` sono pubblici
-
-### 2. **Security Headers**
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `X-XSS-Protection: 1; mode=block`
-- `Strict-Transport-Security` (HSTS)
-- `Content-Security-Policy` (production)
-
-### 3. **Request Size Limits**
-- Max 1MB per request
-- Protezione contro payload attacks
-
-### 4. **Rate Limiting**
-- 100 requests/minute per IP
-- Anti-DoS protection
-
-### 5. **Audit Logging**
-- Tutti gli accessi loggati in DB
-- IP, user-agent, endpoint tracciati
-
-## 🔑 Come Usare l'API (per sviluppo futuro)
-
-Se in futuro vuoi chiamare l'API da un client esterno:
-
-```python
-import httpx
-
-API_KEY = "YOUR_API_KEY_HERE"  # Replace with your actual API key
-
-async with httpx.AsyncClient() as client:
-    response = await client.post(
-        "https://your-app.onrender.com/api/v1/emotion/analyze",
-        headers={"X-API-Key": API_KEY},
-        json={"text": "Mi sento felice oggi!"}
-    )
-    print(response.json())
-```
-
-## 🔄 Rotazione API Key
-
-Se devi cambiare la chiave:
-
-```bash
-# Genera nuova key
-python3 -c "import secrets; print('HK_' + secrets.token_urlsafe(32))"
-
-# Aggiorna su Render
-# 1. Aggiungi nuova key: API_KEYS=old_key,new_key
-# 2. Deploy
-# 3. Aggiorna tutti i client
-# 4. Rimuovi old_key: API_KEYS=new_key
-```
-
-## ⚠️ IMPORTANTE
-
-- **MAI commitare API_KEYS in Git** - usa solo .env locale
-- **Solo su Render dashboard** - configurazione manuale
-- **Il bot Telegram funziona automaticamente** - stesso container
-- **Endpoints pubblici**: solo health checks e metrics
-
-## 📊 Monitoring
-
-Controlla tentativi non autorizzati:
-
-```sql
--- Audit log su PostgreSQL
-SELECT * FROM audit_log
-WHERE endpoint NOT IN ('/healthz', '/ping', '/readyz', '/metrics')
-ORDER BY created_at DESC
-LIMIT 100;
-```
+**Last Review**: 24 Febbraio 2026
+**Next Review**: 24 Maggio 2026
+**Reviewed By**: Claude Opus 4.6 (Automated Security Analysis)

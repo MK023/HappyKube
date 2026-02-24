@@ -50,7 +50,7 @@ Expires:    Never
 🔑 API Key (COPY THIS NOW - won't be shown again):
     HK_P_abc123def456ghi789jkl012mno345pqr678
 
-💡 Add this to your .env or Render environment:
+💡 Add this to your .env or Fly.io environment:
     API_KEYS="HK_P_abc123def456ghi789jkl012mno345pqr678"
 ```
 
@@ -87,22 +87,22 @@ Last Used:  2025-12-31 10:30
 python src/scripts/manage_api_keys.py deactivate 550e8400-e29b-41d4-a716-446655440000
 ```
 
-## 🚀 Deployment su Render
+## 🚀 Deployment su Fly.io
 
 ### 1. Creazione Prima API Key (Locale)
 
 ```bash
 # Crea la chiave in locale (connesso al DB di produzione)
-python src/scripts/manage_api_keys.py create "Render Production" --rate-limit 300
+python src/scripts/manage_api_keys.py create "Fly.io Production" --rate-limit 300
 
 # Output:
 # 🔑 API Key: HK_P_xyz789abc...
 ```
 
-### 2. Configurazione Environment Variable su Render
+### 2. Configurazione Environment Variable su Fly.io
 
 ```bash
-# Vai su Render Dashboard → Service → Environment
+# Vai su Fly.io Dashboard → Service → Environment
 # Aggiungi/Aggiorna:
 API_KEYS="HK_P_xyz789abc..."  # La chiave generata al punto 1
 ```
@@ -183,7 +183,7 @@ CREATE INDEX ix_api_keys_key_hash ON api_keys (key_hash);
 ### Stato Attuale (Variabili d'Ambiente)
 
 ```bash
-# render.yaml
+# fly.toml
 API_KEYS: "HK_L_key1,HK_L_key2,HK_L_key3"
 ```
 
@@ -195,7 +195,7 @@ python src/scripts/manage_api_keys.py create "Telegram Bot" --rate-limit 200
 python src/scripts/manage_api_keys.py create "Web Dashboard" --rate-limit 100
 ```
 
-2. **Aggiorna Render (opzionale - backward compatibility)**:
+2. **Aggiorna Fly.io (opzionale - backward compatibility)**:
 ```bash
 # Puoi mantenere API_KEYS per fallback, ma non sarà più usato
 # Il middleware usa SOLO il database ora
@@ -203,7 +203,7 @@ python src/scripts/manage_api_keys.py create "Web Dashboard" --rate-limit 100
 
 3. **Rimuovi vecchie chiavi** (dopo verifica):
 ```bash
-# In render.yaml, rimuovi o commenta:
+# In fly.toml, rimuovi o commenta:
 # - key: API_KEYS
 #   value: "..."
 ```
@@ -274,7 +274,7 @@ curl -H "X-API-Key: HK_P_..." https://your-api.com/emotions/analyze
 
 ### Chiave non funziona dopo creazione
 
-1. **Riavvia il servizio** (Render redeploy)
+1. **Riavvia il servizio** (Fly.io redeploy)
 2. **Verifica bcrypt hash** nel database:
 ```sql
 SELECT id, name, key_hash, is_active FROM api_keys WHERE is_active = true;

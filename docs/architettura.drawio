@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2026-02-16T10:00:00.000Z" agent="HappyKube Architecture" version="24.0.0" type="device">
+<mxfile host="app.diagrams.net" modified="2026-02-24T14:00:00.000Z" agent="HappyKube Architecture" version="24.0.0" type="device">
   <diagram id="happykube-arch" name="Architettura HappyKube">
     <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
       <root>
@@ -145,7 +145,7 @@
           <mxGeometry x="840" y="555" width="140" height="65" as="geometry" />
         </mxCell>
 
-        <mxCell id="cache-client" value="&lt;b&gt;Redis Cache&lt;/b&gt;&lt;br&gt;TTL 3600s&lt;br&gt;Pool max 10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="cache-client" value="&lt;b&gt;Redis Cache&lt;/b&gt;&lt;br&gt;TTL 24h/1h&lt;br&gt;Pool max 10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="1000" y="560" width="120" height="55" as="geometry" />
         </mxCell>
 
@@ -159,7 +159,7 @@
         </mxCell>
 
         <!-- NeonDB -->
-        <mxCell id="neondb" value="&lt;b&gt;NeonDB&lt;/b&gt;&lt;br&gt;PostgreSQL Serverless&lt;br&gt;EU-West-2 (London)&lt;br&gt;SSL Required" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="neondb" value="&lt;b&gt;Fly.io PostgreSQL&lt;/b&gt;&lt;br&gt;Managed Database&lt;br&gt;Frankfurt (fra)&lt;br&gt;Internal Network" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="860" y="735" width="150" height="70" as="geometry" />
         </mxCell>
 
@@ -243,7 +243,7 @@
         <mxCell id="edge-db-neon" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#996185;strokeWidth=2;dashed=1;" edge="1" source="db-connection" target="neondb" parent="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge-db-neon-label" value="SSL" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-db-neon">
+        <mxCell id="edge-db-neon-label" value="Internal" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="edge-db-neon">
           <mxGeometry x="-0.2" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
         </mxCell>
 
@@ -316,7 +316,7 @@
         <mxCell id="legend-purple" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6d0de;strokeColor=#996185;" vertex="1" parent="1">
           <mxGeometry x="100" y="760" width="20" height="15" as="geometry" />
         </mxCell>
-        <mxCell id="legend-purple-text" value="Servizi Esterni (Groq, NeonDB, Redis, Sentry)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="legend-purple-text" value="Servizi Esterni (Groq, PostgreSQL, Redis, Sentry)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="130" y="755" width="260" height="25" as="geometry" />
         </mxCell>
 
@@ -336,7 +336,7 @@
         <mxCell id="db-schema-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;" vertex="1" parent="1">
           <mxGeometry x="80" y="850" width="1100" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="db-schema-title" value="&lt;b&gt;Schema Database (PostgreSQL - NeonDB)&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="db-schema-title" value="&lt;b&gt;Schema Database (PostgreSQL - Fly.io)&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="90" y="855" width="280" height="25" as="geometry" />
         </mxCell>
 
