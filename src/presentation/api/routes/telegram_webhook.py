@@ -9,6 +9,8 @@ SECURITY FEATURES:
 - HTTPS required (Fly.io provides TLS)
 """
 
+import secrets
+
 from fastapi import APIRouter, Header, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -80,7 +82,9 @@ async def telegram_webhook(
             detail="Webhook not properly configured",
         )
 
-    if x_telegram_bot_api_secret_token != expected_token:
+    if not x_telegram_bot_api_secret_token or not secrets.compare_digest(
+        x_telegram_bot_api_secret_token, expected_token
+    ):
         logger.warning(
             "Invalid webhook secret token",
             remote_addr=request.client.host if request.client else "unknown",
@@ -98,7 +102,7 @@ async def telegram_webhook(
     # Parse Telegram Update object
     try:
         update_data = await request.json()
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         logger.error("Failed to parse webhook payload", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -172,34 +176,30 @@ async def _process_message(message: dict) -> None:
         # Telegram will retry failed webhooks, causing duplicates
 
 
+class _WebhookContext:
+    """Minimal context placeholder for webhook mode (no polling dispatcher)."""
+
+
 async def _handle_command(update: Update, command: str) -> None:
     """Route command to appropriate handler."""
+    context = _WebhookContext()
 
-    # Create empty context (not used in webhook mode)
-    class EmptyContext:
-        pass
+    command_map = {
+        "/start": command_handlers.start,
+        "/help": command_handlers.help,
+        "/ask": command_handlers.ask,
+        "/monthly": command_handlers.monthly,
+        "/exit": command_handlers.exit,
+    }
 
-    context = EmptyContext()
-
-    if command == "/start":
-        await command_handlers.start(update, context)
-    elif command == "/help":
-        await command_handlers.help(update, context)
-    elif command == "/ask":
-        await command_handlers.ask(update, context)
-    elif command == "/monthly":
-        await command_handlers.monthly(update, context)
-    elif command == "/exit":
-        await command_handlers.exit(update, context)
+    handler = command_map.get(command)
+    if handler:
+        await handler(update, context)
     else:
         logger.debug("Unknown command", command=command)
 
 
 async def _handle_text(update: Update) -> None:
     """Route text message to handler."""
-
-    class EmptyContext:
-        pass
-
-    context = EmptyContext()
+    context = _WebhookContext()
     await message_handlers.handle_text(update, context)

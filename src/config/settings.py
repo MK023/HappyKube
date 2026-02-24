@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     )
 
     # CORS
-    cors_enabled: bool = Field(default=True, description="Enable CORS")
+    cors_enabled: bool = Field(default=False, description="Enable CORS")
     cors_origins: list[str] | None = Field(
         default=None,
         description="Allowed CORS origins",
@@ -122,12 +122,12 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list[str] | None) -> list[str] | None:
-        """Parse comma-separated CORS origins."""
+        """Parse comma-separated CORS origins. Returns None if not set (CORS disabled)."""
         if v is None:
-            return ["http://localhost:3000"]
+            return None
         if isinstance(v, str):
             origins = [origin.strip() for origin in v.split(",") if origin.strip()]
-            return origins if origins else ["http://localhost:3000"]
+            return origins if origins else None
         return v
 
     def get_database_url(self) -> str:

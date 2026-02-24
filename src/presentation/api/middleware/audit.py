@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from fastapi import Request
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
@@ -64,7 +65,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 db.add(audit_entry)
                 db.commit()
                 logger.debug("Audit log created", action=action, ip=ip_address)
-        except Exception as e:
+        except (SQLAlchemyError, ConnectionError, OSError) as e:
             logger.error("Failed to create audit log", error=str(e), action=action)
             # Don't fail the request if audit logging fails
 

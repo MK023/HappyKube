@@ -1,6 +1,10 @@
 """Health check routes."""
 
+from typing import Any
+
 from fastapi import APIRouter, Response, status
+from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
 
 from config import get_logger, get_settings
 from infrastructure.cache import get_cache
@@ -37,7 +41,7 @@ router = APIRouter(tags=["health"])
         }
     },
 )
-async def root():
+async def root() -> dict[str, Any]:
     """
     Root endpoint.
 
@@ -70,7 +74,7 @@ async def root():
         }
     },
 )
-async def healthz():
+async def healthz() -> dict[str, str]:
     """
     Basic health check (liveness probe).
 
@@ -80,31 +84,29 @@ async def healthz():
 
 
 @router.get("/healthz/db")
-async def healthz_db(response: Response):
+async def healthz_db(response: Response) -> dict[str, str]:
     """Database health check."""
     try:
         if db_health_check():
             return {"status": "healthy", "service": "database"}
-        else:
-            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-            return {"status": "unhealthy", "service": "database"}
-    except Exception as e:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "unhealthy", "service": "database"}
+    except (SQLAlchemyError, ConnectionError, OSError) as e:
         logger.error("Database health check failed", error=str(e))
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {"status": "error", "service": "database", "error": str(e)}
 
 
 @router.get("/healthz/redis")
-async def healthz_redis(response: Response):
+async def healthz_redis(response: Response) -> dict[str, str]:
     """Redis health check."""
     try:
         cache = get_cache()
         if cache.health_check():
             return {"status": "healthy", "service": "redis"}
-        else:
-            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-            return {"status": "unhealthy", "service": "redis"}
-    except Exception as e:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {"status": "unhealthy", "service": "redis"}
+    except (RedisError, ConnectionError, OSError) as e:
         logger.error("Redis health check failed", error=str(e))
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {"status": "error", "service": "redis", "error": str(e)}
@@ -112,7 +114,7 @@ async def healthz_redis(response: Response):
 
 @router.get("/ping")
 @router.head("/ping")
-async def ping(response: Response):
+async def ping(response: Response) -> str:
     """
     Lightweight ping endpoint for Fly.io health checks.
 
@@ -171,7 +173,7 @@ async def ping(response: Response):
         },
     },
 )
-async def readyz(response: Response):
+async def readyz(response: Response) -> dict[str, Any]:
     """
     Readiness check (readiness probe).
 
@@ -197,7 +199,7 @@ async def readyz(response: Response):
                 headers={"Authorization": f"Bearer {settings.groq_api_key}"},
             )
             groq_healthy = groq_response.status_code == 200
-        except Exception as e:
+        except (ConnectionError, OSError) as e:
             logger.warning("Groq API health check failed", error=str(e))
             groq_healthy = False
 
@@ -212,18 +214,17 @@ async def readyz(response: Response):
                     "groq_api": "healthy",
                 },
             }
-        else:
-            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-            return {
-                "status": "not ready",
-                "checks": {
-                    "database": "healthy" if db_healthy else "unhealthy",
-                    "redis": "healthy" if redis_healthy else "unhealthy",
-                    "groq_api": "healthy" if groq_healthy else "unhealthy",
-                },
-            }
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {
+            "status": "not ready",
+            "checks": {
+                "database": "healthy" if db_healthy else "unhealthy",
+                "redis": "healthy" if redis_healthy else "unhealthy",
+                "groq_api": "healthy" if groq_healthy else "unhealthy",
+            },
+        }
 
-    except Exception as e:
+    except (SQLAlchemyError, RedisError, ConnectionError, OSError) as e:
         logger.error("Readiness check failed", error=str(e))
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {"status": "error", "error": str(e)}

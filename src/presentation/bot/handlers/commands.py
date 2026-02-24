@@ -1,12 +1,13 @@
 """Telegram bot command handlers."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import httpx
 from telegram import Update
 from telegram.ext import ContextTypes
 
 from config import get_logger, get_settings
+from domain.utils import get_italian_month_name
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -141,7 +142,7 @@ I tuoi messaggi sono criptati e sicuri.
             return
 
         telegram_id = str(user.id)
-        current_month = datetime.now().strftime("%Y-%m")
+        current_month = datetime.now(UTC).strftime("%Y-%m")
 
         logger.info("User requested monthly stats", user_id=telegram_id, month=current_month)
 
@@ -160,7 +161,7 @@ I tuoi messaggi sono criptati e sicuri.
                 response = await client.get(api_url, headers=headers)
 
             if response.status_code == 404:
-                month_name = self._get_month_name(current_month)
+                month_name = get_italian_month_name(current_month)
                 await update.message.reply_text(
                     f"📭 Non ho ancora nessun dato disponibile per {month_name}.\n\n"
                     "💡 Condividi le tue emozioni con me e poi riprova!\n"
@@ -206,8 +207,11 @@ I tuoi messaggi sono criptati e sicuri.
         except httpx.TimeoutException:
             logger.error("Timeout fetching monthly stats")
             await update.message.reply_text("⏱️ Timeout nel recupero delle statistiche. Riprova.")
-        except Exception as e:
-            logger.error("Error in monthly command", error=str(e), exc_info=True)
+        except httpx.RequestError as e:
+            logger.error("Connection error fetching monthly stats", error=str(e))
+            await update.message.reply_text("❌ Errore di connessione. Riprova più tardi.")
+        except (KeyError, ValueError) as e:
+            logger.error("Error parsing monthly stats response", error=str(e))
             await update.message.reply_text("❌ Si è verificato un errore. Riprova più tardi.")
 
     @staticmethod
@@ -216,26 +220,3 @@ I tuoi messaggi sono criptati e sicuri.
         from domain.enums.emotion_emojis import EMOTION_EMOJIS
 
         return EMOTION_EMOJIS.get(emotion.lower(), "🎭")
-
-    @staticmethod
-    def _get_month_name(month: str) -> str:
-        """Convert YYYY-MM to Italian month name."""
-        month_names = {
-            "01": "Gennaio",
-            "02": "Febbraio",
-            "03": "Marzo",
-            "04": "Aprile",
-            "05": "Maggio",
-            "06": "Giugno",
-            "07": "Luglio",
-            "08": "Agosto",
-            "09": "Settembre",
-            "10": "Ottobre",
-            "11": "Novembre",
-            "12": "Dicembre",
-        }
-        try:
-            _, mon = month.split("-")
-            return month_names.get(mon, month)
-        except (ValueError, KeyError):
-            return month

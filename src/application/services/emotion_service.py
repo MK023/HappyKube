@@ -2,10 +2,11 @@
 
 import asyncio
 import hashlib
-from datetime import datetime
+from datetime import UTC, datetime
 
 from config import get_logger
 from domain import EmotionRecord
+from domain.utils import get_italian_month_name
 from infrastructure.cache import RedisCache
 from infrastructure.ml import ModelFactory
 
@@ -149,13 +150,14 @@ class EmotionService:
             try:
                 # Parse YYYY-MM
                 year, mon = map(int, month.split("-"))
-                start_date = datetime(year, mon, 1)
+                start_date = datetime(year, mon, 1, tzinfo=UTC)
 
                 # Calculate end of month
-                if mon == 12:
-                    end_date = datetime(year + 1, 1, 1)
-                else:
-                    end_date = datetime(year, mon + 1, 1)
+                end_date = (
+                    datetime(year + 1, 1, 1, tzinfo=UTC)
+                    if mon == 12
+                    else datetime(year, mon + 1, 1, tzinfo=UTC)
+                )
 
                 emotions = self.emotion_repo.find_by_user_and_period(user.id, start_date, end_date)
                 period_label = month
@@ -213,16 +215,17 @@ class EmotionService:
             year, mon = map(int, month.split("-"))
             if not (1 <= mon <= 12):
                 raise ValueError("Month must be between 01 and 12")
-            start_date = datetime(year, mon, 1)
+            start_date = datetime(year, mon, 1, tzinfo=UTC)
         except (ValueError, AttributeError) as e:
             logger.error("Invalid month format", month=month, error=str(e))
             raise ValueError("Invalid month format. Use YYYY-MM (e.g., 2026-01)") from e
 
         # Calculate end of month
-        if mon == 12:
-            end_date = datetime(year + 1, 1, 1)
-        else:
-            end_date = datetime(year, mon + 1, 1)
+        end_date = (
+            datetime(year + 1, 1, 1, tzinfo=UTC)
+            if mon == 12
+            else datetime(year, mon + 1, 1, tzinfo=UTC)
+        )
 
         # Find user
         user = self.user_repo.find_or_create_by_telegram_id(telegram_id)
@@ -338,7 +341,7 @@ class EmotionService:
         insights: list[MonthlyInsight] = []
 
         # Insight 1: Overall sentiment
-        month_name = self._get_month_name(month)
+        month_name = get_italian_month_name(month)
         if sentiment_stats.positive > 60:
             msg = (
                 f"🎉 {month_name} è stato un mese positivo! "
@@ -355,7 +358,7 @@ class EmotionService:
             insights.append(
                 MonthlyInsight(
                     type="balanced_month",
-                    message=f"⚖️ {self._get_month_name(month)} è stato un mese equilibrato",
+                    message=f"⚖️ {get_italian_month_name(month)} è stato un mese equilibrato",
                     icon="⚖️",
                 )
             )
@@ -402,26 +405,3 @@ class EmotionService:
             )
 
         return insights
-
-    @staticmethod
-    def _get_month_name(month: str) -> str:
-        """Convert YYYY-MM to Italian month name."""
-        month_names = {
-            "01": "Gennaio",
-            "02": "Febbraio",
-            "03": "Marzo",
-            "04": "Aprile",
-            "05": "Maggio",
-            "06": "Giugno",
-            "07": "Luglio",
-            "08": "Agosto",
-            "09": "Settembre",
-            "10": "Ottobre",
-            "11": "Novembre",
-            "12": "Dicembre",
-        }
-        try:
-            _, mon = month.split("-")
-            return month_names.get(mon, month)
-        except (ValueError, KeyError):
-            return month

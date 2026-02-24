@@ -80,24 +80,36 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "UP",  # pyupgrade
-    "S",   # bandit
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "S",    # bandit (security)
+    "BLE",  # flake8-blind-except
+    "SIM",  # flake8-simplify
+    "DTZ",  # flake8-datetimez (naive datetime)
+    "T20",  # flake8-print (no print statements)
+    "RET",  # flake8-return
+    "PTH",  # flake8-use-pathlib
 ]
 ignore = [
-    "E501",  # line too long (handled by black)
-    "S101",  # assert used (ok in tests)
+    "E501",   # line too long (handled by black)
+    "S101",   # assert used (ok in tests)
+    "RET504", # unnecessary variable assignment before return
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106"]  # S105: Allow test token strings
+"tests/**" = ["S101", "S105", "S106", "DTZ"]  # Allow test patterns
 "src/config/settings.py" = ["S104"]  # S104: Allow 0.0.0.0 binding for API server
 "src/presentation/api/routes/*.py" = ["B008"]  # B008: FastAPI Depends() pattern is standard
+"src/presentation/api/app.py" = ["BLE001"]  # Lifespan shutdown must catch broadly
+"src/presentation/bot/handlers/messages.py" = ["BLE001"]  # Bot must not crash on unexpected errors
+"src/presentation/api/routes/telegram_webhook.py" = ["BLE001"]  # Webhook must acknowledge all requests
+"src/presentation/api/routes/emotion.py" = ["BLE001"]  # API must return 500, not crash
+"src/presentation/api/middleware/security.py" = ["BLE001"]  # Middleware must not crash server
 
 [tool.mypy]
 python_version = "3.12"

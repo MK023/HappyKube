@@ -1,6 +1,6 @@
 """Field-level encryption for sensitive data (PII compliance)."""
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 from config import get_logger, get_settings
 
@@ -31,7 +31,7 @@ class FieldEncryption:
         try:
             self._fernet = Fernet(key.encode())
             logger.info("Field encryption initialized successfully")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             logger.error("Failed to initialize encryption", error=str(e))
             raise ValueError(f"Invalid encryption key: {e}") from e
 
@@ -55,7 +55,7 @@ class FieldEncryption:
             encrypted = self._fernet.encrypt(plaintext.encode("utf-8"))
             logger.debug("Text encrypted successfully", length=len(plaintext))
             return encrypted
-        except Exception as e:
+        except (TypeError, UnicodeEncodeError) as e:
             logger.error("Encryption failed", error=str(e))
             raise ValueError(f"Encryption failed: {e}") from e
 
@@ -80,7 +80,10 @@ class FieldEncryption:
             plaintext = decrypted.decode("utf-8")
             logger.debug("Text decrypted successfully")
             return plaintext
-        except Exception as e:
+        except InvalidToken as e:
+            logger.error("Decryption failed: invalid token or corrupted data")
+            raise ValueError("Decryption failed: invalid token or corrupted data") from e
+        except (TypeError, UnicodeDecodeError) as e:
             logger.error("Decryption failed", error=str(e))
             raise ValueError(f"Decryption failed: {e}") from e
 

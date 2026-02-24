@@ -1,6 +1,7 @@
 """Groq-based emotion and sentiment analyzer using Llama."""
 
 import httpx
+from httpx import HTTPStatusError, RequestError
 
 from config import get_logger, get_settings
 from domain import EmotionScore, EmotionType, SentimentType
@@ -90,8 +91,18 @@ Emotion:"""
             )
             return emotion, score
 
-        except Exception as e:
-            logger.error("Groq emotion analysis failed", error=str(e), text=text[:50])
+        except HTTPStatusError as e:
+            logger.error(
+                "Groq emotion API error",
+                status_code=e.response.status_code,
+                text=text[:50],
+            )
+            return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
+        except RequestError as e:
+            logger.error("Groq emotion connection error", error=str(e), text=text[:50])
+            return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
+        except (KeyError, IndexError, ValueError) as e:
+            logger.error("Groq emotion response parsing error", error=str(e), text=text[:50])
             return EmotionType.UNKNOWN, EmotionScore.from_float(0.0)
 
     async def analyze_sentiment(self, text: str) -> tuple[SentimentType, EmotionScore]:
@@ -141,6 +152,16 @@ Sentiment:"""
             )
             return sentiment, score
 
-        except Exception as e:
-            logger.error("Groq sentiment analysis failed", error=str(e), text=text[:50])
+        except HTTPStatusError as e:
+            logger.error(
+                "Groq sentiment API error",
+                status_code=e.response.status_code,
+                text=text[:50],
+            )
+            return SentimentType.UNKNOWN, EmotionScore.from_float(0.0)
+        except RequestError as e:
+            logger.error("Groq sentiment connection error", error=str(e), text=text[:50])
+            return SentimentType.UNKNOWN, EmotionScore.from_float(0.0)
+        except (KeyError, IndexError, ValueError) as e:
+            logger.error("Groq sentiment response parsing error", error=str(e), text=text[:50])
             return SentimentType.UNKNOWN, EmotionScore.from_float(0.0)

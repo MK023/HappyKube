@@ -105,9 +105,20 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             request.state.api_key_id = api_key_id
             request.state.rate_limit = rate_limit
 
+        except (ConnectionError, OSError) as e:
+            logger.error(
+                "API key validation: database unreachable", path=request.url.path, error=str(e)
+            )
+            return JSONResponse(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                content={
+                    "detail": "Authentication service unavailable",
+                    "error": "service_unavailable",
+                },
+            )
         except Exception as e:
             logger.error(
-                "Error validating API key", path=request.url.path, error=str(e), exc_info=e
+                "Error validating API key", path=request.url.path, error=str(e), exc_info=True
             )
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -185,10 +196,19 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
             HTTP response or 413 Payload Too Large
         """
         # Check Content-Length header
-        content_length = request.headers.get("content-length")
+        content_length_header = request.headers.get("content-length")
 
-        if content_length:
-            content_length = int(content_length)
+        if content_length_header:
+            try:
+                content_length = int(content_length_header)
+            except ValueError:
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={
+                        "detail": "Invalid Content-Length header",
+                        "error": "bad_request",
+                    },
+                )
             if content_length > self.MAX_REQUEST_SIZE:
                 logger.warning(
                     "Request too large",

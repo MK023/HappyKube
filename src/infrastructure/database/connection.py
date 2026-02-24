@@ -6,6 +6,7 @@ from contextlib import contextmanager
 
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from config import get_logger, get_settings
@@ -147,7 +148,7 @@ def get_db_session() -> Generator[Session, None, None]:
         yield session
         session.commit()
         logger.debug("Database session committed")
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error("Database session error, rolling back", error=str(e))
         session.rollback()
         raise
@@ -171,7 +172,7 @@ def init_database() -> None:
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error("Failed to create database tables", error=str(e))
         raise
 
@@ -205,6 +206,6 @@ def health_check() -> bool:
             session.execute(text("SELECT 1"))
         logger.debug("Database health check passed")
         return True
-    except Exception as e:
+    except (SQLAlchemyError, ConnectionError, OSError) as e:
         logger.error("Database health check failed", error=str(e))
         return False

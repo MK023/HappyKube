@@ -25,6 +25,16 @@ router = APIRouter(prefix="/api/v1", tags=["emotion"])
 limiter = Limiter(key_func=get_remote_address)
 
 
+def _get_emotion_service(db: Session) -> EmotionService:
+    """Create EmotionService instance with injected dependencies."""
+    return EmotionService(
+        emotion_repo=EmotionRepository(db),
+        user_repo=UserRepository(db),
+        model_factory=get_model_factory(),
+        cache=get_cache(),
+    )
+
+
 @router.post(
     "/emotion",
     response_model=EmotionAnalysisResponse,
@@ -84,17 +94,8 @@ async def analyze_emotion(
     Rate limited to 100 requests per minute.
     """
     try:
-        # Create service with dependencies
-        emotion_repo = EmotionRepository(db)
-        user_repo = UserRepository(db)
-        service = EmotionService(
-            emotion_repo=emotion_repo,
-            user_repo=user_repo,
-            model_factory=get_model_factory(),
-            cache=get_cache(),
-        )
+        service = _get_emotion_service(db)
 
-        # Analyze emotion (async)
         response = await service.analyze_emotion(
             telegram_id=emotion_request.user_id,
             text=emotion_request.text,
@@ -111,8 +112,14 @@ async def analyze_emotion(
     except ValueError as e:
         logger.warning("Validation error", error=str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except (ConnectionError, OSError) as e:
+        logger.error("Service connectivity error", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable",
+        ) from e
     except Exception as e:
-        logger.error("Emotion analysis error", error=str(e))
+        logger.error("Emotion analysis error", error=str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
@@ -192,17 +199,8 @@ async def get_report(
     Rate limited to 50 requests per minute.
     """
     try:
-        # Create service
-        emotion_repo = EmotionRepository(db)
-        user_repo = UserRepository(db)
-        service = EmotionService(
-            emotion_repo=emotion_repo,
-            user_repo=user_repo,
-            model_factory=get_model_factory(),
-            cache=get_cache(),
-        )
+        service = _get_emotion_service(db)
 
-        # Get report
         response = service.get_user_report(
             telegram_id=user_id,
             month=month,
@@ -212,8 +210,17 @@ async def get_report(
 
         return response
 
+    except ValueError as e:
+        logger.warning("Report validation error", error=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except (ConnectionError, OSError) as e:
+        logger.error("Service connectivity error", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable",
+        ) from e
     except Exception as e:
-        logger.error("Report generation error", error=str(e))
+        logger.error("Report generation error", error=str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",

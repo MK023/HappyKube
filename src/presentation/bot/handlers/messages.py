@@ -73,19 +73,18 @@ class MessageHandlers:
                 score=result.score,
             )
 
+            chat_id = update.message.chat_id
+
             # Delete user message for privacy (only after successful analysis)
-            await update.message.delete()
+            try:
+                await update.message.delete()
+            except Exception:
+                logger.debug("Could not delete user message", user_id=user_id)
 
             # Prepare response with emoji
-            emotion_emoji = {
-                "joy": "😊",
-                "sadness": "😢",
-                "anger": "😠",
-                "fear": "😨",
-                "surprise": "😲",
-                "disgust": "🤢",
-                "neutral": "😐",
-            }.get(result.emotion, "🤔")
+            from domain.enums.emotion_emojis import EMOTION_EMOJIS
+
+            emotion_emoji = EMOTION_EMOJIS.get(result.emotion, "🤔")
 
             response = (
                 f"{self.messages.get('thanks', 'Grazie per aver condiviso!')}\n\n"
@@ -100,10 +99,20 @@ class MessageHandlers:
                 )
                 response += f"\n{sentiment_emoji} *Sentiment:* {result.sentiment}"
 
-            await update.message.reply_text(response, parse_mode="Markdown")
+            # Send to chat directly (message may have been deleted)
+            await context.bot.send_message(chat_id=chat_id, text=response, parse_mode="Markdown")
 
+        except (ConnectionError, OSError) as e:
+            logger.error(
+                "Service connectivity error during analysis", error=str(e), user_id=user_id
+            )
+            await update.message.reply_text(
+                self.messages.get("error", "Errore durante l'analisi. Riprova tra poco.")
+            )
         except Exception as e:
-            logger.error("Error analyzing emotion", error=str(e), user_id=user_id)
+            logger.error(
+                "Unexpected error analyzing emotion", error=str(e), user_id=user_id, exc_info=True
+            )
             await update.message.reply_text(
                 self.messages.get("error", "Errore durante l'analisi. Riprova tra poco.")
             )

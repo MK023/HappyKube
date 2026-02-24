@@ -252,17 +252,21 @@ class TestEmotionServiceMonthlyStats:
         # Should have variety insight
         assert any("5 emozioni" in i.message for i in insights)
 
-    def test_get_month_name_italian(self, emotion_service):
+    def test_get_month_name_italian(self):
         """Test Italian month name conversion."""
-        assert emotion_service._get_month_name("2026-01") == "Gennaio"
-        assert emotion_service._get_month_name("2026-02") == "Febbraio"
-        assert emotion_service._get_month_name("2026-12") == "Dicembre"
+        from domain.utils import get_italian_month_name
 
-    def test_get_month_name_invalid(self, emotion_service):
+        assert get_italian_month_name("2026-01") == "Gennaio"
+        assert get_italian_month_name("2026-02") == "Febbraio"
+        assert get_italian_month_name("2026-12") == "Dicembre"
+
+    def test_get_month_name_invalid(self):
         """Test invalid month name conversion."""
+        from domain.utils import get_italian_month_name
+
         # Should return original string
-        assert emotion_service._get_month_name("invalid") == "invalid"
-        assert emotion_service._get_month_name("2026") == "2026"
+        assert get_italian_month_name("invalid") == "invalid"
+        assert get_italian_month_name("2026") == "2026"
 
     def test_active_days_calculation(self, emotion_service, sample_user, mock_repositories):
         """Test that active days are calculated correctly (unique dates)."""

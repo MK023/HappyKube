@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI):
         factory = get_model_factory()
         await factory.cleanup()
         logger.info("Groq analyzer closed")
-    except Exception as e:
+    except (ConnectionError, OSError, RuntimeError) as e:
         logger.error("Error closing Groq analyzer", error=str(e))
 
     # Close Redis connection (sync operation)
@@ -59,7 +59,7 @@ async def lifespan(app: FastAPI):
 
         cache = get_cache()
         cache.close()
-    except Exception as e:
+    except (ConnectionError, OSError, RuntimeError) as e:
         logger.error("Error closing Redis", error=str(e))
 
     # Close database connections
@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI):
 
         close_database()
         logger.info("Database connections closed")
-    except Exception as e:
+    except (ConnectionError, OSError, RuntimeError) as e:
         logger.error("Error closing database", error=str(e))
 
     # Clear analyzer cache
@@ -101,8 +101,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Configure CORS
-    if settings.cors_enabled:
+    # Configure CORS (must be explicitly enabled with allowed origins)
+    if settings.cors_enabled and settings.cors_origins:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=settings.cors_origins,
@@ -111,6 +111,8 @@ def create_app() -> FastAPI:
             allow_headers=["Content-Type", "X-API-Key", "Authorization"],
         )
         logger.info("CORS enabled", origins=settings.cors_origins)
+    elif settings.cors_enabled:
+        logger.warning("CORS enabled but no origins configured, skipping CORS middleware")
 
     # Configure rate limiting
     limiter = Limiter(key_func=get_remote_address)

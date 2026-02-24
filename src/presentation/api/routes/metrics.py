@@ -73,7 +73,7 @@ happykube_active_users 342.0"""
         404: {"description": "Metrics collection disabled"},
     },
 )
-async def metrics():
+async def metrics() -> Response:
     """
     Prometheus metrics endpoint.
 

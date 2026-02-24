@@ -10,7 +10,7 @@ from application.services.emotion_service import EmotionService
 from config import get_logger
 from infrastructure.cache import get_cache
 from infrastructure.database import get_db
-from infrastructure.ml import ModelFactory
+from infrastructure.ml import get_model_factory
 from infrastructure.repositories import EmotionRepository, UserRepository
 
 logger = get_logger(__name__)
@@ -24,7 +24,7 @@ limiter = Limiter(key_func=get_remote_address)
 def _get_emotion_service(db: Session) -> EmotionService:
     """Create EmotionService instance with dependencies."""
     cache = get_cache()
-    model_factory = ModelFactory()
+    model_factory = get_model_factory()
 
     emotion_repo = EmotionRepository(db)
     user_repo = UserRepository(db)
@@ -152,14 +152,13 @@ async def get_monthly_report(
         if "Invalid month format" in error_msg:
             logger.warning("Invalid month format", telegram_id=telegram_id, month=month)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg) from e
-        elif "No emotion data" in error_msg:
+        if "No emotion data" in error_msg:
             logger.info("No data for month", telegram_id=telegram_id, month=month)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_msg) from e
-        else:
-            logger.error("Unexpected error", telegram_id=telegram_id, month=month, error=error_msg)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
-            ) from e
+        logger.error("Unexpected error", telegram_id=telegram_id, month=month, error=error_msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
+        ) from e
 
     except Exception as e:
         logger.error(

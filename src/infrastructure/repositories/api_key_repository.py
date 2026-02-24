@@ -1,6 +1,6 @@
 """API Key repository for database operations."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 import bcrypt
@@ -48,14 +48,14 @@ class APIKeyRepository:
             for key_model in api_keys:
                 try:
                     # Check expiration
-                    if key_model.expires_at and key_model.expires_at < datetime.now():
+                    if key_model.expires_at and key_model.expires_at < datetime.now(UTC):
                         logger.debug("API key expired", key_id=str(key_model.id))
                         continue
 
                     # Verify using bcrypt (constant-time comparison)
                     if bcrypt.checkpw(api_key.encode(), key_model.key_hash.encode()):
                         # Update last_used_at timestamp
-                        key_model.last_used_at = datetime.now()
+                        key_model.last_used_at = datetime.now(UTC)
                         session.commit()
 
                         logger.info(

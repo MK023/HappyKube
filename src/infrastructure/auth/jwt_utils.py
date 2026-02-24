@@ -68,8 +68,8 @@ class JWTUtils:
             logger.warning("Invalid JWT token", error=str(e), token_prefix=token[:20])
             return None
 
-        except Exception as e:
-            logger.error("Error decoding JWT token", error=str(e), exc_info=e)
+        except (TypeError, ValueError, KeyError) as e:
+            logger.error("Error decoding JWT token", error=str(e))
             return None
 
     @staticmethod

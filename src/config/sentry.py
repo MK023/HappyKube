@@ -58,7 +58,7 @@ def init_sentry() -> None:
             traces_sample_rate=settings.sentry_traces_sample_rate,
         )
 
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         logger.error("Failed to initialize Sentry", error=str(e))
 
 
