@@ -179,10 +179,18 @@ async def _process_message(message: dict) -> None:
 class _WebhookContext:
     """Minimal context placeholder for webhook mode (no polling dispatcher)."""
 
+    def __init__(self, bot: Bot) -> None:
+        self.bot = bot
+
+
+def _create_context() -> _WebhookContext:
+    """Create webhook context with bot instance."""
+    return _WebhookContext(bot=Bot(token=settings.telegram_bot_token))
+
 
 async def _handle_command(update: Update, command: str) -> None:
     """Route command to appropriate handler."""
-    context = _WebhookContext()
+    context = _create_context()
 
     command_map = {
         "/start": command_handlers.start,
@@ -201,5 +209,5 @@ async def _handle_command(update: Update, command: str) -> None:
 
 async def _handle_text(update: Update) -> None:
     """Route text message to handler."""
-    context = _WebhookContext()
+    context = _create_context()
     await message_handlers.handle_text(update, context)  # type: ignore[arg-type]
