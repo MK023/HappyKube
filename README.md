@@ -2,13 +2,17 @@
 
 AI-powered emotion analysis Telegram bot with webhook architecture and enterprise security.
 
+[![CI/CD Pipeline](https://github.com/MK023/HappyKube/actions/workflows/ci.yml/badge.svg)](https://github.com/MK023/HappyKube/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/MK023/HappyKube/codeql/badge.svg)](https://github.com/MK023/HappyKube/security/code-scanning)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ## 🌟 Features
 
 - 🤖 **AI-Powered Analysis**: Groq LLaMA 3.3 70B for multilingual emotion detection
 - 🇮🇹 Italian emotion detection (7 emotions + neutral)
 - 🇬🇧 English emotion detection (7 emotions + neutral)
 - 📊 Advanced sentiment analysis with confidence scores
-- 🔐 Enterprise security: AES-256 encryption, API key auth, rate limiting, prompt injection prevention
+- 🔐 Enterprise security: Fernet encryption (AES-128 CBC), API key auth, rate limiting, prompt injection prevention
 - 🚀 Production-ready FastAPI with webhook architecture
 - ⚡ Redis caching with intelligent TTL (24h analysis, 1h statistics)
 - 📊 PostgreSQL database (Fly.io internal) with Alembic migrations
@@ -117,6 +121,9 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
+# Install pre-commit hooks
+pre-commit install
+
 # Configure
 cp .env.example .env
 # Edit .env with your values
@@ -127,6 +134,8 @@ uvicorn wsgi:app --host 0.0.0.0 --port 5000 --reload
 # Run tests
 pytest tests/ -v
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full development workflow.
 
 ## 📡 API Endpoints
 
@@ -199,35 +208,33 @@ pytest --cov=src --cov-report=html
 ## 🛠️ Development Tools
 
 ```bash
-# Format
-black src/
-
-# Lint
-ruff check src/
+# Format + Lint (ruff replaces black + flake8)
+ruff format src/ tests/
+ruff check src/ tests/ --fix
 
 # Type check
-mypy src/
+mypy src/ --ignore-missing-imports
 
 # Security scan
-bandit -r src/
+bandit -r src/ -x tests/ -s B101,B104
+
+# Run all checks via pre-commit
+pre-commit run --all-files
 ```
 
-## 🛡️ Security Hardening
+## 🛡️ Security
 
-- **Prompt Injection Prevention**: LLM prompts use system/user message separation
+- **OWASP Top 10**: Full coverage — see [SECURITY.md](SECURITY.md)
+- **Encryption**: Fernet (AES-128 CBC + HMAC) for user messages, bcrypt for API keys, SHA-256 for user IDs
+- **Prompt Injection Prevention**: System/user message separation in LLM prompts
 - **Cache Poisoning Prevention**: UNKNOWN results are never cached
-- **Input Validation**: Service-layer validation for all inputs (text length, empty checks)
-- **Decrypt Resilience**: Bulk operations survive individual decrypt failures
-- **Session Safety**: Rollback on all exception types, not just SQLAlchemy errors
-- **Bot Singleton**: Shared Bot instance prevents resource leaks
-- **Privacy**: User messages deleted after analysis, PII excluded from logs
-
-See [SECURITY.md](SECURITY.md) for full OWASP Top 10 coverage.
+- **Input Validation**: Multi-layer (Pydantic DTOs + service validation + SQL parametrization)
+- **Secret Detection**: Pre-commit hooks (detect-secrets + gitleaks)
+- **CI/CD Security**: CodeQL SAST, Trivy container scan, Hadolint, dependency review, Bandit, Safety
 
 ## 📝 Notes
 
 - **Architecture**: Clean Architecture (DDD-inspired) with 4 layers
-- **Security**: API key auth (bcrypt), rate limiting, audit logging, prompt injection prevention
 - **AI Model**: Groq LLaMA 3.3 70B (fast, accurate, free tier: 14,400 req/day)
 - **Database**: Fly.io internal PostgreSQL (managed, Frankfurt region)
 - **Cache**: Redis Cloud (30MB free tier, 24h TTL for analysis, 1h for stats)
@@ -236,12 +243,18 @@ See [SECURITY.md](SECURITY.md) for full OWASP Top 10 coverage.
 
 ## 📄 License
 
-MIT License
+[MIT License](LICENSE)
+
+## 🤝 Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ## 🙏 Acknowledgments
 
 - [Groq](https://groq.com/) for ultra-fast LLM inference
-- [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) v22
+- [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) for the Telegram bot framework
 - [FastAPI](https://fastapi.tiangolo.com/) for high-performance async API
 
 ---
