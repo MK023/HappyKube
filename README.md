@@ -3,7 +3,7 @@
 AI-powered emotion analysis Telegram bot with webhook architecture and enterprise security.
 
 [![CI/CD Pipeline](https://github.com/MK023/HappyKube/actions/workflows/ci.yml/badge.svg)](https://github.com/MK023/HappyKube/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/MK023/HappyKube/codeql/badge.svg)](https://github.com/MK023/HappyKube/security/code-scanning)
+[![CodeQL](https://img.shields.io/badge/CodeQL-enabled-brightgreen?logo=github)](https://github.com/MK023/HappyKube/security/code-scanning)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 🌟 Features
