@@ -25,10 +25,6 @@ jobs:
     # Only deploy if CI passed and it's a push to main
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
-    environment:
-      name: production
-      url: https://happykube.fly.dev
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
