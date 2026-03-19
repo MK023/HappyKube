@@ -91,12 +91,16 @@ Stato: **Production-Ready**
 
 ### ✅ A06:2021 - Vulnerable Components
 **Protezioni implementate:**
-- ✅ **Dependency Scanning**: GitHub Actions (safety check)
-- ✅ **Security Linting**: Bandit (security scanner) + Ruff con regole S-prefix
+- ✅ **CodeQL SAST**: GitHub default setup (security-extended queries, weekly scan)
+- ✅ **Dependency Scanning**: Safety CVE check + dependency-review (blocks high-severity + GPL/AGPL)
+- ✅ **Container Scanning**: Trivy (CRITICAL/HIGH) + Hadolint (Dockerfile lint)
+- ✅ **Security Linting**: Bandit (AST analysis) + Ruff con regole S-prefix
+- ✅ **Secret Detection**: detect-secrets + gitleaks (pre-commit hooks)
 - ✅ **SHA-pinned CI Actions**: Tutte le GitHub Actions pinned by SHA
 - ✅ **Pinned Versions**: `pyproject.toml` con version constraints
+- ✅ **Dependabot**: Weekly updates per pip, Docker, GitHub Actions
 
-**CI/CD:** `.github/workflows/ci.yml`
+**CI/CD:** `.github/workflows/ci.yml`, `codeql.yml`, `docker-security.yml`, `dependency-review.yml`
 
 ---
 
@@ -275,12 +279,19 @@ text = text[:MAX_TEXT_LENGTH]  # 500 chars
 ### Automated Security Checks (CI/CD)
 
 ```yaml
-# .github/workflows/ci.yml - 5 job paralleli
-lint:       Ruff (con regole Bandit S-prefix) + Black
-typecheck:  mypy strict mode
-security:   Bandit AST analysis + Safety CVE scan
-test:       pytest 40 tests + coverage
-docker:     Build verification
+# Pre-commit hooks (developer locale)
+ruff:             Lint + format con regole Bandit S-prefix
+mypy:             Type checking
+bandit:           AST security analysis
+detect-secrets:   Secret detection con baseline
+gitleaks:         Git secret scanning (staged files)
+
+# CI Pipeline (.github/workflows/)
+ci.yml:           Ruff + mypy + Bandit + Safety + pytest + Docker build
+docker-security:  Trivy container scan (CRITICAL/HIGH) + Hadolint
+dependency-review: Vulnerability + license check su PR
+CodeQL:           GitHub default setup (SAST, weekly + push/PR)
+Dependabot:       Weekly dependency updates (pip, Docker, Actions)
 ```
 
 ---
@@ -325,6 +336,6 @@ docker:     Build verification
 
 ---
 
-**Last Review**: 24 Febbraio 2026
-**Next Review**: 24 Maggio 2026
+**Last Review**: 19 Marzo 2026
+**Next Review**: 19 Giugno 2026
 **Reviewed By**: Claude Opus 4.6 (Automated Security Analysis)
