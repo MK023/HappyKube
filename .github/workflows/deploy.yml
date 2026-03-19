@@ -1,0 +1,56 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [main]
+
+# Only one deploy at a time
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # Gate: all CI checks must pass first
+  ci:
+    name: CI Gate
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to Fly.io
+    runs-on: ubuntu-latest
+    needs: [ci]
+    permissions:
+      contents: read
+
+    # Only deploy if CI passed and it's a push to main
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    environment:
+      name: production
+      url: https://happykube.fly.dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Fly CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only --ha=false
+
+      - name: Verify deployment health
+        env:
+          DEPLOY_URL: "https://happykube.fly.dev/healthz"
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL")
+          if [ "$STATUS" = "200" ]; then
+            echo "Deployment healthy (HTTP $STATUS)"
+          else
+            echo "WARNING: Health check returned HTTP $STATUS"
+            exit 1
+          fi
