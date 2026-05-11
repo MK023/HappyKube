@@ -4,7 +4,39 @@ AI-powered emotion analysis Telegram bot with webhook architecture and enterpris
 
 [![CI/CD Pipeline](https://github.com/MK023/HappyKube/actions/workflows/ci.yml/badge.svg)](https://github.com/MK023/HappyKube/actions/workflows/ci.yml)
 [![CodeQL](https://img.shields.io/badge/CodeQL-enabled-brightgreen?logo=github)](https://github.com/MK023/HappyKube/security/code-scanning)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)
+![Fly.io](https://img.shields.io/badge/Fly.io-Frankfurt-7B3FE4?logo=flydotio&logoColor=white)
+![Telegram](https://img.shields.io/badge/Telegram-Webhook-26A5E4?logo=telegram&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-LLaMA_3.3_70B-F55036)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**[Live bot](https://t.me/happykube_bot)** | **[API health](https://happykube.fly.dev/healthz)** | **[Security policy](SECURITY.md)**
+
+## 🎯 Why
+
+Built to learn three things at the same time, on a real product I would actually use:
+
+1. **Clean Architecture in Python** — strict 4-layer separation (domain / infrastructure / application / presentation) with zero framework leakage into the core. The same pattern used in Java/.NET enterprise systems, applied to a Python async stack.
+2. **Production-grade security on a hobby budget** — Fernet encryption for PII, prompt-injection prevention in the LLM pipeline, cache-poisoning resistance, full OWASP Top 10 coverage, SAST in CI. The bot processes user emotional data; the security bar matches what that responsibility demands.
+3. **Free-tier production deployment** — Fly.io + Postgres + Redis Cloud all on free tiers, running ~$0/month, but designed so that *every architectural decision still holds* if it had to scale 100x tomorrow. No "I'll fix it when we have users" code.
+
+The bot itself (emotion analysis via Groq LLaMA 3.3 70B) is the product; the architecture is the portfolio.
+
+## 💰 Operating cost
+
+Production deployment runs at **~$0/month** on free tiers:
+
+| Component | Cost | Notes |
+|---|---|---|
+| Fly.io app (Frankfurt, 256 MB RAM) | Free | 3 shared-cpu-1x VMs free with auto-stop/start |
+| Fly.io internal PostgreSQL | Free | Managed, Frankfurt region |
+| Redis Cloud (Stockholm, 30 MB) | Free | 24h TTL for analyses, 1h for statistics |
+| Groq API (LLaMA 3.3 70B) | Free | 14,400 req/day free tier |
+| Telegram Bot API | Free | Unlimited messages |
+| Sentry | Free | Free tier with sampling |
+
+Auto-stop/start on Fly.io means the bot consumes **zero CPU when idle**. With light traffic, the entire stack genuinely costs nothing — but uses the same architectural patterns I'd use at scale.
 
 ## 🌟 Features
 
