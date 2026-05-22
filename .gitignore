@@ -152,3 +152,5 @@ happykube-v2/
 tmp/
 temp/
 *.tmp
+# graphify knowledge graph
+graphify-out/
